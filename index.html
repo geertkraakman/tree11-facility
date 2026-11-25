@@ -12,6 +12,33 @@
     .tab-inactive { background-color: #f1f5f9; color: #475569; }
     .tab-inactive:hover { background-color: #e2e8f0; }
     canvas { touch-action: none; }
+
+    /* TREE11 Startscherm na inloggen (8 donkergroene afdelingstegels) */
+    .t11-dept-tile {
+      background-color: #163828;
+      color: #ffffff;
+      border-radius: 18px;
+      min-height: 92px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px 12px;
+      box-shadow: 0 4px 12px rgba(22, 56, 40, 0.14);
+      transition: transform 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .t11-dept-tile:hover {
+      background-color: #1e4b36;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(22, 56, 40, 0.22);
+    }
+    .t11-dept-tile:active {
+      transform: scale(0.98);
+      background-color: #0f271c;
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -66,9 +93,9 @@
     <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
       <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-extrabold text-lg">
+          <button onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="w-10 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-extrabold text-lg transition">
             T11
-          </div>
+          </button>
           <div>
             <div class="flex items-center gap-2">
               <h1 class="font-extrabold text-lg tracking-tight">TREE11 Facility & Verbouwing</h1>
@@ -79,6 +106,9 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openDepartmentHomeScreen()" class="px-3 py-1.5 rounded-lg bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 text-xs font-bold border border-emerald-600/40 transition">
+            🌿 8 Afdelingen
+          </button>
           <button onclick="openCloudSyncModal()" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
             <span>☁️ Cloud Sync (Supabase)</span>
           </button>
@@ -96,7 +126,7 @@
       </div>
 
       <!-- NAVIGATIE TABS -->
-      <div class="bg-slate-950/60 border-t border-slate-800">
+      <div id="main-nav-tabs" class="bg-slate-950/60 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-4 py-2 flex gap-2 overflow-x-auto">
           <button id="nav-tasks" onclick="switchMainTab('tasks')" class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition tab-active">
             ✅ Takenlijst & Afdelingen
@@ -117,14 +147,49 @@
     <!-- CONTENT CONTAINER -->
     <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
 
+      <!-- ==================== STARTSCHERM NA INLOGGEN: 8 AFDELINGSTEGELS ==================== -->
+      <section id="view-home-tiles" class="hidden max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6">
+          <div class="flex flex-col items-center text-center pt-1">
+            <div class="flex items-center gap-2.5 text-[#163828]">
+              <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2.4"/>
+                <path d="M16 25V9M16 15L10.5 10.5M16 18L21.5 13M16 12L20.5 8.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+              <span class="font-extrabold tracking-[0.14em] text-xl uppercase">TREE11</span>
+            </div>
+            <p class="text-xs font-semibold text-slate-500 mt-1">Hoofdlocatie • Kies een afdeling voor openstaande taken</p>
+          </div>
+
+          <div id="home-8-tiles-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5"></div>
+
+          <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <button onclick="selectDepartmentFromHome('ALL')" class="font-bold text-[#163828] hover:underline">
+              → Bekijk alle afdelingen & taken
+            </button>
+            <button onclick="openUsageHistoryModal()" class="font-bold text-slate-700 hover:text-[#163828]">
+              📦 Voorraad & Verbruikshistorie (<span id="home-history-count">0</span>)
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ==================== TAB 1: TAKENLIJST & AFDELINGEN ==================== -->
       <section id="view-tasks" class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="text-xl font-extrabold text-slate-900">Dagelijks Onderhoud & Afdelingen</h2>
-            <p class="text-xs text-slate-500">Filter per clubafdeling of voeg direct nieuwe onderhoudstaken toe.</p>
+            <div class="flex items-center gap-2.5">
+              <button onclick="openDepartmentHomeScreen()" class="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-xs font-bold text-slate-700 transition">
+                ← Afdelingstegels
+              </button>
+              <h2 id="tasks-section-title" class="text-xl font-extrabold text-slate-900">Dagelijks Onderhoud & Afdelingen</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Openstaande taken per afdeling, voorraadstand en verbruikshistorie bij afronden.</p>
           </div>
           <div class="flex flex-wrap gap-2">
+            <button onclick="openUsageHistoryModal()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#163828] border border-emerald-200 text-xs font-bold transition">
+              📦 Voorraad & Verbruikshistorie
+            </button>
             <button onclick="openAddDeptModal()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold shadow-sm transition">
               + Afdeling toevoegen
             </button>
@@ -137,26 +202,22 @@
           </div>
         </div>
 
-        <!-- AFDELINGSKAARTEN / FILTERS -->
         <div id="department-filter-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5"></div>
 
-        <!-- ZOEK & STATUS FILTER -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
-          <input id="task-search" oninput="renderTasks()" type="text" placeholder="Zoek op taak, ruimte of monteur..." class="flex-1 min-w-[200px] px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <input id="task-search" oninput="renderTasks()" type="text" placeholder="Zoek op taak, ruimte, materiaal of monteur..." class="flex-1 min-w-[200px] px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           <select id="task-status-filter" onchange="renderTasks()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
-            <option value="all">Alle statussen</option>
             <option value="open">Alleen openstaand</option>
+            <option value="all">Alle statussen</option>
             <option value="done">Afgerond</option>
           </select>
         </div>
 
-        <!-- TAKENLIJST -->
         <div id="tasks-list" class="space-y-2.5"></div>
       </section>
 
       <!-- ==================== TAB 2: PROJECTEN & VERBOUWING ==================== -->
       <section id="view-projects" class="hidden space-y-6">
-        <!-- PROJECT OVERZICHT (TEGELS) -->
         <div id="projects-overview-mode" class="space-y-6">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -179,7 +240,6 @@
           <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- PROJECT DETAIL DOSSIER -->
         <div id="project-detail-mode" class="hidden space-y-5">
           <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -214,7 +274,6 @@
               </div>
             </div>
 
-            <!-- PROJECT SUB-TABS -->
             <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-slate-100">
               <button id="ptab-planning" onclick="switchProjectSubTab('planning')" class="px-4 py-2 rounded-xl text-xs font-bold tab-active">
                 📋 Planning (A-Z)
@@ -231,10 +290,8 @@
             </div>
           </div>
 
-          <!-- SUB-TAB 1: PLANNING -->
           <div id="project-subview-planning" class="space-y-3"></div>
 
-          <!-- SUB-TAB 2: FOTO'S -->
           <div id="project-subview-photos" class="hidden space-y-4">
             <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
               <div>
@@ -248,7 +305,6 @@
             <div id="detail-photos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
           </div>
 
-          <!-- SUB-TAB 3: BOUWTEKENING -->
           <div id="project-subview-blueprint" class="hidden bg-white p-5 rounded-2xl border border-slate-200 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -269,7 +325,6 @@
               </div>
             </div>
 
-            <!-- TEKENGEREEDSCHAP -->
             <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <span class="text-xs font-bold text-slate-600 mr-1">Gereedschap:</span>
               <button onclick="setBpTool('line')" id="bptool-line" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white">📏 Lijn / Wand</button>
@@ -283,7 +338,6 @@
             </div>
           </div>
 
-          <!-- SUB-TAB 4: RISICO & OFFERTE-CHECK -->
           <div id="project-subview-risks" class="hidden space-y-4">
             <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -320,1597 +374,4 @@
             <h2 class="text-xl font-extrabold text-slate-900">Team & Dienstrooster Technische Dienst</h2>
             <p class="text-xs text-slate-500">Overzicht van medewerkers, specialisaties en ingeplande diensten.</p>
           </div>
-          <button onclick="openAddMemberModal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
-            + Teamlid toevoegen
-          </button>
-        </div>
-        <div id="team-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-      </section>
-    </main>
-  </div>
-
-  <!-- ==================== MODALS ==================== -->
-
-  <!-- MODAL: MEERDERE FOTO'S + SLIMME PLANNING -->
-  <div id="project-photo-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">📷 Meerdere Foto's & Automatische Planning</h3>
-        <button onclick="closeProjectPhotoModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">1. Selecteer één of meerdere foto's tegelijk</label>
-        <input id="proj-photo-files" type="file" accept="image/*" multiple onchange="previewMultipleProjectPhotos(event)" class="w-full text-xs border border-slate-300 rounded-xl p-2 bg-slate-50" />
-      </div>
-
-      <div id="proj-photo-previews" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">2. Algemene beschrijving / observaties (elke regel wordt een geplande stap)</label>
-        <textarea id="proj-photo-desc" rows="3" placeholder="Bijv.&#10;Stalen H-balken losslijpen met behoud van betonnen poeren&#10;Draadeinden op poeren vlak afslijpen voor nieuwe entree" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500"></textarea>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-sky-50 p-3.5 rounded-2xl border border-sky-200">
-        <div>
-          <label class="block text-xs font-bold text-sky-950 mb-1">Startdatum vervolgplanning</label>
-          <input id="proj-photo-date" type="date" class="w-full px-3 py-2 rounded-xl border border-sky-300 text-xs bg-white" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-sky-950 mb-1">Uitvoerende / Verantwoordelijke</label>
-          <input id="proj-photo-assignee" type="text" value="Geert / Aannemer" class="w-full px-3 py-2 rounded-xl border border-sky-300 text-xs bg-white" />
-        </div>
-        <div class="sm:col-span-2 flex items-center gap-2">
-          <input id="proj-photo-autoplan" type="checkbox" checked class="w-4 h-4 accent-sky-600" />
-          <label for="proj-photo-autoplan" class="text-xs font-bold text-sky-950">Genereer automatisch slimme vervolgplanning (incl. vaktechnische aandachtspunten & takenlijst)</label>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeProjectPhotoModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Annuleren</button>
-        <button onclick="handleSaveProjectPhoto()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow">Opslaan & Planning Genereren</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: NIEUWE TAAK -->
-  <div id="new-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">+ Nieuwe Onderhoudstaak</h3>
-        <button onclick="closeModal('new-task-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-      </div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Taakomschrijving</label>
-          <input id="nt-title" type="text" placeholder="Bijv. Kabel loopband 4 vervangen" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
-            <select id="nt-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Prioriteit</label>
-            <select id="nt-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
-              <option value="Normaal">Normaal</option>
-              <option value="Hoog">Hoog / Spoed</option>
-              <option value="Laag">Laag</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
-            <input id="nt-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Datum</label>
-            <input id="nt-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Extra notitie / benodigd materiaal</label>
-          <textarea id="nt-notes" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal('new-task-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewTask()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Taak opslaan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: MEERDERE TAKEN TEGELIJK -->
-  <div id="bulk-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">⚡ Meerdere Taken Tegelijk Toevoegen</h3>
-        <button onclick="closeModal('bulk-task-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
-          <select id="bt-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
-          <input id="bt-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        </div>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Typ elke taak op een nieuwe regel</label>
-        <textarea id="bt-lines" rows="6" placeholder="Douchekoppen ontkalken kleedkamer heren&#10;Afvoerputjes reinigen&#10;Verlichting gang vervangen" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('bulk-task-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveBulkTasks()" class="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold">Alle regels toevoegen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: NIEUWE AFDELING -->
-  <div id="add-dept-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">+ Nieuwe Afdeling Toevoegen</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Icoon (emoji)</label>
-          <input id="nd-icon" type="text" value="🎾" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Naam afdeling</label>
-          <input id="nd-name" type="text" placeholder="Bijv. Padelbanen Buiten" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('add-dept-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewDepartment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Toevoegen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: LESSONS LEARNED -->
-  <div id="lessons-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">📚 Lessons Learned & Aannemers-Ervaringen</h3>
-        <button onclick="closeModal('lessons-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-      </div>
-      <p class="text-xs text-slate-600">Vastgelegde praktijkervaringen die automatisch als waarschuwing en offerte-check worden meegenomen in nieuwe projecten.</p>
-      <div id="lessons-list-container" class="space-y-3"></div>
-    </div>
-  </div>
-
-  <!-- MODAL: SLIM STAPPENPLAN / NIEUW PROJECT -->
-  <div id="new-project-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">🧠 Nieuw Verbouwingsproject (met Smart Check)</h3>
-        <button onclick="closeModal('new-project-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-      </div>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Projectnaam</label>
-          <input id="np-title" type="text" placeholder="Bijv. Renovatie Kleedkamers Noord" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Ruimte / Afdeling</label>
-            <input id="np-room" type="text" placeholder="Bijv. Kleedkamers & Sanitair" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Type klus (voor vaktechniek & risico-check)</label>
-            <select id="np-type" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
-              <option value="vloer">Vloer / Vlonder / Egaliseren</option>
-              <option value="wand">Sloop / Wanden / Indeling</option>
-              <option value="nat">Natte ruimte / Sanitair / Sauna</option>
-              <option value="algemeen">Algemeen verbouwingsproject</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Omschrijving & doel</label>
-          <textarea id="np-desc" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('new-project-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="createSmartProject()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Project + Stappenplan aanmaken</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: PROJECTSTAP TOEVOEGEN -->
-  <div id="add-step-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">+ Verbouwingsstap Toevoegen</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Fase</label>
-          <select id="st-phase" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
-            <option value="Fase 0: Voorbereiding, Offerte & Sloop">Fase 0: Voorbereiding, Offerte & Sloop</option>
-            <option value="Fase 1: Constructie & Ondergrond">Fase 1: Constructie & Ondergrond</option>
-            <option value="Fase 2: Installaties & Droogtijden">Fase 2: Installaties & Droogtijden</option>
-            <option value="Fase 3: Opbouw & Afwerking">Fase 3: Opbouw & Afwerking</option>
-            <option value="Fase 4: Oplevering & Controle">Fase 4: Oplevering & Controle</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Werkzaamheden</label>
-          <input id="st-title" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Datum</label>
-            <input id="st-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
-            <input id="st-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Vaktechnisch aandachtspunt</label>
-          <input id="st-note" type="text" placeholder="Bijv. Droogtijd aanhouden of ankers vlak afslijpen" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('add-step-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewProjectStep()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: RISICO TOEVOEGEN -->
-  <div id="add-risk-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">⚠️ Risico / Offerte-eis Toevoegen</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Risico / Verborgen gebrek</label>
-          <input id="rk-title" type="text" placeholder="Bijv. Verborgen staalconstructie onder vlonder" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Offerte-eis / Actie voor aannemer</label>
-          <textarea id="rk-action" rows="3" placeholder="Bijv. Vooraf steekproef uitvoeren en demontage + afvoer inclusief opnemen in offerte." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('add-risk-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewRiskItem()" class="px-4 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold">Toevoegen</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CLOUD SYNC (SUPABASE) -->
-  <div id="cloud-sync-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">☁️ Live Cloud Sync (Telefoon & Laptop)</h3>
-        <button onclick="closeModal('cloud-sync-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
-      </div>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        Koppel een gratis <strong>Supabase</strong>-project (tabel <code>tree11_state</code> met kolommen <code>id</code> text primary key en <code>payload</code> jsonb) zodat al je taken, projecten, foto's en tekeningen live synchroon blijven tussen al je apparaten.
-      </p>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Project URL</label>
-          <input id="sb-url" type="text" placeholder="https://jouwproject.supabase.co" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Anon Public Key</label>
-          <input id="sb-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIs..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        </div>
-      </div>
-      <div class="flex flex-wrap justify-between gap-2 pt-2">
-        <button onclick="pullFromCloud()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold">⬇️ Ophalen uit Cloud</button>
-        <div class="flex gap-2">
-          <button onclick="closeModal('cloud-sync-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Sluiten</button>
-          <button onclick="saveCloudConfigAndPush()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold">Opslaan & Synchroniseren</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: APPARAAT TOEVOEGEN -->
-  <div id="new-equip-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">+ Apparaat / Installatie Toevoegen</h3>
-      <div class="space-y-3">
-        <input id="eq-name" type="text" placeholder="Naam apparaat (bijv. Technogym Skillrun 1)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        <input id="eq-dept" type="text" placeholder="Afdeling (bijv. Fitness & Kracht)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        <input id="eq-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('new-equip-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewEquipment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: TEAMLID TOEVOEGEN -->
-  <div id="add-member-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">+ Teamlid Toevoegen</h3>
-      <div class="space-y-3">
-        <input id="tm-name" type="text" placeholder="Naam" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        <input id="tm-role" type="text" placeholder="Rol / Specialisatie" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        <input id="tm-shift" type="text" placeholder="Vaste diensten (bijv. Ma-Vr 08:00 - 16:30)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('add-member-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewMember()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LIGHTBOX VOOR FOTO'S -->
-  <div id="photo-lightbox" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 cursor-zoom-out">
-    <img id="lightbox-img" src="" class="max-h-[88vh] max-w-[92vw] rounded-2xl shadow-2xl" />
-  </div>
-
-  <script>
-    // ==================== STATE & STORAGE ====================
-    const STORAGE_KEY = 'tree11_facility_master_v3';
-    let currentUser = { name: 'Geert', role: 'Beheerder & Technische Dienst' };
-    let selectedDeptFilter = 'ALL';
-    let activeProjectId = null;
-    let activeProjectSubTab = 'planning';
-
-    // Blueprint drawing state
-    let bpTool = 'line';
-    let isDrawingBp = false;
-    let bpStart = { x: 0, y: 0 };
-    let bpShapes = [];
-    let bpBgImageDataUrl = null;
-    let bpBgImgObj = null;
-
-    // Temporary photo uploads
-    let pendingPhotoItems = [];
-
-    const DEFAULT_DEPARTMENTS = [
-      { id: 'fitness', icon: '🏋️', name: 'Fitness & Kracht' },
-      { id: 'cycling', icon: '🚴', name: 'Cycling Studio' },
-      { id: 'yoga', icon: '🧘', name: 'Yoga & Groepslessen' },
-      { id: 'kleedkamers', icon: '🚿', name: 'Kleedkamers & Sanitair' },
-      { id: 'wellness', icon: '🧖', name: 'Wellness & Sauna' },
-      { id: 'horeca', icon: '☕', name: 'Horeca & Receptie' },
-      { id: 'techniek', icon: '⚡', name: 'Elektra, Klimaat & Techniek' },
-      { id: 'buiten', icon: '🏗️', name: 'Buitenterrein, Entree & Gebouw' }
-    ];
-
-    const DEFAULT_LESSONS = [
-      {
-        id: 'lesson-vlonder-staal',
-        project: 'Yoga Studio (Hoofdingang & Vlonder)',
-        title: 'Verborgen staalconstructie (H-balken) onder vlonderplanken',
-        impact: 'Aannemer rekende € 1.000 voor vlonder verwijderen zonder vooraf onder de planken te kijken. Na zelf verwijderen bleek een zware verzinkte H-balkconstructie op betonnen poeren aanwezig (meerwerkindicatie staaldemontage: € 1.000 – € 1.750).',
-        rule: 'Verplichte offerte-eis: Trek vóór offerte-akkoord altijd 1–2 planken/platen los (steekproef), leg schriftelijk vast wie de onderconstructie demonteert/afvoert, eis dat draadeinden op betonnen poeren vlak worden afgeslepen en verreken oud-ijzeropbrengst.'
-      },
-      {
-        id: 'lesson-bamboe-vocht',
-        project: 'Yoga Studio (Vloerrenovatie)',
-        title: 'Acclimatiseren & restvochtmeting vóór verlijmen bamboe/parket',
-        impact: 'Te vroeg verlijmen op verse egaline veroorzaakt schotelen of loslaten van de vloer.',
-        rule: 'Altijd eerst CM-restvochtmeting uitvoeren en pakken bamboe minimaal 48–72 uur gesloten in de ruimte laten acclimatiseren.'
-      }
-    ];
-
-    const DEFAULT_PROJECTS = [
-      {
-        id: 'proj-yoga-floor',
-        title: 'Nieuwe Vloer & Verbouwing Yoga Centrum',
-        room: 'Yoga & Groepslessen / Hoofdingang',
-        budget: 'Staaldemontage indicatie: € 1.000 – € 1.750 (excl. btw, poeren behouden)',
-        description: 'Complete vernieuwing van de Yoga Studio (10,80 m × 7,00 m = 75,6 m² netto), inclusief demontage van de vrijgekomen stalen H-balken met behoud van de betonnen poeren en realisatie van de nieuwe schuin oplopende hoofdingang.',
-        steps: [
-          {
-            id: 'ys-0',
-            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-            title: 'Vlonderplanken zelf verwijderd & staalconstructie vrijgelegd',
-            date: '2026-11-20',
-            assignee: 'Geert & Team',
-            note: 'Vlonder (€ 1.000 bespaard) zelf weggehaald; verzinkte H-balken op betonnen poeren aangetroffen.',
-            done: true
-          },
-          {
-            id: 'ys-1',
-            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-            title: 'Stalen H-balken demonteren & afvoeren (betonnen poeren behouden!)',
-            date: '2026-11-26',
-            assignee: 'Aannemer / Metaalhandel',
-            note: 'Richtprijs € 1.000–€ 1.750 (oud-ijzer verrekenen). Betonnen poeren blijven staan; draadeinden vlak afslijpen en gevelankers vrijmaken.',
-            done: false
-          },
-          {
-            id: 'ys-2',
-            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-            title: 'Maatvoering zaal (10,80m × 7,00m = 75,6 m²) & hellingshoek hoofdingang (1:12 à 1:15) uitzetten',
-            date: '2026-11-27',
-            assignee: 'Geert',
-            note: 'Bestel ca. 83 m² vloer, primer en egaline (incl. 10% snijverlies). Houd rekening met vlak bordes vóór de openslaande deuren.',
-            done: false
-          },
-          {
-            id: 'ys-3',
-            phase: 'Fase 1: Constructie & Ondergrond',
-            title: 'Ondervloer schuren, stofvrij maken, primeren & egaliseren',
-            date: '2026-12-01',
-            assignee: 'Vloerenlegger',
-            note: 'Minimale droogtijd egaline 24–48 uur aanhouden + restvochtmeting vóór verlijmen.',
-            done: false
-          },
-          {
-            id: 'ys-4',
-            phase: 'Fase 3: Opbouw & Afwerking',
-            title: 'Schuin oplopende hoofdingang opbouwen op bestaande poeren + bamboe vloer leggen',
-            date: '2026-12-05',
-            assignee: 'Aannemer & Vloerenlegger',
-            note: 'Hoofdingang voorzien van antislip-afwerking, afwateringsgoot bij dorpel en entreeverlichting. Bamboe 48u laten acclimatiseren.',
-            done: false
-          }
-        ],
-        photos: [],
-        risks: [
-          {
-            id: 'rk-yoga-1',
-            title: 'Verborgen stalen draagconstructie onder vlonder (€ 1.000 – € 1.750)',
-            action: 'Schriftelijk vastleggen dat demontage van H-balken plaatsvindt met behoud van betonnen poeren, draadeinden vlak afgeslepen worden en oud-ijzerwaarde in mindering komt.',
-            checked: true
-          },
-          {
-            id: 'rk-yoga-2',
-            title: 'Hemelwater & gladheid bij schuin oplopende hoofdingang',
-            action: 'Helling 1:12 à 1:15 aanhouden, lijngoot/afwatering vóór de drempel plaatsen en antislip toplaag toepassen.',
-            checked: false
-          }
-        ],
-        blueprintShapes: [
-          { type: 'rect', x: 70, y: 60, w: 540, h: 350, color: '#0f172a' },
-          { type: 'text', x: 260, y: 48, text: '10.80 m (Yoga Zaal ~75,6 m²)', color: '#0f172a' },
-          { type: 'text', x: 12, y: 240, text: '7.00 m', color: '#0f172a' },
-          { type: 'line', x1: 610, y1: 60, x2: 810, y2: 60, color: '#0f172a' },
-          { type: 'line', x1: 810, y1: 60, x2: 810, y2: 330, color: '#0f172a' },
-          { type: 'text', x: 640, y: 140, text: 'Hal / Kleedkamers / WC', color: '#475569' },
-          { type: 'rect', x: 670, y: 245, w: 140, h: 85, color: '#64748b' },
-          { type: 'text', x: 705, y: 292, text: 'CV Ruimte', color: '#334155' },
-          { type: 'rect', x: 460, y: 410, w: 230, h: 110, color: '#059669' },
-          { type: 'text', x: 478, y: 465, text: 'Schuine Hoofdingang (1:12)', color: '#059669' },
-          { type: 'text', x: 485, y: 488, text: 'Poeren blijven behouden', color: '#047857' }
-        ],
-        blueprintBgDataUrl: null
-      },
-      {
-        id: 'proj-cycling-studio',
-        title: 'Upgrade & Onderhoud Cycling Studio',
-        room: 'Cycling Studio',
-        budget: 'In eigen beheer + AV-leverancier',
-        description: 'Controle en vervanging van verlichting/LED-strips, geluidsinstallatie, ventilatie en onderhoudsbeurt van alle indoor bikes.',
-        steps: [
-          {
-            id: 'cs-1',
-            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-            title: 'Inventarisatie trappers, riemen, zadels en consolas van alle bikes',
-            date: '2026-11-28',
-            assignee: 'Geert',
-            note: 'Noteer framenummers met speling op trapas.',
-            done: false
-          },
-          {
-            id: 'cs-2',
-            phase: 'Fase 2: Installaties & Droogtijden',
-            title: 'DMX-sfeerverlichting & ventilatiekanalen reinigen en testen',
-            date: '2026-12-03',
-            assignee: 'Technische Dienst',
-            note: 'Check ook subwoofer-bekabeling bij podium.',
-            done: false
-          }
-        ],
-        photos: [],
-        risks: [
-          {
-            id: 'rk-cyc-1',
-            title: 'Zweetcorrosie onder voetplaten van bikes',
-            action: 'Bij onderhoud alle stelvoeten losdraaien, invetten en vloer daaronder reinigen.',
-            checked: false
-          }
-        ],
-        blueprintShapes: [],
-        blueprintBgDataUrl: null
-      }
-    ];
-
-    const DEFAULT_TASKS = [
-      { id: 't-1', title: 'Loopbanden 1 t/m 6 bandspanning en smering controleren', dept: 'Fitness & Kracht', priority: 'Normaal', assignee: 'Geert', date: '2026-11-25', notes: 'Siliconenspray gebruiken indien nodig', done: false },
-      { id: 't-2', title: 'Trapassen & pedalen Cycling Studio nalopen', dept: 'Cycling Studio', priority: 'Hoog', assignee: 'Geert', date: '2026-11-25', notes: 'Bike 7 en 12 tikken bij staand klimmen', done: false },
-      { id: 't-3', title: 'Doucheputjes & thermostaatkranen kleedkamers controleren', dept: 'Kleedkamers & Sanitair', priority: 'Normaal', assignee: 'Facility', date: '2026-11-26', notes: '', done: false },
-      { id: 't-4', title: 'Sauna kachelstenen en temperatuursensor checken', dept: 'Wellness & Sauna', priority: 'Normaal', assignee: 'Geert', date: '2026-11-27', notes: '', done: false },
-      { id: 't-5', title: 'Koffiemachine ontkalken en waterfilter vervangen', dept: 'Horeca & Receptie', priority: 'Normaal', assignee: 'Receptie', date: '2026-11-26', notes: '', done: true },
-      { id: 't-6', title: 'Luchtbehandelingskast (LBK) filters vervangen', dept: 'Elektra, Klimaat & Techniek', priority: 'Hoog', assignee: 'Geert', date: '2026-11-28', notes: 'F7 filters uit magazijn pakken', done: false }
-    ];
-
-    const DEFAULT_EQUIPMENT = [
-      { id: 'eq-1', name: 'Technogym Skillrun (6x)', dept: 'Fitness & Kracht', nextDate: '2026-12-15', status: 'Operationeel' },
-      { id: 'eq-2', name: 'Stages Indoor Bikes (28x)', dept: 'Cycling Studio', nextDate: '2026-12-01', status: 'Aandacht nodig' },
-      { id: 'eq-3', name: 'Luchtbehandelingskast Hoofdgebouw', dept: 'Elektra, Klimaat & Techniek', nextDate: '2026-11-28', status: 'Onderhoud gepland' },
-      { id: 'eq-4', name: 'Finse Sauna & Stoomcabine', dept: 'Wellness & Sauna', nextDate: '2026-12-10', status: 'Operationeel' }
-    ];
-
-    const DEFAULT_TEAM = [
-      { id: 'tm-1', name: 'Geert', role: 'Hoofd Technische Dienst & Verbouwing', shift: 'Ma - Vr | 08:00 - 17:00' },
-      { id: 'tm-2', name: 'Facility Team', role: 'Dagelijkse Schoonmaak & Rondes', shift: 'Ma - Zo | 07:00 - 13:00' },
-      { id: 'tm-3', name: 'Vaste Aannemer / Installateur', role: 'Constructie, Staal & Elektra', shift: 'Op afroep / Projectbasis' }
-    ];
-
-    let appState = {
-      departments: [],
-      tasks: [],
-      projects: [],
-      lessons: [],
-      equipment: [],
-      team: [],
-      cloudConfig: { url: '', key: '' }
-    };
-
-    function loadAppState() {
-      let saved = null;
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) saved = JSON.parse(raw);
-      } catch (e) {}
-
-      appState.departments = (saved && Array.isArray(saved.departments) && saved.departments.length) ? saved.departments : JSON.parse(JSON.stringify(DEFAULT_DEPARTMENTS));
-      appState.tasks = (saved && Array.isArray(saved.tasks) && saved.tasks.length) ? saved.tasks : JSON.parse(JSON.stringify(DEFAULT_TASKS));
-      appState.projects = (saved && Array.isArray(saved.projects) && saved.projects.length) ? saved.projects : JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
-      appState.lessons = (saved && Array.isArray(saved.lessons) && saved.lessons.length) ? saved.lessons : JSON.parse(JSON.stringify(DEFAULT_LESSONS));
-      appState.equipment = (saved && Array.isArray(saved.equipment) && saved.equipment.length) ? saved.equipment : JSON.parse(JSON.stringify(DEFAULT_EQUIPMENT));
-      appState.team = (saved && Array.isArray(saved.team) && saved.team.length) ? saved.team : JSON.parse(JSON.stringify(DEFAULT_TEAM));
-      appState.cloudConfig = (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' };
-
-      DEFAULT_PROJECTS.forEach(defProj => {
-        if (!appState.projects.some(p => p.id === defProj.id)) {
-          appState.projects.push(JSON.parse(JSON.stringify(defProj)));
-        }
-      });
-
-      saveAppState(false);
-    }
-
-    function saveAppState(pushCloud = true) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      } catch (e) {
-        console.warn('Opslaglimiet bereikt:', e);
-      }
-      updateCloudBadge();
-      if (pushCloud && appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
-        pushToCloudSilent();
-      }
-    }
-
-    // ==================== LOGIN & NAVIGATIE ====================
-    function quickLoginGeert() {
-      currentUser = { name: 'Geert', role: 'Beheerder & Technische Dienst' };
-      enterApp();
-    }
-
-    function handleTeamLogin() {
-      const name = document.getElementById('login-name').value.trim() || 'Collega';
-      const role = document.getElementById('login-role').value;
-      currentUser = { name, role };
-      enterApp();
-    }
-
-    function enterApp() {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('main-app').classList.remove('hidden');
-      document.getElementById('current-user-label').textContent = `${currentUser.name} (${currentUser.role})`;
-      renderAll();
-    }
-
-    function logoutUser() {
-      document.getElementById('main-app').classList.add('hidden');
-      document.getElementById('login-screen').classList.remove('hidden');
-    }
-
-    function switchMainTab(tab) {
-      ['tasks', 'projects', 'equipment', 'roster'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
-        const btn = document.getElementById(`nav-${t}`);
-        btn.classList.toggle('tab-active', t === tab);
-        btn.classList.toggle('tab-inactive', t !== tab);
-      });
-      if (tab === 'projects') {
-        closeProjectDetail();
-        renderProjectsGrid();
-      }
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.add('hidden');
-    }
-
-    function renderAll() {
-      renderDepartmentFilters();
-      renderTasks();
-      renderProjectsGrid();
-      renderEquipment();
-      renderTeam();
-      document.getElementById('lessons-count-badge').textContent = appState.lessons.length;
-    }
-
-    // ==================== AFDELINGEN & TAKEN ====================
-    function renderDepartmentFilters() {
-      const grid = document.getElementById('department-filter-grid');
-      const totalOpen = appState.tasks.filter(t => !t.done).length;
-
-      let html = `
-        <button onclick="selectDeptFilter('ALL')" class="p-3 rounded-2xl border text-left transition ${selectedDeptFilter === 'ALL' ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
-          <div class="flex items-center justify-between">
-            <span class="text-base">🏢</span>
-            <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${selectedDeptFilter === 'ALL' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-100 text-slate-700'}">${totalOpen} open</span>
-          </div>
-          <div class="font-bold text-xs mt-1.5 truncate">Alle Afdelingen</div>
-        </button>
-      `;
-
-      appState.departments.forEach(d => {
-        const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
-        const active = selectedDeptFilter === d.name;
-        html += `
-          <button onclick="selectDeptFilter('${d.name.replace(/'/g, "\'")}')" class="p-3 rounded-2xl border text-left transition ${active ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
-            <div class="flex items-center justify-between">
-              <span class="text-base">${d.icon}</span>
-              <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${active ? 'bg-emerald-500 text-slate-950' : (openCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500')}">${openCount}</span>
-            </div>
-            <div class="font-bold text-xs mt-1.5 truncate">${d.name}</div>
-          </button>
-        `;
-      });
-
-      grid.innerHTML = html;
-    }
-
-    function selectDeptFilter(deptName) {
-      selectedDeptFilter = deptName;
-      renderDepartmentFilters();
-      renderTasks();
-    }
-
-    function renderTasks() {
-      const list = document.getElementById('tasks-list');
-      const search = (document.getElementById('task-search').value || '').toLowerCase();
-      const statusFilter = document.getElementById('task-status-filter').value;
-
-      const filtered = appState.tasks.filter(t => {
-        if (selectedDeptFilter !== 'ALL' && t.dept !== selectedDeptFilter) return false;
-        if (statusFilter === 'open' && t.done) return false;
-        if (statusFilter === 'done' && !t.done) return false;
-        if (search && !(`${t.title} ${t.dept} ${t.assignee} ${t.notes || ''}`).toLowerCase().includes(search)) return false;
-        return true;
-      });
-
-      if (!filtered.length) {
-        list.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-sm text-slate-500">Geen taken gevonden voor deze selectie.</div>`;
-        return;
-      }
-
-      list.innerHTML = filtered.map(t => `
-        <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-slate-200 opacity-65' : 'border-slate-200 shadow-sm'} flex items-start justify-between gap-3">
-          <div class="flex items-start gap-3">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTaskDone('${t.id}')" class="mt-1 w-5 h-5 accent-emerald-600 cursor-pointer" />
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-bold text-sm ${t.done ? 'line-through text-slate-400' : 'text-slate-900'}">${t.title}</span>
-                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${t.dept}</span>
-                ${t.priority === 'Hoog' ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔥 Hoog</span>' : ''}
-              </div>
-              ${t.notes ? `<p class="text-xs text-slate-600 mt-1">${t.notes}</p>` : ''}
-              <div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
-                <span>👤 ${t.assignee || 'Geert'}</span>
-                <span>📅 ${t.date || 'Geen datum'}</span>
-              </div>
-            </div>
-          </div>
-          <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-2 py-1">✕</button>
-        </div>
-      `).join('');
-    }
-
-    function toggleTaskDone(id) {
-      const t = appState.tasks.find(x => x.id === id);
-      if (t) {
-        t.done = !t.done;
-        saveAppState();
-        renderDepartmentFilters();
-        renderTasks();
-      }
-    }
-
-    function deleteTask(id) {
-      appState.tasks = appState.tasks.filter(x => x.id !== id);
-      saveAppState();
-      renderDepartmentFilters();
-      renderTasks();
-    }
-
-    function populateDeptSelects() {
-      const opts = appState.departments.map(d => `<option value="${d.name}">${d.icon} ${d.name}</option>`).join('');
-      document.getElementById('nt-dept').innerHTML = opts;
-      document.getElementById('bt-dept').innerHTML = opts;
-    }
-
-    function openNewTaskModal() {
-      populateDeptSelects();
-      document.getElementById('nt-date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('new-task-modal').classList.remove('hidden');
-    }
-
-    function saveNewTask() {
-      const title = document.getElementById('nt-title').value.trim();
-      if (!title) return alert('Vul een taakomschrijving in.');
-      appState.tasks.unshift({
-        id: 't-' + Date.now(),
-        title,
-        dept: document.getElementById('nt-dept').value,
-        priority: document.getElementById('nt-priority').value,
-        assignee: document.getElementById('nt-assignee').value.trim() || 'Geert',
-        date: document.getElementById('nt-date').value,
-        notes: document.getElementById('nt-notes').value.trim(),
-        done: false
-      });
-      document.getElementById('nt-title').value = '';
-      document.getElementById('nt-notes').value = '';
-      closeModal('new-task-modal');
-      saveAppState();
-      renderDepartmentFilters();
-      renderTasks();
-    }
-
-    function openBulkTaskModal() {
-      populateDeptSelects();
-      document.getElementById('bulk-task-modal').classList.remove('hidden');
-    }
-
-    function saveBulkTasks() {
-      const dept = document.getElementById('bt-dept').value;
-      const assignee = document.getElementById('bt-assignee').value.trim() || 'Geert';
-      const lines = document.getElementById('bt-lines').value.split('\n').map(l => l.trim()).filter(Boolean);
-      if (!lines.length) return alert('Typ minimaal één taak.');
-      const today = new Date().toISOString().split('T')[0];
-      lines.reverse().forEach((line, idx) => {
-        appState.tasks.unshift({
-          id: 't-' + Date.now() + '-' + idx,
-          title: line,
-          dept,
-          priority: 'Normaal',
-          assignee,
-          date: today,
-          notes: '',
-          done: false
-        });
-      });
-      document.getElementById('bt-lines').value = '';
-      closeModal('bulk-task-modal');
-      saveAppState();
-      renderDepartmentFilters();
-      renderTasks();
-    }
-
-    function openAddDeptModal() {
-      document.getElementById('add-dept-modal').classList.remove('hidden');
-    }
-
-    function saveNewDepartment() {
-      const icon = document.getElementById('nd-icon').value.trim() || '🛠️';
-      const name = document.getElementById('nd-name').value.trim();
-      if (!name) return alert('Vul een afdelingsnaam in.');
-      appState.departments.push({ id: 'dept-' + Date.now(), icon, name });
-      document.getElementById('nd-name').value = '';
-      closeModal('add-dept-modal');
-      saveAppState();
-      renderDepartmentFilters();
-    }
-
-    // ==================== PROJECTEN & DOSSIER ====================
-    function renderProjectsGrid() {
-      const grid = document.getElementById('projects-grid');
-      grid.innerHTML = appState.projects.map(p => {
-        const total = p.steps.length;
-        const done = p.steps.filter(s => s.done).length;
-        const pct = total ? Math.round((done / total) * 100) : 0;
-        const photoCount = (p.photos || []).length;
-        const hasDrawing = (p.blueprintShapes && p.blueprintShapes.length > 0) || !!p.blueprintBgDataUrl;
-
-        return `
-          <div onclick="openProjectDetail('${p.id}')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-400 transition cursor-pointer flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <span class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold border border-emerald-100">🏗️</span>
-                <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${pct}% gereed</span>
-              </div>
-              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">${p.room}</span>
-              <h3 class="font-extrabold text-base text-slate-900 mt-0.5">${p.title}</h3>
-              <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">${p.description}</p>
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-100">
-              <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
-                <div class="h-full bg-emerald-500" style="width: ${pct}%"></div>
-              </div>
-              <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500">
-                <span>📋 ${done}/${total} stappen</span>
-                <span>📷 ${photoCount} foto's</span>
-                <span>${hasDrawing ? '📐 Tekening ✓' : '📐 Geen tekening'}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function openProjectDetail(projectId) {
-      activeProjectId = projectId;
-      document.getElementById('projects-overview-mode').classList.add('hidden');
-      document.getElementById('project-detail-mode').classList.remove('hidden');
-      renderActiveProjectDetail();
-      switchProjectSubTab('planning');
-    }
-
-    function closeProjectDetail() {
-      activeProjectId = null;
-      document.getElementById('project-detail-mode').classList.add('hidden');
-      document.getElementById('projects-overview-mode').classList.remove('hidden');
-      renderProjectsGrid();
-    }
-
-    function renderActiveProjectDetail() {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      if (!p) return;
-
-      const total = p.steps.length;
-      const done = p.steps.filter(s => s.done).length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-
-      document.getElementById('detail-proj-room').textContent = p.room;
-      document.getElementById('detail-proj-title').textContent = p.title;
-      document.getElementById('detail-proj-desc').textContent = p.description;
-      document.getElementById('detail-proj-progress-text').textContent = `${pct}% (${done}/${total})`;
-      document.getElementById('detail-proj-progress-bar').style.width = `${pct}%`;
-      document.getElementById('detail-proj-budget').textContent = p.budget || '';
-      document.getElementById('detail-photo-count').textContent = (p.photos || []).length;
-      document.getElementById('detail-risk-count').textContent = (p.risks || []).length;
-
-      // Render Planning per fase
-      const phases = [...new Set(p.steps.map(s => s.phase))];
-      const planContainer = document.getElementById('project-subview-planning');
-      if (!p.steps.length) {
-        planContainer.innerHTML = `<div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen stappen in dit project.</div>`;
-      } else {
-        planContainer.innerHTML = phases.map(phase => {
-          const phaseSteps = p.steps.filter(s => s.phase === phase);
-          return `
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-              <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg">${phase}</h4>
-              ${phaseSteps.map(s => `
-                <div class="flex items-start justify-between gap-3 p-2.5 rounded-xl border ${s.done ? 'bg-slate-50 border-slate-100 opacity-70' : 'bg-white border-slate-200'}">
-                  <div class="flex items-start gap-3">
-                    <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleProjectStep('${p.id}', '${s.id}')" class="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer" />
-                    <div>
-                      <div class="font-bold text-sm ${s.done ? 'line-through text-slate-400' : 'text-slate-900'}">${s.title}</div>
-                      ${s.note ? `<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 mt-1">💡 ${s.note}</p>` : ''}
-                      <div class="text-[11px] text-slate-400 mt-1">👤 ${s.assignee} • 📅 ${s.date}</div>
-                    </div>
-                  </div>
-                  <button onclick="deleteProjectStep('${p.id}', '${s.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        }).join('');
-      }
-
-      // Render Foto's
-      const photosGrid = document.getElementById('detail-photos-grid');
-      if (!p.photos || !p.photos.length) {
-        photosGrid.innerHTML = `<div class="sm:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen foto's geüpload in dit project.</div>`;
-      } else {
-        photosGrid.innerHTML = p.photos.map(ph => `
-          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-            <img src="${ph.dataUrl}" onclick="openLightbox('${ph.dataUrl}')" class="w-full h-48 object-cover cursor-zoom-in bg-slate-100" />
-            <div class="p-3.5 flex-1 flex flex-col justify-between">
-              <p class="text-xs font-semibold text-slate-800">${ph.caption || 'Projectfoto'}</p>
-              <div class="flex justify-between items-center text-[11px] text-slate-400 mt-2 pt-2 border-t border-slate-100">
-                <span>📅 ${ph.date || ''}</span>
-                <button onclick="deleteProjectPhoto('${p.id}', '${ph.id}')" class="text-rose-500 hover:underline font-bold">Verwijderen</button>
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      // Render Risico's
-      const risksList = document.getElementById('detail-risks-list');
-      risksList.innerHTML = (p.risks || []).map(r => `
-        <div class="bg-white p-4 rounded-2xl border ${r.checked ? 'border-emerald-300 bg-emerald-50/30' : 'border-amber-200'} flex items-start justify-between gap-3">
-          <div class="flex items-start gap-3">
-            <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="toggleRiskChecked('${p.id}', '${r.id}')" class="mt-1 w-4 h-4 accent-emerald-600" />
-            <div>
-              <div class="font-bold text-sm text-slate-900">${r.title}</div>
-              <p class="text-xs text-slate-600 mt-1">${r.action}</p>
-            </div>
-          </div>
-          <button onclick="promoteRiskToPhase0('${p.id}', '${r.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold whitespace-nowrap">+ Zet in Fase 0</button>
-        </div>
-      `).join('');
-    }
-
-    function switchProjectSubTab(sub) {
-      activeProjectSubTab = sub;
-      ['planning', 'photos', 'blueprint', 'risks'].forEach(t => {
-        document.getElementById(`project-subview-${t}`).classList.toggle('hidden', t !== sub);
-        const btn = document.getElementById(`ptab-${t}`);
-        btn.classList.toggle('tab-active', t === sub);
-        btn.classList.toggle('tab-inactive', t !== sub);
-      });
-      if (sub === 'blueprint') {
-        initBlueprintEditor();
-      }
-    }
-
-    function toggleProjectStep(projId, stepId) {
-      const p = appState.projects.find(x => x.id === projId);
-      const s = p && p.steps.find(x => x.id === stepId);
-      if (s) {
-        s.done = !s.done;
-        saveAppState();
-        renderActiveProjectDetail();
-      }
-    }
-
-    function deleteProjectStep(projId, stepId) {
-      const p = appState.projects.find(x => x.id === projId);
-      if (p) {
-        p.steps = p.steps.filter(x => x.id !== stepId);
-        saveAppState();
-        renderActiveProjectDetail();
-      }
-    }
-
-    function openAddProjectStepModal() {
-      document.getElementById('st-date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('add-step-modal').classList.remove('hidden');
-    }
-
-    function saveNewProjectStep() {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      const title = document.getElementById('st-title').value.trim();
-      if (!p || !title) return alert('Vul de werkzaamheden in.');
-      p.steps.push({
-        id: 'st-' + Date.now(),
-        phase: document.getElementById('st-phase').value,
-        title,
-        date: document.getElementById('st-date').value,
-        assignee: document.getElementById('st-assignee').value.trim() || 'Geert',
-        note: document.getElementById('st-note').value.trim(),
-        done: false
-      });
-      document.getElementById('st-title').value = '';
-      document.getElementById('st-note').value = '';
-      closeModal('add-step-modal');
-      saveAppState();
-      renderActiveProjectDetail();
-    }
-
-    // ==================== MEERDERE FOTO'S + SLIMME PLANNING ====================
-    function openProjectPhotoModal(projId) {
-      activeProjectId = projId;
-      pendingPhotoItems = [];
-      document.getElementById('proj-photo-files').value = '';
-      document.getElementById('proj-photo-previews').innerHTML = '';
-      document.getElementById('proj-photo-desc').value = '';
-      document.getElementById('proj-photo-date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('project-photo-modal').classList.remove('hidden');
-    }
-
-    function closeProjectPhotoModal() {
-      document.getElementById('project-photo-modal').classList.add('hidden');
-    }
-
-    function previewMultipleProjectPhotos(event) {
-      const files = Array.from(event.target.files || []);
-      pendingPhotoItems = [];
-      const container = document.getElementById('proj-photo-previews');
-      container.innerHTML = '';
-
-      files.forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxW = 900;
-            const scale = Math.min(1, maxW / img.width);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.72);
-            pendingPhotoItems.push({ dataUrl: compressed, note: '' });
-
-            const card = document.createElement('div');
-            card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
-            card.innerHTML = `
-              <img src="${compressed}" class="w-full h-28 object-cover rounded-lg" />
-              <input type="text" placeholder="Eigen notitie bij foto ${idx + 1} (optioneel)" oninput="updatePendingPhotoNote(${pendingPhotoItems.length - 1}, this.value)" class="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg bg-white" />
-            `;
-            container.appendChild(card);
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function updatePendingPhotoNote(index, val) {
-      if (pendingPhotoItems[index]) pendingPhotoItems[index].note = val;
-    }
-
-    function detectSmartPhaseAndTip(text) {
-      const lower = text.toLowerCase();
-      if (lower.includes('staal') || lower.includes('sloop') || lower.includes('vlonder') || lower.includes('poer')) {
-        return {
-          phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-          tip: 'Controleer of poeren behouden blijven, slijp draadeinden vlak af en verreken oud-ijzeropbrengst.'
-        };
-      }
-      if (lower.includes('primer') || lower.includes('egaline') || lower.includes('egaliseren') || lower.includes('ondervloer')) {
-        return {
-          phase: 'Fase 1: Constructie & Ondergrond',
-          tip: 'Houd 24–48 uur droogtijd aan en voer een restvochtmeting uit vóór afwerking.'
-        };
-      }
-      if (lower.includes('bamboe') || lower.includes('vloer') || lower.includes('entree') || lower.includes('helling') || lower.includes('plint')) {
-        return {
-          phase: 'Fase 3: Opbouw & Afwerking',
-          tip: 'Laat vloerdelen 48 uur acclimatiseren; zorg bij entree voor antislip en afwatering.'
-        };
-      }
-      return {
-        phase: 'Fase 2: Installaties & Droogtijden',
-        tip: 'Controleer maatvoering en stem uitvoering af met betrokken monteur/aannemer.'
-      };
-    }
-
-    function handleSaveProjectPhoto() {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      if (!p) return;
-
-      const generalDesc = document.getElementById('proj-photo-desc').value.trim();
-      const startDateStr = document.getElementById('proj-photo-date').value || new Date().toISOString().split('T')[0];
-      const assignee = document.getElementById('proj-photo-assignee').value.trim() || 'Geert';
-      const autoPlan = document.getElementById('proj-photo-autoplan').checked;
-
-      if (!pendingPhotoItems.length && !generalDesc) {
-        return alert('Selecteer minimaal één foto of vul een beschrijving in.');
-      }
-
-      if (!p.photos) p.photos = [];
-      pendingPhotoItems.forEach((item, idx) => {
-        p.photos.unshift({
-          id: 'ph-' + Date.now() + '-' + idx,
-          dataUrl: item.dataUrl,
-          caption: item.note.trim() || generalDesc || `Situatiefoto ${idx + 1}`,
-          date: startDateStr
-        });
-      });
-
-      if (autoPlan) {
-        const stepCandidates = [];
-        pendingPhotoItems.forEach(item => {
-          if (item.note.trim()) stepCandidates.push(item.note.trim());
-        });
-        generalDesc.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
-          if (!stepCandidates.includes(line)) stepCandidates.push(line);
-        });
-        if (!stepCandidates.length) {
-          stepCandidates.push(`Situatie op foto's beoordelen & vervolgactie uitzetten (${p.title})`);
-        }
-
-        const baseDate = new Date(startDateStr);
-        stepCandidates.forEach((stepTitle, idx) => {
-          const d = new Date(baseDate);
-          d.setDate(d.getDate() + idx);
-          const isoDate = d.toISOString().split('T')[0];
-          const smart = detectSmartPhaseAndTip(stepTitle);
-
-          p.steps.push({
-            id: 'st-' + Date.now() + '-' + idx,
-            phase: smart.phase,
-            title: stepTitle,
-            date: isoDate,
-            assignee,
-            note: smart.tip,
-            done: false
-          });
-
-          appState.tasks.unshift({
-            id: 't-proj-' + Date.now() + '-' + idx,
-            title: `[${p.title}] ${stepTitle}`,
-            dept: p.room,
-            priority: 'Normaal',
-            assignee,
-            date: isoDate,
-            notes: smart.tip,
-            done: false
-          });
-        });
-      }
-
-      closeProjectPhotoModal();
-      saveAppState();
-      renderDepartmentFilters();
-      renderTasks();
-      renderActiveProjectDetail();
-    }
-
-    function deleteProjectPhoto(projId, photoId) {
-      const p = appState.projects.find(x => x.id === projId);
-      if (p) {
-        p.photos = p.photos.filter(x => x.id !== photoId);
-        saveAppState();
-        renderActiveProjectDetail();
-      }
-    }
-
-    function openLightbox(src) {
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('photo-lightbox').classList.remove('hidden');
-    }
-
-    // ==================== INTERACTIEVE BOUWTEKENING ====================
-    function initBlueprintEditor() {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      if (!p) return;
-
-      bpShapes = JSON.parse(JSON.stringify(p.blueprintShapes || []));
-      bpBgImageDataUrl = p.blueprintBgDataUrl || null;
-      bpBgImgObj = null;
-
-      const canvas = document.getElementById('blueprint-canvas');
-      if (bpBgImageDataUrl) {
-        const img = new Image();
-        img.onload = () => {
-          bpBgImgObj = img;
-          redrawBlueprintCanvas();
-        };
-        img.src = bpBgImageDataUrl;
-      } else {
-        redrawBlueprintCanvas();
-      }
-
-      canvas.onmousedown = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
-        const color = document.getElementById('bp-color').value;
-
-        if (bpTool === 'text') {
-          const txt = prompt('Typ maatvoering of notitie voor op de tekening:');
-          if (txt) {
-            bpShapes.push({ type: 'text', x, y, text: txt, color });
-            redrawBlueprintCanvas();
-          }
-          return;
-        }
-        isDrawingBp = true;
-        bpStart = { x, y };
-      };
-
-      canvas.onmousemove = (e) => {
-        if (!isDrawingBp) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        redrawBlueprintCanvas();
-        const ctx = canvas.getContext('2d');
-        ctx.strokeStyle = document.getElementById('bp-color').value;
-        ctx.lineWidth = 3;
-        if (bpTool === 'line') {
-          ctx.beginPath();
-          ctx.moveTo(bpStart.x, bpStart.y);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        } else if (bpTool === 'rect') {
-          ctx.strokeRect(bpStart.x, bpStart.y, x - bpStart.x, y - bpStart.y);
-        }
-      };
-
-      canvas.onmouseup = (e) => {
-        if (!isDrawingBp) return;
-        isDrawingBp = false;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        const color = document.getElementById('bp-color').value;
-
-        if (bpTool === 'line') {
-          bpShapes.push({ type: 'line', x1: bpStart.x, y1: bpStart.y, x2: x, y2: y, color });
-        } else if (bpTool === 'rect') {
-          bpShapes.push({ type: 'rect', x: bpStart.x, y: bpStart.y, w: x - bpStart.x, h: y - bpStart.y, color });
-        }
-        redrawBlueprintCanvas();
-      };
-    }
-
-    function setBpTool(tool) {
-      bpTool = tool;
-      ['line', 'rect', 'text'].forEach(t => {
-        const btn = document.getElementById(`bptool-${t}`);
-        if (t === tool) {
-          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white';
-        } else {
-          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700';
-        }
-      });
-    }
-
-    function redrawBlueprintCanvas() {
-      const canvas = document.getElementById('blueprint-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#f1f5f9';
-      ctx.lineWidth = 1;
-      for (let gx = 0; gx < canvas.width; gx += 30) {
-        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
-      }
-      for (let gy = 0; gy < canvas.height; gy += 30) {
-        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
-      }
-
-      if (bpBgImgObj) {
-        ctx.drawImage(bpBgImgObj, 0, 0, canvas.width, canvas.height);
-      }
-
-      bpShapes.forEach(s => {
-        ctx.strokeStyle = s.color || '#0f172a';
-        ctx.fillStyle = s.color || '#0f172a';
-        ctx.lineWidth = 3;
-        if (s.type === 'line') {
-          ctx.beginPath();
-          ctx.moveTo(s.x1, s.y1);
-          ctx.lineTo(s.x2, s.y2);
-          ctx.stroke();
-        } else if (s.type === 'rect') {
-          ctx.strokeRect(s.x, s.y, s.w, s.h);
-        } else if (s.type === 'text') {
-          ctx.font = 'bold 14px Inter, sans-serif';
-          ctx.fillText(s.text, s.x, s.y);
-        }
-      });
-    }
-
-    function uploadBlueprintBackground(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        bpBgImageDataUrl = e.target.result;
-        const img = new Image();
-        img.onload = () => {
-          bpBgImgObj = img;
-          redrawBlueprintCanvas();
-          saveBlueprintChanges(true);
-        };
-        img.src = bpBgImageDataUrl;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function undoBlueprintShape() {
-      bpShapes.pop();
-      redrawBlueprintCanvas();
-    }
-
-    function saveBlueprintChanges(silent = false) {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      if (!p) return;
-      p.blueprintShapes = JSON.parse(JSON.stringify(bpShapes));
-      p.blueprintBgDataUrl = bpBgImageDataUrl;
-      saveAppState();
-      if (!silent) alert('Bouwtekening en wijzigingen zijn veilig opgeslagen!');
-    }
-
-    // ==================== RISICO'S, LESSONS & NIEUW PROJECT ====================
-    function toggleRiskChecked(projId, riskId) {
-      const p = appState.projects.find(x => x.id === projId);
-      const r = p && p.risks.find(x => x.id === riskId);
-      if (r) {
-        r.checked = !r.checked;
-        saveAppState();
-        renderActiveProjectDetail();
-      }
-    }
-
-    function promoteRiskToPhase0(projId, riskId) {
-      const p = appState.projects.find(x => x.id === projId);
-      const r = p && p.risks.find(x => x.id === riskId);
-      if (!p || !r) return;
-      p.steps.unshift({
-        id: 'st-rk-' + Date.now(),
-        phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
-        title: `Offerte-eis controleren: ${r.title}`,
-        date: new Date().toISOString().split('T')[0],
-        assignee: 'Geert',
-        note: r.action,
-        done: false
-      });
-      saveAppState();
-      switchProjectSubTab('planning');
-      renderActiveProjectDetail();
-    }
-
-    function openAddRiskModal() {
-      document.getElementById('add-risk-modal').classList.remove('hidden');
-    }
-
-    function saveNewRiskItem() {
-      const p = appState.projects.find(x => x.id === activeProjectId);
-      const title = document.getElementById('rk-title').value.trim();
-      const action = document.getElementById('rk-action').value.trim();
-      if (!p || !title) return alert('Vul een risico in.');
-      p.risks.push({ id: 'rk-' + Date.now(), title, action, checked: false });
-      appState.lessons.unshift({
-        id: 'les-' + Date.now(),
-        project: p.title,
-        title,
-        impact: 'Vastgelegd tijdens projectvoorbereiding.',
-        rule: action
-      });
-      document.getElementById('rk-title').value = '';
-      document.getElementById('rk-action').value = '';
-      closeModal('add-risk-modal');
-      saveAppState();
-      renderActiveProjectDetail();
-    }
-
-    function openLessonsModal() {
-      const container = document.getElementById('lessons-list-container');
-      container.innerHTML = appState.lessons.map(l => `
-        <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/60 space-y-1.5">
-          <span class="text-[11px] font-bold uppercase text-amber-800">${l.project}</span>
-          <h4 class="font-extrabold text-sm text-slate-900">${l.title}</h4>
-          <p class="text-xs text-slate-600">${l.impact}</p>
-          <p class="text-xs font-semibold text-emerald-900 bg-emerald-100/80 px-3 py-1.5 rounded-xl mt-1">✅ Standaard Offerte-eis: ${l.rule}</p>
-        </div>
-      `).join('');
-      document.getElementById('lessons-modal').classList.remove('hidden');
-    }
-
-    function openSmartWizardModal() {
-      document.getElementById('new-project-modal').classList.remove('hidden');
-    }
-
-    function openNewProjectModal() {
-      document.getElementById('new-project-modal').classList.remove('hidden');
-    }
-
-    function createSmartProject() {
-      const title = document.getElementById('np-title').value.trim();
-      const room = document.getElementById('np-room').value.trim() || 'Algemeen';
-      const type = document.getElementById('np-type').value;
-      const desc = document.getElementById('np-desc').value.trim() || 'Nieuw verbouwingsproject';
-      if (!title) return alert('Vul een projectnaam in.');
-
-      const today = new Date().toISOString().split('T')[0];
-      const steps = [
-        { id: 's1-' + Date.now(), phase: 'Fase 0: Voorbereiding, Offerte & Sloop', title: 'Steekproef & inspectie onderliggende constructie vóór tekenen offerte', date: today, assignee: 'Geert', note: 'Les uit Yoga Studio: leg verborgen constructies vooraf schriftelijk vast.', done: false },
-        { id: 's2-' + Date.now(), phase: 'Fase 1: Constructie & Ondergrond', title: 'Ruimte vrijmaken, sloopwerk uitvoeren en ondergrond voorbereiden', date: today, assignee: 'Aannemer', note: '', done: false },
-        { id: 's3-' + Date.now(), phase: 'Fase 3: Opbouw & Afwerking', title: 'Nieuwe afwerking plaatsen en opleverronde lopen', date: today, assignee: 'Geert & Aannemer', note: '', done: false }
-      ];
-
-      if (type === 'vloer') {
-        steps.splice(2, 0, { id: 'sv-' + Date.now(), phase: 'Fase 2: Installaties & Droogtijden', title: 'Primer & egaline aanbrengen + CM-restvochtmeting', date: today, assignee: 'Vloerenlegger', note: 'Minimaal 24-48 uur droogtijd aanhouden.', done: false });
-      }
-
-      const inheritedRisks = appState.lessons.map((l, idx) => ({
-        id: 'inh-' + Date.now() + '-' + idx,
-        title: l.title,
-        action: l.rule,
-        checked: false
-      }));
-
-      appState.projects.unshift({
-        id: 'proj-' + Date.now(),
-        title,
-        room,
-        budget: 'Offerte nog vast te stellen',
-        description: desc,
-        steps,
-        photos: [],
-        risks: inheritedRisks,
-        blueprintShapes: [],
-        blueprintBgDataUrl: null
-      });
-
-      document.getElementById('np-title').value = '';
-      document.getElementById('np-desc').value = '';
-      closeModal('new-project-modal');
-      saveAppState();
-      renderProjectsGrid();
-    }
-
-    // ==================== APPARATUUR & TEAM ====================
-    function renderEquipment() {
-      const grid = document.getElementById('equipment-grid');
-      grid.innerHTML = appState.equipment.map(eq => `
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div class="flex justify-between items-start">
-            <span class="text-xs font-bold text-emerald-600">${eq.dept}</span>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${eq.status}</span>
-          </div>
-          <h3 class="font-extrabold text-sm text-slate-900">${eq.name}</h3>
-          <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${eq.nextDate}</strong></p>
-        </div>
-      `).join('');
-    }
-
-    function openNewEquipmentModal() {
-      document.getElementById('new-equip-modal').classList.remove('hidden');
-    }
-
-    function saveNewEquipment() {
-      const name = document.getElementById('eq-name').value.trim();
-      if (!name) return;
-      appState.equipment.unshift({
-        id: 'eq-' + Date.now(),
-        name,
-        dept: document.getElementById('eq-dept').value.trim() || 'Fitness & Kracht',
-        nextDate: document.getElementById('eq-next').value || '2026-12-31',
-        status: 'Operationeel'
-      });
-      closeModal('new-equip-modal');
-      saveAppState();
-      renderEquipment();
-    }
-
-    function renderTeam() {
-      const grid = document.getElementById('team-grid');
-      grid.innerHTML = appState.team.map(m => `
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
-          <h3 class="font-extrabold text-base text-slate-900">👤 ${m.name}</h3>
-          <p class="text-xs font-semibold text-emerald-700">${m.role}</p>
-          <p class="text-xs text-slate-500">🕒 ${m.shift}</p>
-        </div>
-      `).join('');
-    }
-
-    function openAddMemberModal() {
-      document.getElementById('add-member-modal').classList.remove('hidden');
-    }
-
-    function saveNewMember() {
-      const name = document.getElementById('tm-name').value.trim();
-      if (!name) return;
-      appState.team.push({
-        id: 'tm-' + Date.now(),
-        name,
-        role: document.getElementById('tm-role').value.trim() || 'Technische Dienst',
-        shift: document.getElementById('tm-shift').value.trim() || 'Flexibel'
-      });
-      closeModal('add-member-modal');
-      saveAppState();
-      renderTeam();
-    }
-
-    // ==================== BACKUP & CLOUD SYNC (SUPABASE) ====================
-    function exportBackupJson() {
-      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `TREE11-backup-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-    }
-
-    function importBackupJson(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target.result);
-          appState = { ...appState, ...data };
-          saveAppState();
-          renderAll();
-          alert('Backup succesvol hersteld!');
-        } catch (err) {
-          alert('Ongeldig backupbestand.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function updateCloudBadge() {
-      const badge = document.getElementById('cloud-status-badge');
-      if (appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
-        badge.textContent = '☁️ Cloud verbonden';
-        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/40';
-      } else {
-        badge.textContent = 'Lokale opslag';
-        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
-      }
-    }
-
-    function openCloudSyncModal() {
-      document.getElementById('sb-url').value = appState.cloudConfig.url || '';
-      document.getElementById('sb-key').value = appState.cloudConfig.key || '';
-      document.getElementById('cloud-sync-modal').classList.remove('hidden');
-    }
-
-    async function saveCloudConfigAndPush() {
-      appState.cloudConfig = {
-        url: document.getElementById('sb-url').value.trim().replace(/\/$/, ''),
-        key: document.getElementById('sb-key').value.trim()
-      };
-      saveAppState(false);
-      await pushToCloudSilent(true);
-      closeModal('cloud-sync-modal');
-    }
-
-    async function pushToCloudSilent(showAlert = false) {
-      const { url, key } = appState.cloudConfig || {};
-      if (!url || !key) return;
-      try {
-        const res = await fetch(`${url}/rest/v1/tree11_state`, {
-          method: 'POST',
-          headers: {
-            'apikey': key,
-            'Authorization': `Bearer ${key}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({ id: 'main', payload: appState })
-        });
-        if (showAlert) {
-          alert(res.ok ? 'Gegevens zijn gesynchroniseerd naar de Cloud!' : 'Controleer je Supabase URL, Key of tabelnaam (tree11_state).');
-        }
-      } catch (e) {
-        if (showAlert) alert('Verbinding met Supabase mislukt.');
-      }
-    }
-
-    async function pullFromCloud() {
-      const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
-      const key = document.getElementById('sb-key').value.trim();
-      if (!url || !key) return alert('Vul eerst de Supabase URL en Key in.');
-      try {
-        const res = await fetch(`${url}/rest/v1/tree11_state?id=eq.main&select=payload`, {
-          headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
-        });
-        const rows = await res.json();
-        if (rows && rows[0] && rows[0].payload) {
-          appState = { ...rows[0].payload, cloudConfig: { url, key } };
-          saveAppState(false);
-          renderAll();
-          closeModal('cloud-sync-modal');
-          alert('Laatste gegevens uit de Cloud opgehaald!');
-        } else {
-          alert('Nog geen opgeslagen gegevens gevonden in de Cloud.');
-        }
-      } catch (e) {
-        alert('Ophalen uit Cloud mislukt.');
-      }
-    }
-
-    // INIT
-    loadAppState();
-  </script>
-</body>
-</html>
+          <button onclick="openAddMemberModal()" class="px-4 py-2 rounded
