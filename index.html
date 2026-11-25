@@ -1076,8 +1076,7 @@
     function saveBulkTasks() {
       const dept = document.getElementById('bt-dept').value;
       const assignee = document.getElementById('bt-assignee').value.trim() || 'Geert';
-      const lines = document.getElementById('bt-lines').value.split('
-').map(l => l.trim()).filter(Boolean);
+      const lines = document.getElementById('bt-lines').value.split('\n')map(l => l.trim()).filter(Boolean);
       if (!lines.length) return alert('Typ minimaal één taak.');
       const today = new Date().toISOString().split('T')[0];
       lines.reverse().forEach((line, idx) => {
@@ -1411,8 +1410,7 @@
         pendingPhotoItems.forEach(item => {
           if (item.note.trim()) stepCandidates.push(item.note.trim());
         });
-        generalDesc.split('
-').map(l => l.trim()).filter(Boolean).forEach(line => {
+        generalDesc.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
           if (!stepCandidates.includes(line)) stepCandidates.push(line);
         });
         if (!stepCandidates.length) {
