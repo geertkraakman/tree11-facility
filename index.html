@@ -374,4 +374,711 @@
             <h2 class="text-xl font-extrabold text-slate-900">Team & Dienstrooster Technische Dienst</h2>
             <p class="text-xs text-slate-500">Overzicht van medewerkers, specialisaties en ingeplande diensten.</p>
           </div>
-          <button onclick="openAddMemberModal()" class="px-4 py-2 rounded
+          <button onclick="openAddMemberModal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
+            + Teamlid toevoegen
+          </button>
+        </div>
+        <div id="team-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL: TAAK AFRONDEN -->
+  <div id="complete-task-modal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Taak Afronden & Dossier Vastleggen</span>
+          <h3 id="ct-task-title" class="font-extrabold text-lg text-slate-900 mt-0.5"></h3>
+          <p id="ct-task-meta" class="text-xs text-slate-500"></p>
+        </div>
+        <button onclick="cancelCompleteTaskModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div id="ct-similar-history" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 space-y-1.5">
+        <div class="text-xs font-extrabold text-[#163828]">💡 Eerdere verbruikshistorie bij vergelijkbare klussen:</div>
+        <div id="ct-similar-history-list" class="space-y-1 text-xs text-slate-700"></div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-extrabold text-slate-800 mb-1">
+          1. Werkomschrijving (verplicht) <span class="text-rose-600">*</span>
+        </label>
+        <textarea id="ct-work-desc" rows="3" placeholder="Beschrijf kort en duidelijk wat er is uitgevoerd, vervangen of hersteld (handig voor latere reparaties)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"></textarea>
+      </div>
+
+      <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <div class="flex items-center justify-between gap-2">
+          <label class="text-xs font-extrabold text-slate-800">
+            2. Materiaalopgave (verplicht) <span class="text-rose-600">*</span>
+          </label>
+          <span class="text-[11px] text-slate-500">Kies voorraad, nieuw materiaal of "Geen materiaal"</span>
+        </div>
+
+        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
+          <input id="ct-no-material" type="checkbox" onchange="toggleNoMaterialMode()" class="w-4 h-4 accent-[#163828]" />
+          <span class="text-xs font-bold text-slate-800">Geen materiaal verbruikt bij deze taak</span>
+        </label>
+
+        <div id="ct-material-inputs" class="space-y-3">
+          <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Uit voorraad (automatische voorraadmutatie)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <select id="ct-stock-select" class="sm:col-span-7 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+              <input id="ct-stock-qty" type="number" min="0.1" step="any" value="1" placeholder="Aantal" class="sm:col-span-3 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              <button type="button" onclick="addStockUsageRow()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">
+                + Toevoegen
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Nieuw / niet in voorraad materiaal toevoegen</div>
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+              <input id="ct-new-mat-name" type="text" placeholder="Naam materiaal (bijv. RVS bout M8x40)" class="sm:col-span-5 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              <input id="ct-new-mat-qty" type="number" min="0.1" step="any" value="1" placeholder="Aantal" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              <input id="ct-new-mat-unit" type="text" value="stuks" placeholder="Eenheid" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+              <button type="button" onclick="addNewMaterialUsageRow()" class="sm:col-span-3 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">
+                + Nieuw item
+              </button>
+            </div>
+            <label class="flex items-center gap-2 text-[11px] text-slate-600 pt-0.5 cursor-pointer">
+              <input id="ct-add-to-stock" type="checkbox" checked class="w-3.5 h-3.5 accent-[#163828]" />
+              <span>Ook opnemen in de voorraadlijst voor toekomstig gebruik</span>
+            </label>
+          </div>
+
+          <div id="ct-selected-materials" class="space-y-1.5"></div>
+        </div>
+      </div>
+
+      <p id="ct-error-msg" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></p>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="cancelCompleteTaskModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">Annuleren</button>
+        <button onclick="confirmCompleteTaskWithLog()" class="px-5 py-2.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold shadow">
+          ✓ Taak Afronden & Opslaan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VOORRAAD & VERBRUIKSHISTORIE -->
+  <div id="usage-history-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="font-extrabold text-lg text-slate-900">📦 Voorraadbeheer & Verbruikshistorie</h3>
+          <p class="text-xs text-slate-500">Actuele voorraadstanden en naslagwerk van eerder verbruikte materialen per klus.</p>
+        </div>
+        <button onclick="closeModal('usage-history-modal')" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+        <div class="text-xs font-extrabold text-slate-800">+ Nieuw artikel in voorraad plaatsen</div>
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <input id="inv-add-name" type="text" placeholder="Artikelnaam (bijv. Siliconenspray)" class="sm:col-span-5 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <input id="inv-add-qty" type="number" min="0" step="any" value="10" placeholder="Voorraad" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <input id="inv-add-unit" type="text" value="stuks" placeholder="Eenheid" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <button onclick="addInventoryItemFromModal()" class="sm:col-span-3 px-3 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">
+            Toevoegen
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Actuele Voorraad</h4>
+        <div id="inventory-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Verbruikshistorie (Naslagwerk)</h4>
+        <div id="usage-history-list-container" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MEERDERE FOTO'S + SLIMME PLANNING -->
+  <div id="project-photo-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">📷 Meerdere Foto's & Automatische Planning</h3>
+        <button onclick="closeProjectPhotoModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">1. Selecteer één of meerdere foto's tegelijk</label>
+        <input id="proj-photo-files" type="file" accept="image/*" multiple onchange="previewMultipleProjectPhotos(event)" class="w-full text-xs border border-slate-300 rounded-xl p-2 bg-slate-50" />
+      </div>
+
+      <div id="proj-photo-previews" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">2. Algemene beschrijving / observaties (elke regel wordt een geplande stap)</label>
+        <textarea id="proj-photo-desc" rows="3" placeholder="Bijv.&#10;Stalen H-balken losslijpen met behoud van betonnen poeren&#10;Draadeinden op poeren vlak afslijpen voor nieuwe entree" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-sky-500"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-sky-50 p-3.5 rounded-2xl border border-sky-200">
+        <div>
+          <label class="block text-xs font-bold text-sky-950 mb-1">Startdatum vervolgplanning</label>
+          <input id="proj-photo-date" type="date" class="w-full px-3 py-2 rounded-xl border border-sky-300 text-xs bg-white" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-sky-950 mb-1">Uitvoerende / Verantwoordelijke</label>
+          <input id="proj-photo-assignee" type="text" value="Geert / Aannemer" class="w-full px-3 py-2 rounded-xl border border-sky-300 text-xs bg-white" />
+        </div>
+        <div class="sm:col-span-2 flex items-center gap-2">
+          <input id="proj-photo-autoplan" type="checkbox" checked class="w-4 h-4 accent-sky-600" />
+          <label for="proj-photo-autoplan" class="text-xs font-bold text-sky-950">Genereer automatisch slimme vervolgplanning (incl. vaktechnische aandachtspunten & takenlijst)</label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeProjectPhotoModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Annuleren</button>
+        <button onclick="handleSaveProjectPhoto()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow">Opslaan & Planning Genereren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NIEUWE TAAK -->
+  <div id="new-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">+ Nieuwe Onderhoudstaak</h3>
+        <button onclick="closeModal('new-task-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Taakomschrijving</label>
+          <input id="nt-title" type="text" placeholder="Bijv. Kabel loopband 4 vervangen" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+            <select id="nt-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Prioriteit</label>
+            <select id="nt-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="Normaal">Normaal</option>
+              <option value="Hoog">Hoog / Spoed</option>
+              <option value="Laag">Laag</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
+            <input id="nt-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Datum</label>
+            <input id="nt-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Extra notitie / benodigd materiaal</label>
+          <textarea id="nt-notes" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('new-task-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewTask()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Taak opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MEERDERE TAKEN TEGELIJK -->
+  <div id="bulk-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">⚡ Meerdere Taken Tegelijk Toevoegen</h3>
+        <button onclick="closeModal('bulk-task-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+          <select id="bt-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
+          <input id="bt-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Typ elke taak op een nieuwe regel</label>
+        <textarea id="bt-lines" rows="6" placeholder="Douchekoppen ontkalken kleedkamer heren&#10;Afvoerputjes reinigen&#10;Verlichting gang vervangen" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('bulk-task-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveBulkTasks()" class="px-5 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold">Alle regels toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NIEUWE AFDELING -->
+  <div id="add-dept-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="font-extrabold text-lg text-slate-900">+ Nieuwe Afdeling Toevoegen</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Icoon (emoji)</label>
+          <input id="nd-icon" type="text" value="🎾" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Naam afdeling</label>
+          <input id="nd-name" type="text" placeholder="Bijv. Padelbanen Buiten" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-dept-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewDepartment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LESSONS LEARNED -->
+  <div id="lessons-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">📚 Lessons Learned & Aannemers-Ervaringen</h3>
+        <button onclick="closeModal('lessons-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-600">Vastgelegde praktijkervaringen die automatisch als waarschuwing en offerte-check worden meegenomen in nieuwe projecten.</p>
+      <div id="lessons-list-container" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: SLIM STAPPENPLAN / NIEUW PROJECT -->
+  <div id="new-project-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">🧠 Nieuw Verbouwingsproject (met Smart Check)</h3>
+        <button onclick="closeModal('new-project-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Projectnaam</label>
+          <input id="np-title" type="text" placeholder="Bijv. Renovatie Kleedkamers Noord" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Ruimte / Afdeling</label>
+            <input id="np-room" type="text" placeholder="Bijv. Kleedkamers & Sanitair" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Type klus (voor vaktechniek & risico-check)</label>
+            <select id="np-type" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="vloer">Vloer / Vlonder / Egaliseren</option>
+              <option value="wand">Sloop / Wanden / Indeling</option>
+              <option value="nat">Natte ruimte / Sanitair / Sauna</option>
+              <option value="algemeen">Algemeen verbouwingsproject</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Omschrijving & doel</label>
+          <textarea id="np-desc" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('new-project-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="createSmartProject()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Project + Stappenplan aanmaken</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROJECTSTAP TOEVOEGEN -->
+  <div id="add-step-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <h3 class="font-extrabold text-lg text-slate-900">+ Verbouwingsstap Toevoegen</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Fase</label>
+          <select id="st-phase" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+            <option value="Fase 0: Voorbereiding, Offerte & Sloop">Fase 0: Voorbereiding, Offerte & Sloop</option>
+            <option value="Fase 1: Constructie & Ondergrond">Fase 1: Constructie & Ondergrond</option>
+            <option value="Fase 2: Installaties & Droogtijden">Fase 2: Installaties & Droogtijden</option>
+            <option value="Fase 3: Opbouw & Afwerking">Fase 3: Opbouw & Afwerking</option>
+            <option value="Fase 4: Oplevering & Controle">Fase 4: Oplevering & Controle</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Werkzaamheden</label>
+          <input id="st-title" type="text" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Datum</label>
+            <input id="st-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
+            <input id="st-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Vaktechnisch aandachtspunt</label>
+          <input id="st-note" type="text" placeholder="Bijv. Droogtijd aanhouden of ankers vlak afslijpen" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-step-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewProjectStep()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RISICO TOEVOEGEN -->
+  <div id="add-risk-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <h3 class="font-extrabold text-lg text-slate-900">⚠️ Risico / Offerte-eis Toevoegen</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Risico / Verborgen gebrek</label>
+          <input id="rk-title" type="text" placeholder="Bijv. Verborgen staalconstructie onder vlonder" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Offerte-eis / Actie voor aannemer</label>
+          <textarea id="rk-action" rows="3" placeholder="Bijv. Vooraf steekproef uitvoeren en demontage + afvoer inclusief opnemen in offerte." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-risk-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewRiskItem()" class="px-4 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLOUD SYNC (SUPABASE) -->
+  <div id="cloud-sync-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">☁️ Live Cloud Sync (Telefoon & Laptop)</h3>
+        <button onclick="closeModal('cloud-sync-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Koppel een gratis <strong>Supabase</strong>-project (tabel <code>tree11_state</code> met kolommen <code>id</code> text primary key en <code>payload</code> jsonb) zodat al je taken, projecten, voorraad, verbruikshistorie, foto's en tekeningen live synchroon blijven tussen al je apparaten.
+      </p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Project URL</label>
+          <input id="sb-url" type="text" placeholder="https://jouwproject.supabase.co" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Anon Public Key</label>
+          <input id="sb-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIs..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        </div>
+      </div>
+      <div class="flex flex-wrap justify-between gap-2 pt-2">
+        <button onclick="pullFromCloud()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold">⬇️ Ophalen uit Cloud</button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('cloud-sync-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Sluiten</button>
+          <button onclick="saveCloudConfigAndPush()" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold">Opslaan & Synchroniseren</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: APPARAAT TOEVOEGEN -->
+  <div id="new-equip-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="font-extrabold text-lg text-slate-900">+ Apparaat / Installatie Toevoegen</h3>
+      <div class="space-y-3">
+        <input id="eq-name" type="text" placeholder="Naam apparaat (bijv. Technogym Skillrun 1)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        <input id="eq-dept" type="text" placeholder="Afdeling (bijv. Fitness)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        <input id="eq-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('new-equip-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewEquipment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEAMLID TOEVOEGEN -->
+  <div id="add-member-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="font-extrabold text-lg text-slate-900">+ Teamlid Toevoegen</h3>
+      <div class="space-y-3">
+        <input id="tm-name" type="text" placeholder="Naam" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        <input id="tm-role" type="text" placeholder="Rol / Specialisatie" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        <input id="tm-shift" type="text" placeholder="Vaste diensten (bijv. Ma-Vr 08:00 - 16:30)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeModal('add-member-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button onclick="saveNewMember()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX VOOR FOTO'S -->
+  <div id="photo-lightbox" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 cursor-zoom-out">
+    <img id="lightbox-img" src="" class="max-h-[88vh] max-w-[92vw] rounded-2xl shadow-2xl" />
+  </div>
+
+  <script>
+    function escapeHtml(val) {
+      return String(val ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildSupabaseHeaders(key) {
+      const headers = {
+        'apikey': key,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      };
+      if (key.startsWith('eyJ')) {
+        headers['Authorization'] = `Bearer ${key}`;
+      }
+      return headers;
+    }
+
+    const STORAGE_KEY = 'tree11_facility_master_v4';
+    let currentUser = { name: 'Geert', role: 'Beheerder & Technische Dienst' };
+    let selectedDeptFilter = 'ALL';
+    let activeProjectId = null;
+    let activeProjectSubTab = 'planning';
+
+    let completingTaskId = null;
+    let pendingMaterialUsages = [];
+
+    let bpTool = 'line';
+    let isDrawingBp = false;
+    let bpStart = { x: 0, y: 0 };
+    let bpShapes = [];
+    let bpBgImageDataUrl = null;
+    let bpBgImgObj = null;
+
+    let pendingPhotoItems = [];
+
+    const DEFAULT_DEPARTMENTS = [
+      { id: 'fitness', icon: '🏋️', name: 'Fitness', tileLabel: 'FITNESS' },
+      { id: 'the-box', icon: '🥊', name: 'The Box', tileLabel: 'THE BOX' },
+      { id: 'ride-cycling', icon: '🚴', name: 'Ride/Cycling', tileLabel: 'RIDE / CYCLING' },
+      { id: 'hal-1', icon: '🏟️', name: 'Hal 1', tileLabel: 'HAL 1' },
+      { id: 'padel', icon: '🎾', name: 'Padel', tileLabel: 'PADEL' },
+      { id: 'yoga-studio', icon: '🧘', name: 'Yoga Studio', tileLabel: 'YOGA STUDIO' },
+      { id: 'horeca', icon: '☕', name: 'Horeca', tileLabel: 'HORECA' },
+      { id: 'kantoor', icon: '💼', name: 'Kantoor', tileLabel: 'KANTOOR' }
+    ];
+
+    const DEFAULT_INVENTORY = [
+      { id: 'inv-1', name: 'Siliconenspray loopbanden', qty: 8, unit: 'bussen' },
+      { id: 'inv-2', name: 'RVS bouten & moeren set M8', qty: 45, unit: 'stuks' },
+      { id: 'inv-3', name: 'LED-buis / spot 4000K', qty: 14, unit: 'stuks' },
+      { id: 'inv-4', name: 'Ontkalker / sanitairreiniger', qty: 6, unit: 'flessen' },
+      { id: 'inv-5', name: 'LBK F7 luchtfilter', qty: 4, unit: 'stuks' },
+      { id: 'inv-6', name: 'Isolatietape / kabelbinders', qty: 12, unit: 'stuks' }
+    ];
+
+    const DEFAULT_USAGE_HISTORY = [
+      {
+        id: 'uh-init-1',
+        date: '2026-11-18',
+        dept: 'Ride/Cycling',
+        taskTitle: 'Speling trapas & pedaal Bike 9 verhelpen',
+        workDescription: 'Trapas nagetrokken, beschadigde pedaal vervangen en licht ingevet.',
+        materials: [{ name: 'RVS bouten & moeren set M8', qty: 2, unit: 'stuks', source: 'voorraad' }],
+        noMaterial: false,
+        completedBy: 'Geert'
+      }
+    ];
+
+    const DEFAULT_LESSONS = [
+      {
+        id: 'lesson-vlonder-staal',
+        project: 'Yoga Studio (Hoofdingang & Vlonder)',
+        title: 'Verborgen staalconstructie (H-balken) onder vlonderplanken',
+        impact: 'Aannemer rekende € 1.000 voor vlonder verwijderen zonder vooraf onder de planken te kijken. Na zelf verwijderen bleek een zware verzinkte H-balkconstructie op betonnen poeren aanwezig (meerwerkindicatie staaldemontage: € 1.000 – € 1.750).',
+        rule: 'Verplichte offerte-eis: Trek vóór offerte-akkoord altijd 1–2 planken/platen los (steekproef), leg schriftelijk vast wie de onderconstructie demonteert/afvoert, eis dat draadeinden op betonnen poeren vlak worden afgeslepen en verreken oud-ijzeropbrengst.'
+      },
+      {
+        id: 'lesson-bamboe-vocht',
+        project: 'Yoga Studio (Vloerrenovatie)',
+        title: 'Acclimatiseren & restvochtmeting vóór verlijmen bamboe/parket',
+        impact: 'Te vroeg verlijmen op verse egaline veroorzaakt schotelen of loslaten van de vloer.',
+        rule: 'Altijd eerst CM-restvochtmeting uitvoeren en pakken bamboe minimaal 48–72 uur gesloten in de ruimte laten acclimatiseren.'
+      }
+    ];
+
+    const DEFAULT_PROJECTS = [
+      {
+        id: 'proj-yoga-floor',
+        title: 'Nieuwe Vloer & Verbouwing Yoga Centrum',
+        room: 'Yoga Studio',
+        budget: 'Staaldemontage indicatie: € 1.000 – € 1.750 (excl. btw, poeren behouden)',
+        description: 'Complete vernieuwing van de Yoga Studio (10,80 m × 7,00 m = 75,6 m² netto), inclusief demontage van de vrijgekomen stalen H-balken met behoud van de betonnen poeren en realisatie van de nieuwe schuin oplopende hoofdingang.',
+        steps: [
+          {
+            id: 'ys-0',
+            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+            title: 'Vlonderplanken zelf verwijderd & staalconstructie vrijgelegd',
+            date: '2026-11-20',
+            assignee: 'Geert & Team',
+            note: 'Vlonder (€ 1.000 bespaard) zelf weggehaald; verzinkte H-balken op betonnen poeren aangetroffen.',
+            done: true
+          },
+          {
+            id: 'ys-1',
+            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+            title: 'Stalen H-balken demonteren & afvoeren (betonnen poeren behouden!)',
+            date: '2026-11-26',
+            assignee: 'Aannemer / Metaalhandel',
+            note: 'Richtprijs € 1.000–€ 1.750 (oud-ijzer verrekenen). Betonnen poeren blijven staan; draadeinden vlak afslijpen en gevelankers vrijmaken.',
+            done: false
+          },
+          {
+            id: 'ys-2',
+            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+            title: 'Maatvoering zaal (10,80m × 7,00m = 75,6 m²) & hellingshoek hoofdingang (1:12 à 1:15) uitzetten',
+            date: '2026-11-27',
+            assignee: 'Geert',
+            note: 'Bestel ca. 83 m² vloer, primer en egaline (incl. 10% snijverlies). Houd rekening met vlak bordes vóór de openslaande deuren.',
+            done: false
+          },
+          {
+            id: 'ys-3',
+            phase: 'Fase 1: Constructie & Ondergrond',
+            title: 'Ondervloer schuren, stofvrij maken, primeren & egaliseren',
+            date: '2026-12-01',
+            assignee: 'Vloerenlegger',
+            note: 'Minimale droogtijd egaline 24–48 uur aanhouden + restvochtmeting vóór verlijmen.',
+            done: false
+          },
+          {
+            id: 'ys-4',
+            phase: 'Fase 3: Opbouw & Afwerking',
+            title: 'Schuin oplopende hoofdingang opbouwen op bestaande poeren + bamboe vloer leggen',
+            date: '2026-12-05',
+            assignee: 'Aannemer & Vloerenlegger',
+            note: 'Hoofdingang voorzien van antislip-afwerking, afwateringsgoot bij dorpel en entreeverlichting. Bamboe 48u laten acclimatiseren.',
+            done: false
+          }
+        ],
+        photos: [],
+        risks: [
+          {
+            id: 'rk-yoga-1',
+            title: 'Verborgen stalen draagconstructie onder vlonder (€ 1.000 – € 1.750)',
+            action: 'Schriftelijk vastleggen dat demontage van H-balken plaatsvindt met behoud van betonnen poeren, draadeinden vlak afgeslepen worden en oud-ijzerwaarde in mindering komt.',
+            checked: true
+          },
+          {
+            id: 'rk-yoga-2',
+            title: 'Hemelwater & gladheid bij schuin oplopende hoofdingang',
+            action: 'Helling 1:12 à 1:15 aanhouden, lijngoot/afwatering vóór de drempel plaatsen en antislip toplaag toepassen.',
+            checked: false
+          }
+        ],
+        blueprintShapes: [
+          { type: 'rect', x: 70, y: 60, w: 540, h: 350, color: '#0f172a' },
+          { type: 'text', x: 260, y: 48, text: '10.80 m (Yoga Zaal ~75,6 m²)', color: '#0f172a' },
+          { type: 'text', x: 12, y: 240, text: '7.00 m', color: '#0f172a' },
+          { type: 'line', x1: 610, y1: 60, x2: 810, y2: 60, color: '#0f172a' },
+          { type: 'line', x1: 810, y1: 60, x2: 810, y2: 330, color: '#0f172a' },
+          { type: 'text', x: 640, y: 140, text: 'Hal / Kleedkamers / WC', color: '#475569' },
+          { type: 'rect', x: 670, y: 245, w: 140, h: 85, color: '#64748b' },
+          { type: 'text', x: 705, y: 292, text: 'CV Ruimte', color: '#334155' },
+          { type: 'rect', x: 460, y: 410, w: 230, h: 110, color: '#059669' },
+          { type: 'text', x: 478, y: 465, text: 'Schuine Hoofdingang (1:12)', color: '#059669' },
+          { type: 'text', x: 485, y: 488, text: 'Poeren blijven behouden', color: '#047857' }
+        ],
+        blueprintBgDataUrl: null
+      },
+      {
+        id: 'proj-cycling-studio',
+        title: 'Upgrade & Onderhoud Ride/Cycling',
+        room: 'Ride/Cycling',
+        budget: 'In eigen beheer + AV-leverancier',
+        description: 'Controle en vervanging van verlichting/LED-strips, geluidsinstallatie, ventilatie en onderhoudsbeurt van alle indoor bikes.',
+        steps: [
+          {
+            id: 'cs-1',
+            phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+            title: 'Inventarisatie trappers, riemen, zadels en consolas van alle bikes',
+            date: '2026-11-28',
+            assignee: 'Geert',
+            note: 'Noteer framenummers met speling op trapas.',
+            done: false
+          },
+          {
+            id: 'cs-2',
+            phase: 'Fase 2: Installaties & Droogtijden',
+            title: 'DMX-sfeerverlichting & ventilatiekanalen reinigen en testen',
+            date: '2026-12-03',
+            assignee: 'Technische Dienst',
+            note: 'Check ook subwoofer-bekabeling bij podium.',
+            done: false
+          }
+        ],
+        photos: [],
+        risks: [
+          {
+            id: 'rk-cyc-1',
+            title: 'Zweetcorrosie onder voetplaten van bikes',
+            action: 'Bij onderhoud alle stelvoeten losdraaien, invetten en vloer daaronder reinigen.',
+            checked: false
+          }
+        ],
+        blueprintShapes: [],
+        blueprintBgDataUrl: null
+      }
+    ];
+
+    const DEFAULT_TASKS = [
+      { id: 't-1', title: 'Loopbanden 1 t/m 6 bandspanning en smering controleren', dept: 'Fitness', priority: 'Normaal', assignee: 'Geert', date: '2026-11-25', notes: 'Siliconenspray gebruiken indien nodig', done: false, completionLog: null },
+      { id: 't-2', title: 'Trapassen & pedalen Ride/Cycling nalopen', dept: 'Ride/Cycling', priority: 'Hoog', assignee: 'Geert', date: '2026-11-25', notes: 'Bike 7 en 12 tikken bij staand klimmen', done: false, completionLog: null },
+      { id: 't-3', title: 'Pull-up rig en halterrekken The Box controleren op losse bouten', dept: 'The Box', priority: 'Normaal', assignee: 'Geert', date: '2026-11-26', notes: '', done: false, completionLog: null },
+      { id: 't-4', title: 'Vloerbelijning en LED-armaturen Hal 1 inspecteren', dept: 'Hal 1', priority: 'Normaal', assignee: 'Geert', date: '2026-11-27', notes: '', done: false, completionLog: null },
+      { id: 't-5', title: 'Glaswandbeslag en netspanning Padel nalopen', dept: 'Padel', priority: 'Hoog', assignee: 'Geert', date: '2026-11-27', notes: '', done: false, completionLog: null },
+      { id: 't-6', title: 'Koffiemachine ontkalken en waterfilter vervangen', dept: 'Horeca', priority: 'Normaal', assignee: 'Receptie', date: '2026-11-26', notes: '', done: true, completionLog: { workDescription: 'Ontkalkingscyclus gedraaid en waterfilter vernieuwd.', noMaterial: false, materials: [{ name: 'Ontkalker / sanitairreiniger', qty: 1, unit: 'flessen', source: 'voorraad' }], completedBy: 'Receptie', completedAt: '2026-11-26' } },
+      { id: 't-7', title: 'Klimaatregeling en werkplekverlichting Kantoor controleren', dept: 'Kantoor', priority: 'Laag', assignee: 'Geert', date: '2026-11-28', notes: '', done: false, completionLog: null }
+    ];
+
+    const DEFAULT_EQUIPMENT = [
+      { id: 'eq-1', name: 'Technogym Skillrun (6x)', dept: 'Fitness', nextDate: '2026-12-15', status: 'Operationeel' },
+      { id: 'eq-2', name: 'Indoor Bikes (28x)', dept: 'Ride/Cycling', nextDate: '2026-12-01', status: 'Aandacht nodig' },
+      { id: 'eq-3', name: 'Padelbanen Glas & Verlichting', dept: 'Padel', nextDate: '2026-12-05', status: 'Operationeel' },
+      { id: 'eq-4', name: 'Rig & Atletiekrekken', dept: 'The Box', nextDate: '2026-12-10', status: 'Operationeel' }
+    ];
+
+    const DEFAULT_TEAM = [
+      { id: 'tm-1', name: 'Geert', role: 'Hoofd Technische Dienst & Verbouwing', shift: 'Ma - Vr | 08:00 - 17:00' },
+      { id: 'tm-2', name: 'Facility Team', role: 'Dagelijkse Schoonmaak & Rondes', shift: 'Ma - Zo | 07:00 - 13:00' },
+      { id: 'tm-3', name: 'Vaste Aannemer / Installateur', role: 'Constructie, Staal & Elektra', shift: 'Op afroep / Projectbasis' }
+    ];
+
+    let appState = {
+      departments: [],
+      tasks: [],
+      projects: [],
+      lessons: [],
+      equipment: [],
+      team: [],
+      inventory: [],
+      usageHistory: [],
+      cloudConfig: { url: '', key: '' }
+    };
+
+    function loadAppState() {
+      let saved = null;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) saved = JSON.parse(raw);
+      } catch (e) {}
+
+      appState.departments = (saved && Array.isArray(saved.departments) && saved.departments.length) ? saved.departments : JSON.parse(JSON.stringify(DEFAULT_DEPARTMENTS));
+      appState.tasks = (saved && Array.isArray(saved.tasks) && saved.tasks.length) ? saved.tasks : JSON.parse(JSON.stringify(DEFAULT_TASKS));
+      appState.projects = (saved && Array.isArray(saved.projects) && saved.projects.length) ? saved.projects : JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
+      appState.lessons = (saved && Array.isArray(saved.lessons) && saved.lessons.length) ? saved.lessons : JSON.parse(JSON.stringify(DEFAULT_LESSONS));
+      appState.equipment = (saved && Array.isArray(saved.equipment) && saved.equipment.length) ? saved.equipment : JSON.parse(JSON.stringify(DEFAULT_EQUIPMENT));
+      appState.team = (saved && Array.isArray(saved.team) && saved.team.length) ? saved.team : JSON.parse(JSON.stringify(DEFAULT_TEAM));
+      appState
