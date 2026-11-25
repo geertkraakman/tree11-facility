@@ -959,7 +959,7 @@
         const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
         const active = selectedDeptFilter === d.name;
         html += `
-          <button onclick="selectDeptFilter('${d.name.replace(/'/g, "\\'")}')" class="p-3 rounded-2xl border text-left transition ${active ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
+          <button onclick="selectDeptFilter('${d.name.replace(/'/g, "\'")}')" class="p-3 rounded-2xl border text-left transition ${active ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
             <div class="flex items-center justify-between">
               <span class="text-base">${d.icon}</span>
               <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${active ? 'bg-emerald-500 text-slate-950' : (openCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500')}">${openCount}</span>
@@ -1076,7 +1076,8 @@
     function saveBulkTasks() {
       const dept = document.getElementById('bt-dept').value;
       const assignee = document.getElementById('bt-assignee').value.trim() || 'Geert';
-      const lines = document.getElementById('bt-lines').value.split('\n').map(l => l.trim()).filter(Boolean);
+      const lines = document.getElementById('bt-lines').value.split('
+').map(l => l.trim()).filter(Boolean);
       if (!lines.length) return alert('Typ minimaal één taak.');
       const today = new Date().toISOString().split('T')[0];
       lines.reverse().forEach((line, idx) => {
@@ -1410,7 +1411,8 @@
         pendingPhotoItems.forEach(item => {
           if (item.note.trim()) stepCandidates.push(item.note.trim());
         });
-        generalDesc.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+        generalDesc.split('
+').map(l => l.trim()).filter(Boolean).forEach(line => {
           if (!stepCandidates.includes(line)) stepCandidates.push(line);
         });
         if (!stepCandidates.length) {
@@ -1864,46 +1866,27 @@
       closeModal('cloud-sync-modal');
     }
 
-   async function pushToCloudSilent(showAlert = false) {
-  const cfg = appState.cloudConfig || {};
-  const cleanUrl = (cfg.url || '').trim().replace(/\/+$/, '');
-  const cleanKey = (cfg.key || '').trim();
-  if (!cleanUrl || !cleanKey) {
-    if (showAlert) alert('Vul eerst een geldige Supabase URL en Key in.');
-    return;
-  }
-
-  const headers = {
-    'apikey': cleanKey,
-    'Content-Type': 'application/json',
-    'Prefer': 'resolution=merge-duplicates,return=minimal'
-  };
-  if (cleanKey.startsWith('eyJ')) {
-    headers['Authorization'] = `Bearer ${cleanKey}`;
-  }
-
-  try {
-    const res = await fetch(`${cleanUrl}/rest/v1/tree11_state`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ id: 'main', payload: appState })
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`HTTP ${res.status}: ${errText || 'Onbekende fout'}`);
+    async function pushToCloudSilent(showAlert = false) {
+      const { url, key } = appState.cloudConfig || {};
+      if (!url || !key) return;
+      try {
+        const res = await fetch(`${url}/rest/v1/tree11_state`, {
+          method: 'POST',
+          headers: {
+            'apikey': key,
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({ id: 'main', payload: appState })
+        });
+        if (showAlert) {
+          alert(res.ok ? 'Gegevens zijn gesynchroniseerd naar de Cloud!' : 'Controleer je Supabase URL, Key of tabelnaam (tree11_state).');
+        }
+      } catch (e) {
+        if (showAlert) alert('Verbinding met Supabase mislukt.');
+      }
     }
-
-    if (showAlert) {
-      alert('Gegevens zijn gesynchroniseerd naar de Cloud!');
-    }
-  } catch (err) {
-    if (showAlert) {
-      alert(`Synchronisatie mislukt: ${err.message}`);
-    }
-  }
-}
-     
 
     async function pullFromCloud() {
       const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
