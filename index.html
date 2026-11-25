@@ -1081,4 +1081,1516 @@
       appState.lessons = (saved && Array.isArray(saved.lessons) && saved.lessons.length) ? saved.lessons : JSON.parse(JSON.stringify(DEFAULT_LESSONS));
       appState.equipment = (saved && Array.isArray(saved.equipment) && saved.equipment.length) ? saved.equipment : JSON.parse(JSON.stringify(DEFAULT_EQUIPMENT));
       appState.team = (saved && Array.isArray(saved.team) && saved.team.length) ? saved.team : JSON.parse(JSON.stringify(DEFAULT_TEAM));
-      appState
+      appState.inventory = (saved && Array.isArray(saved.inventory) && saved.inventory.length) ? saved.inventory : JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
+      appState.usageHistory = (saved && Array.isArray(saved.usageHistory)) ? saved.usageHistory : JSON.parse(JSON.stringify(DEFAULT_USAGE_HISTORY));
+      appState.cloudConfig = (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' };
+
+      DEFAULT_PROJECTS.forEach(defProj => {
+        if (!appState.projects.some(p => p.id === defProj.id)) {
+          appState.projects.push(JSON.parse(JSON.stringify(defProj)));
+        }
+      });
+
+      saveAppState(false);
+    }
+
+    function saveAppState(pushCloud = true) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('Opslaglimiet bereikt:', e);
+      }
+      updateCloudBadge();
+      const histBadge = document.getElementById('home-history-count');
+      if (histBadge) histBadge.textContent = appState.usageHistory.length;
+      if (pushCloud && appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
+        pushToCloudSilent();
+      }
+    }
+
+    function quickLoginGeert() {
+      currentUser = { name: 'Geert', role: 'Beheerder & Technische Dienst' };
+      enterApp();
+    }
+
+    function handleTeamLogin() {
+      const name = document.getElementById('login-name').value.trim() || 'Collega';
+      const role = document.getElementById('login-role').value;
+      currentUser = { name, role };
+      enterApp();
+    }
+
+    function enterApp() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+      document.getElementById('current-user-label').textContent = `${currentUser.name} (${currentUser.role})`;
+      renderAll();
+      openDepartmentHomeScreen();
+    }
+
+    function logoutUser() {
+      document.getElementById('main-app').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    function openDepartmentHomeScreen() {
+      renderHome8Tiles();
+      ['tasks', 'projects', 'equipment', 'roster'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`nav-${t}`);
+        btn.classList.remove('tab-active');
+        btn.classList.add('tab-inactive');
+      });
+      document.getElementById('view-home-tiles').classList.remove('hidden');
+    }
+
+    function selectDepartmentFromHome(deptName) {
+      selectedDeptFilter = deptName;
+      document.getElementById('task-status-filter').value = 'open';
+      document.getElementById('view-home-tiles').classList.add('hidden');
+      switchMainTab('tasks');
+      renderDepartmentFilters();
+      renderTasks();
+    }
+
+    function switchMainTab(tab) {
+      document.getElementById('view-home-tiles').classList.add('hidden');
+      ['tasks', 'projects', 'equipment', 'roster'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`nav-${t}`);
+        btn.classList.toggle('tab-active', t === tab);
+        btn.classList.toggle('tab-inactive', t !== tab);
+      });
+      if (tab === 'tasks') {
+        renderDepartmentFilters();
+        renderTasks();
+      } else if (tab === 'projects') {
+        closeProjectDetail();
+        renderProjectsGrid();
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function renderAll() {
+      renderHome8Tiles();
+      renderDepartmentFilters();
+      renderTasks();
+      renderProjectsGrid();
+      renderEquipment();
+      renderTeam();
+      document.getElementById('lessons-count-badge').textContent = appState.lessons.length;
+      document.getElementById('home-history-count').textContent = appState.usageHistory.length;
+    }
+
+    function renderHome8Tiles() {
+      const grid = document.getElementById('home-8-tiles-grid');
+      if (!grid) return;
+      const eightDepts = appState.departments.slice(0, 8);
+      grid.innerHTML = eightDepts.map((d, idx) => {
+        const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
+        const label = escapeHtml((d.tileLabel || d.name).toUpperCase());
+        return `
+          <button
+            type="button"
+            data-home-dept-idx="${idx}"
+            class="t11-dept-tile flex-col gap-1"
+            title="${escapeHtml(d.name)} — ${openCount} openstaande taken"
+          >
+            <span class="font-extrabold text-sm sm:text-base tracking-wide leading-tight">${label}</span>
+            <span class="text-[11px] font-semibold text-emerald-200/90">${openCount} open</span>
+          </button>
+        `;
+      }).join('');
+
+      grid.querySelectorAll('[data-home-dept-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dept = eightDepts[Number(btn.getAttribute('data-home-dept-idx'))];
+          if (dept) selectDepartmentFromHome(dept.name);
+        });
+      });
+    }
+
+    function renderDepartmentFilters() {
+      const grid = document.getElementById('department-filter-grid');
+      const totalOpen = appState.tasks.filter(t => !t.done).length;
+
+      let html = `
+        <button type="button" data-filter-dept="ALL" class="p-3 rounded-2xl border text-left transition ${selectedDeptFilter === 'ALL' ? 'bg-[#163828] text-white border-[#163828] shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
+          <div class="flex items-center justify-between">
+            <span class="text-base">🏢</span>
+            <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${selectedDeptFilter === 'ALL' ? 'bg-emerald-400 text-slate-950' : 'bg-slate-100 text-slate-700'}">${totalOpen} open</span>
+          </div>
+          <div class="font-bold text-xs mt-1.5 truncate">Alle Afdelingen</div>
+        </button>
+      `;
+
+      appState.departments.forEach((d, idx) => {
+        const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
+        const active = selectedDeptFilter === d.name;
+        html += `
+          <button type="button" data-filter-dept-idx="${idx}" class="p-3 rounded-2xl border text-left transition ${active ? 'bg-[#163828] text-white border-[#163828] shadow-sm' : 'bg-white text-slate-800 border-slate-200 hover:bg-slate-50'}">
+            <div class="flex items-center justify-between">
+              <span class="text-base">${escapeHtml(d.icon)}</span>
+              <span class="text-xs font-extrabold px-2 py-0.5 rounded-full ${active ? 'bg-emerald-400 text-slate-950' : (openCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500')}">${openCount}</span>
+            </div>
+            <div class="font-bold text-xs mt-1.5 truncate">${escapeHtml(d.name)}</div>
+          </button>
+        `;
+      });
+
+      grid.innerHTML = html;
+
+      grid.querySelectorAll('[data-filter-dept="ALL"]').forEach(btn => {
+        btn.addEventListener('click', () => selectDeptFilter('ALL'));
+      });
+      grid.querySelectorAll('[data-filter-dept-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dept = appState.departments[Number(btn.getAttribute('data-filter-dept-idx'))];
+          if (dept) selectDeptFilter(dept.name);
+        });
+      });
+
+      const heading = document.getElementById('tasks-section-title');
+      if (heading) {
+        heading.textContent = selectedDeptFilter === 'ALL'
+          ? 'Openstaande & Dagelijkse Taken — Alle Afdelingen'
+          : `Openstaande Taken — ${selectedDeptFilter}`;
+      }
+    }
+
+    function selectDeptFilter(deptName) {
+      selectedDeptFilter = deptName;
+      renderDepartmentFilters();
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('tasks-list');
+      const search = (document.getElementById('task-search').value || '').toLowerCase();
+      const statusFilter = document.getElementById('task-status-filter').value;
+
+      const filtered = appState.tasks.filter(t => {
+        if (selectedDeptFilter !== 'ALL' && t.dept !== selectedDeptFilter) return false;
+        if (statusFilter === 'open' && t.done) return false;
+        if (statusFilter === 'done' && !t.done) return false;
+        if (search) {
+          const matText = (t.completionLog && Array.isArray(t.completionLog.materials))
+            ? t.completionLog.materials.map(m => m.name).join(' ')
+            : '';
+          const logText = t.completionLog ? (t.completionLog.workDescription || '') : '';
+          if (!(`${t.title} ${t.dept} ${t.assignee} ${t.notes || ''} ${matText} ${logText}`).toLowerCase().includes(search)) return false;
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-sm text-slate-500">Geen taken gevonden voor deze selectie.</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(t => {
+        let logHtml = '';
+        if (t.done && t.completionLog) {
+          const mats = t.completionLog.noMaterial
+            ? 'Geen materiaal verbruikt'
+            : (t.completionLog.materials || []).map(m => `${escapeHtml(m.qty)} ${escapeHtml(m.unit)} ${escapeHtml(m.name)}`).join(', ');
+          logHtml = `
+            <div class="mt-2 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-1">
+              <div><strong class="text-[#163828]">Werkomschrijving:</strong> ${escapeHtml(t.completionLog.workDescription)}</div>
+              <div><strong class="text-[#163828]">Materiaal:</strong> ${escapeHtml(mats) || 'Niet opgegeven'}</div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-slate-200 opacity-75' : 'border-slate-200 shadow-sm'} flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3 flex-1">
+              <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle('${t.id}', this)" class="mt-1 w-5 h-5 accent-[#163828] cursor-pointer" />
+              <div class="flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-bold text-sm ${t.done ? 'line-through text-slate-400' : 'text-slate-900'}">${escapeHtml(t.title)}</span>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${escapeHtml(t.dept)}</span>
+                  ${t.priority === 'Hoog' ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔥 Hoog</span>' : ''}
+                </div>
+                ${t.notes ? `<p class="text-xs text-slate-600 mt-1">${escapeHtml(t.notes)}</p>` : ''}
+                ${logHtml}
+                <div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
+                  <span>👤 ${escapeHtml(t.assignee || 'Geert')}</span>
+                  <span>📅 ${escapeHtml(t.date || 'Geen datum')}</span>
+                </div>
+              </div>
+            </div>
+            <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-2 py-1">✕</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleTaskCheckboxToggle(id, checkboxEl) {
+      const t = appState.tasks.find(x => x.id === id);
+      if (!t) return;
+
+      if (!t.done) {
+        checkboxEl.checked = false;
+        openCompleteTaskModal(id);
+      } else {
+        t.done = false;
+        saveAppState();
+        renderDepartmentFilters();
+        renderTasks();
+        renderHome8Tiles();
+      }
+    }
+
+    function openCompleteTaskModal(taskId) {
+      const t = appState.tasks.find(x => x.id === taskId);
+      if (!t) return;
+
+      completingTaskId = taskId;
+      pendingMaterialUsages = [];
+
+      document.getElementById('ct-task-title').textContent = t.title;
+      document.getElementById('ct-task-meta').textContent = `Afdeling: ${t.dept} • Uitvoerende: ${t.assignee || currentUser.name}`;
+      document.getElementById('ct-work-desc').value = '';
+      document.getElementById('ct-no-material').checked = false;
+      document.getElementById('ct-material-inputs').classList.remove('hidden');
+      document.getElementById('ct-new-mat-name').value = '';
+      document.getElementById('ct-new-mat-qty').value = '1';
+      document.getElementById('ct-new-mat-unit').value = 'stuks';
+      document.getElementById('ct-stock-qty').value = '1';
+      document.getElementById('ct-error-msg').classList.add('hidden');
+
+      populateStockDropdown();
+      renderPendingMaterials();
+      renderSimilarUsageSuggestions(t);
+
+      document.getElementById('complete-task-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('ct-work-desc').focus(), 50);
+    }
+
+    function cancelCompleteTaskModal() {
+      completingTaskId = null;
+      pendingMaterialUsages = [];
+      closeModal('complete-task-modal');
+    }
+
+    function populateStockDropdown() {
+      const sel = document.getElementById('ct-stock-select');
+      if (!appState.inventory.length) {
+        sel.innerHTML = `<option value="">Geen voorraadartikelen beschikbaar</option>`;
+        return;
+      }
+      sel.innerHTML = appState.inventory.map(item =>
+        `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (voorraad: ${escapeHtml(item.qty)} ${escapeHtml(item.unit)})</option>`
+      ).join('');
+    }
+
+    function renderSimilarUsageSuggestions(task) {
+      const box = document.getElementById('ct-similar-history');
+      const list = document.getElementById('ct-similar-history-list');
+      const words = task.title.toLowerCase().split(/\s+/).filter(w => w.length >= 4);
+
+      const matches = appState.usageHistory.filter(h => {
+        if (h.noMaterial || !Array.isArray(h.materials) || !h.materials.length) return false;
+        if (h.dept === task.dept) return true;
+        const hay = `${h.taskTitle} ${h.workDescription}`.toLowerCase();
+        return words.some(w => hay.includes(w));
+      }).slice(0, 3);
+
+      if (!matches.length) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      list.innerHTML = matches.map(m => {
+        const mats = m.materials.map(x => `${escapeHtml(x.qty)} ${escapeHtml(x.unit)} ${escapeHtml(x.name)}`).join(', ');
+        return `<div class="bg-white/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/70">
+          <strong>${escapeHtml(m.taskTitle)}</strong> (${escapeHtml(m.dept)}, ${escapeHtml(m.date)}): <span class="font-semibold text-[#163828]">${mats}</span>
+        </div>`;
+      }).join('');
+      box.classList.remove('hidden');
+    }
+
+    function toggleNoMaterialMode() {
+      const checked = document.getElementById('ct-no-material').checked;
+      const inputsBox = document.getElementById('ct-material-inputs');
+      if (checked) {
+        pendingMaterialUsages = [];
+        renderPendingMaterials();
+        inputsBox.classList.add('hidden');
+      } else {
+        inputsBox.classList.remove('hidden');
+      }
+      document.getElementById('ct-error-msg').classList.add('hidden');
+    }
+
+    function addStockUsageRow() {
+      const stockId = document.getElementById('ct-stock-select').value;
+      const qty = parseFloat(document.getElementById('ct-stock-qty').value);
+      const errBox = document.getElementById('ct-error-msg');
+      errBox.classList.add('hidden');
+
+      if (!stockId) return;
+      if (isNaN(qty) || qty <= 0) {
+        errBox.textContent = 'Vul een geldig aantal groter dan 0 in.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const invItem = appState.inventory.find(i => i.id === stockId);
+      if (!invItem) return;
+
+      const existing = pendingMaterialUsages.find(m => m.source === 'voorraad' && m.inventoryId === invItem.id);
+      const totalRequested = (existing ? existing.qty : 0) + qty;
+
+      if (totalRequested > invItem.qty) {
+        errBox.textContent = `Onvoldoende voorraad van "${invItem.name}" (beschikbaar: ${invItem.qty} ${invItem.unit}).`;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      if (existing) {
+        existing.qty = totalRequested;
+      } else {
+        pendingMaterialUsages.push({
+          id: 'mat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          source: 'voorraad',
+          inventoryId: invItem.id,
+          name: invItem.name,
+          qty,
+          unit: invItem.unit
+        });
+      }
+
+      document.getElementById('ct-stock-qty').value = '1';
+      renderPendingMaterials();
+    }
+
+    function addNewMaterialUsageRow() {
+      const name = document.getElementById('ct-new-mat-name').value.trim();
+      const qty = parseFloat(document.getElementById('ct-new-mat-qty').value);
+      const unit = document.getElementById('ct-new-mat-unit').value.trim() || 'stuks';
+      const addToStock = document.getElementById('ct-add-to-stock').checked;
+      const errBox = document.getElementById('ct-error-msg');
+      errBox.classList.add('hidden');
+
+      if (!name) {
+        errBox.textContent = 'Vul de naam van het nieuwe materiaal in.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+      if (isNaN(qty) || qty <= 0) {
+        errBox.textContent = 'Vul een geldig aantal groter dan 0 in.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      pendingMaterialUsages.push({
+        id: 'mat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        source: 'nieuw',
+        inventoryId: null,
+        name,
+        qty,
+        unit,
+        addToStock
+      });
+
+      document.getElementById('ct-new-mat-name').value = '';
+      document.getElementById('ct-new-mat-qty').value = '1';
+      renderPendingMaterials();
+    }
+
+    function removePendingMaterial(matId) {
+      pendingMaterialUsages = pendingMaterialUsages.filter(m => m.id !== matId);
+      renderPendingMaterials();
+    }
+
+    function renderPendingMaterials() {
+      const container = document.getElementById('ct-selected-materials');
+      if (!pendingMaterialUsages.length) {
+        container.innerHTML = `<div class="text-xs text-slate-400 italic">Nog geen materiaalregels toegevoegd.</div>`;
+        return;
+      }
+      container.innerHTML = pendingMaterialUsages.map(m => `
+        <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-xs">
+          <div>
+            <span class="font-bold text-slate-900">${escapeHtml(m.qty)} ${escapeHtml(m.unit)} — ${escapeHtml(m.name)}</span>
+            <span class="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${m.source === 'voorraad' ? 'bg-emerald-200/70 text-[#163828]' : 'bg-amber-100 text-amber-800'}">
+              ${m.source === 'voorraad' ? 'Uit voorraad' : (m.addToStock ? 'Nieuw + naar voorraad' : 'Nieuw materiaal')}
+            </span>
+          </div>
+          <button type="button" onclick="removePendingMaterial('${m.id}')" class="text-rose-600 font-bold hover:underline">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function confirmCompleteTaskWithLog() {
+      const errBox = document.getElementById('ct-error-msg');
+      errBox.classList.add('hidden');
+
+      const task = appState.tasks.find(x => x.id === completingTaskId);
+      if (!task) return;
+
+      const workDesc = document.getElementById('ct-work-desc').value.trim();
+      const noMaterial = document.getElementById('ct-no-material').checked;
+
+      if (!workDesc) {
+        errBox.textContent = 'Werkomschrijving is verplicht voordat je de taak kunt afronden.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      if (!noMaterial && pendingMaterialUsages.length === 0) {
+        errBox.textContent = 'Materiaalopgave is verplicht: voeg materiaal toe of vink "Geen materiaal verbruikt" aan.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const loggedMaterials = [];
+
+      if (!noMaterial) {
+        for (const m of pendingMaterialUsages) {
+          if (m.source === 'voorraad' && m.inventoryId) {
+            const invItem = appState.inventory.find(i => i.id === m.inventoryId);
+            if (!invItem || invItem.qty < m.qty) {
+              errBox.textContent = `Voorraad niet meer toereikend voor "${m.name}".`;
+              errBox.classList.remove('hidden');
+              return;
+            }
+            invItem.qty = Math.max(0, Number((invItem.qty - m.qty).toFixed(2)));
+            loggedMaterials.push({ name: invItem.name, qty: m.qty, unit: invItem.unit, source: 'voorraad' });
+          } else {
+            if (m.addToStock) {
+              const existingSame = appState.inventory.find(i => i.name.toLowerCase() === m.name.toLowerCase());
+              if (existingSame) {
+                existingSame.qty = Math.max(0, Number((existingSame.qty - m.qty).toFixed(2)));
+              } else {
+                appState.inventory.push({
+                  id: 'inv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+                  name: m.name,
+                  qty: 0,
+                  unit: m.unit
+                });
+              }
+            }
+            loggedMaterials.push({ name: m.name, qty: m.qty, unit: m.unit, source: 'nieuw' });
+          }
+        }
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      task.done = true;
+      task.completionLog = {
+        workDescription: workDesc,
+        noMaterial,
+        materials: loggedMaterials,
+        completedBy: currentUser.name,
+        completedAt: todayStr
+      };
+
+      appState.usageHistory.unshift({
+        id: 'uh-' + Date.now(),
+        date: todayStr,
+        dept: task.dept,
+        taskTitle: task.title,
+        workDescription: workDesc,
+        materials: loggedMaterials,
+        noMaterial,
+        completedBy: currentUser.name
+      });
+
+      completingTaskId = null;
+      pendingMaterialUsages = [];
+      closeModal('complete-task-modal');
+      saveAppState();
+      renderAll();
+    }
+
+    function openUsageHistoryModal() {
+      renderInventoryAndHistoryModal();
+      document.getElementById('usage-history-modal').classList.remove('hidden');
+    }
+
+    function addInventoryItemFromModal() {
+      const name = document.getElementById('inv-add-name').value.trim();
+      const qty = parseFloat(document.getElementById('inv-add-qty').value);
+      const unit = document.getElementById('inv-add-unit').value.trim() || 'stuks';
+      if (!name || isNaN(qty) || qty < 0) return alert('Vul een geldige naam en voorraadstand in.');
+
+      const existing = appState.inventory.find(i => i.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        existing.qty = Number((existing.qty + qty).toFixed(2));
+        existing.unit = unit;
+      } else {
+        appState.inventory.push({
+          id: 'inv-' + Date.now(),
+          name,
+          qty,
+          unit
+        });
+      }
+
+      document.getElementById('inv-add-name').value = '';
+      document.getElementById('inv-add-qty').value = '10';
+      saveAppState();
+      renderInventoryAndHistoryModal();
+    }
+
+    function adjustInventoryStock(id, delta) {
+      const item = appState.inventory.find(i => i.id === id);
+      if (!item) return;
+      item.qty = Math.max(0, Number((item.qty + delta).toFixed(2)));
+      saveAppState();
+      renderInventoryAndHistoryModal();
+    }
+
+    function renderInventoryAndHistoryModal() {
+      const invContainer = document.getElementById('inventory-list-container');
+      invContainer.innerHTML = appState.inventory.map(i => `
+        <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white">
+          <div>
+            <div class="font-bold text-xs text-slate-900">${escapeHtml(i.name)}</div>
+            <div class="text-[11px] font-semibold ${i.qty <= 2 ? 'text-rose-600' : 'text-[#163828]'}">Voorraad: ${escapeHtml(i.qty)} ${escapeHtml(i.unit)}</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="adjustInventoryStock('${i.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">-</button>
+            <button onclick="adjustInventoryStock('${i.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">+</button>
+          </div>
+        </div>
+      `).join('');
+
+      const histContainer = document.getElementById('usage-history-list-container');
+      if (!appState.usageHistory.length) {
+        histContainer.innerHTML = `<div class="text-xs text-slate-400 p-4 rounded-2xl border border-slate-200 text-center">Nog geen verbruikshistorie vastgelegd.</div>`;
+        return;
+      }
+
+      histContainer.innerHTML = appState.usageHistory.map(h => {
+        const matsHtml = h.noMaterial
+          ? `<span class="text-slate-500 italic">Geen materiaal verbruikt</span>`
+          : (h.materials || []).map(m =>
+              `<span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828] font-bold text-[11px] mr-1 mb-1">${escapeHtml(m.qty)} ${escapeHtml(m.unit)} ${escapeHtml(m.name)}</span>`
+            ).join('');
+
+        return `
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-extrabold text-xs text-slate-900">${escapeHtml(h.taskTitle)}</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${escapeHtml(h.dept)} • ${escapeHtml(h.date)}</span>
+            </div>
+            <p class="text-xs text-slate-600">${escapeHtml(h.workDescription)}</p>
+            <div class="pt-1">${matsHtml}</div>
+            <div class="text-[11px] text-slate-400">Uitgevoerd door: ${escapeHtml(h.completedBy || 'Geert')}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteTask(id) {
+      appState.tasks = appState.tasks.filter(x => x.id !== id);
+      saveAppState();
+      renderDepartmentFilters();
+      renderTasks();
+      renderHome8Tiles();
+    }
+
+    function populateDeptSelects() {
+      const opts = appState.departments.map(d => `<option value="${escapeHtml(d.name)}">${escapeHtml(d.icon)} ${escapeHtml(d.name)}</option>`).join('');
+      document.getElementById('nt-dept').innerHTML = opts;
+      document.getElementById('bt-dept').innerHTML = opts;
+    }
+
+    function openNewTaskModal() {
+      populateDeptSelects();
+      if (selectedDeptFilter !== 'ALL') {
+        document.getElementById('nt-dept').value = selectedDeptFilter;
+      }
+      document.getElementById('nt-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('new-task-modal').classList.remove('hidden');
+    }
+
+    function saveNewTask() {
+      const title = document.getElementById('nt-title').value.trim();
+      if (!title) return alert('Vul een taakomschrijving in.');
+      appState.tasks.unshift({
+        id: 't-' + Date.now(),
+        title,
+        dept: document.getElementById('nt-dept').value,
+        priority: document.getElementById('nt-priority').value,
+        assignee: document.getElementById('nt-assignee').value.trim() || 'Geert',
+        date: document.getElementById('nt-date').value,
+        notes: document.getElementById('nt-notes').value.trim(),
+        done: false,
+        completionLog: null
+      });
+      document.getElementById('nt-title').value = '';
+      document.getElementById('nt-notes').value = '';
+      closeModal('new-task-modal');
+      saveAppState();
+      renderDepartmentFilters();
+      renderTasks();
+      renderHome8Tiles();
+    }
+
+    function openBulkTaskModal() {
+      populateDeptSelects();
+      if (selectedDeptFilter !== 'ALL') {
+        document.getElementById('bt-dept').value = selectedDeptFilter;
+      }
+      document.getElementById('bulk-task-modal').classList.remove('hidden');
+    }
+
+    function saveBulkTasks() {
+      const dept = document.getElementById('bt-dept').value;
+      const assignee = document.getElementById('bt-assignee').value.trim() || 'Geert';
+      const lines = document.getElementById('bt-lines').value.split('\n').map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return alert('Typ minimaal één taak.');
+      const today = new Date().toISOString().split('T')[0];
+      lines.reverse().forEach((line, idx) => {
+        appState.tasks.unshift({
+          id: 't-' + Date.now() + '-' + idx,
+          title: line,
+          dept,
+          priority: 'Normaal',
+          assignee,
+          date: today,
+          notes: '',
+          done: false,
+          completionLog: null
+        });
+      });
+      document.getElementById('bt-lines').value = '';
+      closeModal('bulk-task-modal');
+      saveAppState();
+      renderDepartmentFilters();
+      renderTasks();
+      renderHome8Tiles();
+    }
+
+    function openAddDeptModal() {
+      document.getElementById('add-dept-modal').classList.remove('hidden');
+    }
+
+    function saveNewDepartment() {
+      const icon = document.getElementById('nd-icon').value.trim() || '🛠️';
+      const name = document.getElementById('nd-name').value.trim();
+      if (!name) return alert('Vul een afdelingsnaam in.');
+      appState.departments.push({ id: 'dept-' + Date.now(), icon, name, tileLabel: name.toUpperCase() });
+      document.getElementById('nd-name').value = '';
+      closeModal('add-dept-modal');
+      saveAppState();
+      renderDepartmentFilters();
+      renderHome8Tiles();
+    }
+
+    function renderProjectsGrid() {
+      const grid = document.getElementById('projects-grid');
+      grid.innerHTML = appState.projects.map(p => {
+        const total = p.steps.length;
+        const done = p.steps.filter(s => s.done).length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const photoCount = (p.photos || []).length;
+        const hasDrawing = (p.blueprintShapes && p.blueprintShapes.length > 0) || !!p.blueprintBgDataUrl;
+
+        return `
+          <div onclick="openProjectDetail('${p.id}')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-400 transition cursor-pointer flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold border border-emerald-100">🏗️</span>
+                <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${pct}% gereed</span>
+              </div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">${escapeHtml(p.room)}</span>
+              <h3 class="font-extrabold text-base text-slate-900 mt-0.5">${escapeHtml(p.title)}</h3>
+              <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">${escapeHtml(p.description)}</p>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                <div class="h-full bg-emerald-500" style="width: ${pct}%"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span>📋 ${done}/${total} stappen</span>
+                <span>📷 ${photoCount} foto's</span>
+                <span>${hasDrawing ? '📐 Tekening ✓' : '📐 Geen tekening'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openProjectDetail(projectId) {
+      activeProjectId = projectId;
+      document.getElementById('projects-overview-mode').classList.add('hidden');
+      document.getElementById('project-detail-mode').classList.remove('hidden');
+      renderActiveProjectDetail();
+      switchProjectSubTab('planning');
+    }
+
+    function closeProjectDetail() {
+      activeProjectId = null;
+      document.getElementById('project-detail-mode').classList.add('hidden');
+      document.getElementById('projects-overview-mode').classList.remove('hidden');
+      renderProjectsGrid();
+    }
+
+    function renderActiveProjectDetail() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      if (!p) return;
+
+      const total = p.steps.length;
+      const done = p.steps.filter(s => s.done).length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('detail-proj-room').textContent = p.room;
+      document.getElementById('detail-proj-title').textContent = p.title;
+      document.getElementById('detail-proj-desc').textContent = p.description;
+      document.getElementById('detail-proj-progress-text').textContent = `${pct}% (${done}/${total})`;
+      document.getElementById('detail-proj-progress-bar').style.width = `${pct}%`;
+      document.getElementById('detail-proj-budget').textContent = p.budget || '';
+      document.getElementById('detail-photo-count').textContent = (p.photos || []).length;
+      document.getElementById('detail-risk-count').textContent = (p.risks || []).length;
+
+      const phases = [...new Set(p.steps.map(s => s.phase))];
+      const planContainer = document.getElementById('project-subview-planning');
+      if (!p.steps.length) {
+        planContainer.innerHTML = `<div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen stappen in dit project.</div>`;
+      } else {
+        planContainer.innerHTML = phases.map(phase => {
+          const phaseSteps = p.steps.filter(s => s.phase === phase);
+          return `
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+              <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg">${escapeHtml(phase)}</h4>
+              ${phaseSteps.map(s => `
+                <div class="flex items-start justify-between gap-3 p-2.5 rounded-xl border ${s.done ? 'bg-slate-50 border-slate-100 opacity-70' : 'bg-white border-slate-200'}">
+                  <div class="flex items-start gap-3">
+                    <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleProjectStep('${p.id}', '${s.id}')" class="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer" />
+                    <div>
+                      <div class="font-bold text-sm ${s.done ? 'line-through text-slate-400' : 'text-slate-900'}">${escapeHtml(s.title)}</div>
+                      ${s.note ? `<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 mt-1">💡 ${escapeHtml(s.note)}</p>` : ''}
+                      <div class="text-[11px] text-slate-400 mt-1">👤 ${escapeHtml(s.assignee)} • 📅 ${escapeHtml(s.date)}</div>
+                    </div>
+                  </div>
+                  <button onclick="deleteProjectStep('${p.id}', '${s.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).join('');
+      }
+
+      const photosGrid = document.getElementById('detail-photos-grid');
+      if (!p.photos || !p.photos.length) {
+        photosGrid.innerHTML = `<div class="sm:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen foto's geüpload in dit project.</div>`;
+      } else {
+        photosGrid.innerHTML = p.photos.map(ph => `
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
+            <img src="${ph.dataUrl}" onclick="openLightbox('${ph.dataUrl}')" class="w-full h-48 object-cover cursor-zoom-in bg-slate-100" />
+            <div class="p-3.5 flex-1 flex flex-col justify-between">
+              <p class="text-xs font-semibold text-slate-800">${escapeHtml(ph.caption || 'Projectfoto')}</p>
+              <div class="flex justify-between items-center text-[11px] text-slate-400 mt-2 pt-2 border-t border-slate-100">
+                <span>📅 ${escapeHtml(ph.date || '')}</span>
+                <button onclick="deleteProjectPhoto('${p.id}', '${ph.id}')" class="text-rose-500 hover:underline font-bold">Verwijderen</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      const risksList = document.getElementById('detail-risks-list');
+      risksList.innerHTML = (p.risks || []).map(r => `
+        <div class="bg-white p-4 rounded-2xl border ${r.checked ? 'border-emerald-300 bg-emerald-50/30' : 'border-amber-200'} flex items-start justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="toggleRiskChecked('${p.id}', '${r.id}')" class="mt-1 w-4 h-4 accent-emerald-600" />
+            <div>
+              <div class="font-bold text-sm text-slate-900">${escapeHtml(r.title)}</div>
+              <p class="text-xs text-slate-600 mt-1">${escapeHtml(r.action)}</p>
+            </div>
+          </div>
+          <button onclick="promoteRiskToPhase0('${p.id}', '${r.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold whitespace-nowrap">+ Zet in Fase 0</button>
+        </div>
+      `).join('');
+    }
+
+    function switchProjectSubTab(sub) {
+      activeProjectSubTab = sub;
+      ['planning', 'photos', 'blueprint', 'risks'].forEach(t => {
+        document.getElementById(`project-subview-${t}`).classList.toggle('hidden', t !== sub);
+        const btn = document.getElementById(`ptab-${t}`);
+        btn.classList.toggle('tab-active', t === sub);
+        btn.classList.toggle('tab-inactive', t !== sub);
+      });
+      if (sub === 'blueprint') {
+        initBlueprintEditor();
+      }
+    }
+
+    function toggleProjectStep(projId, stepId) {
+      const p = appState.projects.find(x => x.id === projId);
+      const s = p && p.steps.find(x => x.id === stepId);
+      if (s) {
+        s.done = !s.done;
+        saveAppState();
+        renderActiveProjectDetail();
+      }
+    }
+
+    function deleteProjectStep(projId, stepId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (p) {
+        p.steps = p.steps.filter(x => x.id !== stepId);
+        saveAppState();
+        renderActiveProjectDetail();
+      }
+    }
+
+    function openAddProjectStepModal() {
+      document.getElementById('st-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('add-step-modal').classList.remove('hidden');
+    }
+
+    function saveNewProjectStep() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      const title = document.getElementById('st-title').value.trim();
+      if (!p || !title) return alert('Vul de werkzaamheden in.');
+      p.steps.push({
+        id: 'st-' + Date.now(),
+        phase: document.getElementById('st-phase').value,
+        title,
+        date: document.getElementById('st-date').value,
+        assignee: document.getElementById('st-assignee').value.trim() || 'Geert',
+        note: document.getElementById('st-note').value.trim(),
+        done: false
+      });
+      document.getElementById('st-title').value = '';
+      document.getElementById('st-note').value = '';
+      closeModal('add-step-modal');
+      saveAppState();
+      renderActiveProjectDetail();
+    }
+
+    function openProjectPhotoModal(projId) {
+      activeProjectId = projId;
+      pendingPhotoItems = [];
+      document.getElementById('proj-photo-files').value = '';
+      document.getElementById('proj-photo-previews').innerHTML = '';
+      document.getElementById('proj-photo-desc').value = '';
+      document.getElementById('proj-photo-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('project-photo-modal').classList.remove('hidden');
+    }
+
+    function closeProjectPhotoModal() {
+      document.getElementById('project-photo-modal').classList.add('hidden');
+    }
+
+    function previewMultipleProjectPhotos(event) {
+      const files = Array.from(event.target.files || []);
+      pendingPhotoItems = [];
+      const container = document.getElementById('proj-photo-previews');
+      container.innerHTML = '';
+
+      files.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxW = 900;
+            const scale = Math.min(1, maxW / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.72);
+            const itemIndex = pendingPhotoItems.length;
+            pendingPhotoItems.push({ dataUrl: compressed, note: '' });
+
+            const card = document.createElement('div');
+            card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
+            card.innerHTML = `
+              <img src="${compressed}" class="w-full h-28 object-cover rounded-lg" />
+              <input type="text" placeholder="Eigen notitie bij foto ${idx + 1} (optioneel)" class="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg bg-white" />
+            `;
+            const inputEl = card.querySelector('input');
+            inputEl.addEventListener('input', (ev) => updatePendingPhotoNote(itemIndex, ev.target.value));
+            container.appendChild(card);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function updatePendingPhotoNote(index, val) {
+      if (pendingPhotoItems[index]) pendingPhotoItems[index].note = val;
+    }
+
+    function detectSmartPhaseAndTip(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('staal') || lower.includes('sloop') || lower.includes('vlonder') || lower.includes('poer')) {
+        return {
+          phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+          tip: 'Controleer of poeren behouden blijven, slijp draadeinden vlak af en verreken oud-ijzeropbrengst.'
+        };
+      }
+      if (lower.includes('primer') || lower.includes('egaline') || lower.includes('egaliseren') || lower.includes('ondervloer')) {
+        return {
+          phase: 'Fase 1: Constructie & Ondergrond',
+          tip: 'Houd 24–48 uur droogtijd aan en voer een restvochtmeting uit vóór afwerking.'
+        };
+      }
+      if (lower.includes('bamboe') || lower.includes('vloer') || lower.includes('entree') || lower.includes('helling') || lower.includes('plint')) {
+        return {
+          phase: 'Fase 3: Opbouw & Afwerking',
+          tip: 'Laat vloerdelen 48 uur acclimatiseren; zorg bij entree voor antislip en afwatering.'
+        };
+      }
+      return {
+        phase: 'Fase 2: Installaties & Droogtijden',
+        tip: 'Controleer maatvoering en stem uitvoering af met betrokken monteur/aannemer.'
+      };
+    }
+
+    function handleSaveProjectPhoto() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      if (!p) return;
+
+      const generalDesc = document.getElementById('proj-photo-desc').value.trim();
+      const startDateStr = document.getElementById('proj-photo-date').value || new Date().toISOString().split('T')[0];
+      const assignee = document.getElementById('proj-photo-assignee').value.trim() || 'Geert';
+      const autoPlan = document.getElementById('proj-photo-autoplan').checked;
+
+      if (!pendingPhotoItems.length && !generalDesc) {
+        return alert('Selecteer minimaal één foto of vul een beschrijving in.');
+      }
+
+      if (!p.photos) p.photos = [];
+      pendingPhotoItems.forEach((item, idx) => {
+        p.photos.unshift({
+          id: 'ph-' + Date.now() + '-' + idx,
+          dataUrl: item.dataUrl,
+          caption: item.note.trim() || generalDesc || `Situatiefoto ${idx + 1}`,
+          date: startDateStr
+        });
+      });
+
+      if (autoPlan) {
+        const stepCandidates = [];
+        pendingPhotoItems.forEach(item => {
+          if (item.note.trim()) stepCandidates.push(item.note.trim());
+        });
+        generalDesc.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+          if (!stepCandidates.includes(line)) stepCandidates.push(line);
+        });
+        if (!stepCandidates.length) {
+          stepCandidates.push(`Situatie op foto's beoordelen & vervolgactie uitzetten (${p.title})`);
+        }
+
+        const baseDate = new Date(startDateStr);
+        stepCandidates.forEach((stepTitle, idx) => {
+          const d = new Date(baseDate);
+          d.setDate(d.getDate() + idx);
+          const isoDate = d.toISOString().split('T')[0];
+          const smart = detectSmartPhaseAndTip(stepTitle);
+
+          p.steps.push({
+            id: 'st-' + Date.now() + '-' + idx,
+            phase: smart.phase,
+            title: stepTitle,
+            date: isoDate,
+            assignee,
+            note: smart.tip,
+            done: false
+          });
+
+          appState.tasks.unshift({
+            id: 't-proj-' + Date.now() + '-' + idx,
+            title: `[${p.title}] ${stepTitle}`,
+            dept: p.room,
+            priority: 'Normaal',
+            assignee,
+            date: isoDate,
+            notes: smart.tip,
+            done: false,
+            completionLog: null
+          });
+        });
+      }
+
+      closeProjectPhotoModal();
+      saveAppState();
+      renderDepartmentFilters();
+      renderTasks();
+      renderActiveProjectDetail();
+      renderHome8Tiles();
+    }
+
+    function deleteProjectPhoto(projId, photoId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (p) {
+        p.photos = p.photos.filter(x => x.id !== photoId);
+        saveAppState();
+        renderActiveProjectDetail();
+      }
+    }
+
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('photo-lightbox').classList.remove('hidden');
+    }
+
+    function initBlueprintEditor() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      if (!p) return;
+
+      bpShapes = JSON.parse(JSON.stringify(p.blueprintShapes || []));
+      bpBgImageDataUrl = p.blueprintBgDataUrl || null;
+      bpBgImgObj = null;
+
+      const canvas = document.getElementById('blueprint-canvas');
+      if (bpBgImageDataUrl) {
+        const img = new Image();
+        img.onload = () => {
+          bpBgImgObj = img;
+          redrawBlueprintCanvas();
+        };
+        img.src = bpBgImageDataUrl;
+      } else {
+        redrawBlueprintCanvas();
+      }
+
+      canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        const color = document.getElementById('bp-color').value;
+
+        if (bpTool === 'text') {
+          const txt = prompt('Typ maatvoering of notitie voor op de tekening:');
+          if (txt) {
+            bpShapes.push({ type: 'text', x, y, text: txt, color });
+            redrawBlueprintCanvas();
+          }
+          return;
+        }
+        isDrawingBp = true;
+        bpStart = { x, y };
+      };
+
+      canvas.onmousemove = (e) => {
+        if (!isDrawingBp) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        redrawBlueprintCanvas();
+        const ctx = canvas.getContext('2d');
+        ctx.strokeStyle = document.getElementById('bp-color').value;
+        ctx.lineWidth = 3;
+        if (bpTool === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(bpStart.x, bpStart.y);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        } else if (bpTool === 'rect') {
+          ctx.strokeRect(bpStart.x, bpStart.y, x - bpStart.x, y - bpStart.y);
+        }
+      };
+
+      canvas.onmouseup = (e) => {
+        if (!isDrawingBp) return;
+        isDrawingBp = false;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const color = document.getElementById('bp-color').value;
+
+        if (bpTool === 'line') {
+          bpShapes.push({ type: 'line', x1: bpStart.x, y1: bpStart.y, x2: x, y2: y, color });
+        } else if (bpTool === 'rect') {
+          bpShapes.push({ type: 'rect', x: bpStart.x, y: bpStart.y, w: x - bpStart.x, h: y - bpStart.y, color });
+        }
+        redrawBlueprintCanvas();
+      };
+    }
+
+    function setBpTool(tool) {
+      bpTool = tool;
+      ['line', 'rect', 'text'].forEach(t => {
+        const btn = document.getElementById(`bptool-${t}`);
+        if (t === tool) {
+          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white';
+        } else {
+          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700';
+        }
+      });
+    }
+
+    function redrawBlueprintCanvas() {
+      const canvas = document.getElementById('blueprint-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx < canvas.width; gx += 30) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvas.height); ctx.stroke();
+      }
+      for (let gy = 0; gy < canvas.height; gy += 30) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvas.width, gy); ctx.stroke();
+      }
+
+      if (bpBgImgObj) {
+        ctx.drawImage(bpBgImgObj, 0, 0, canvas.width, canvas.height);
+      }
+
+      bpShapes.forEach(s => {
+        ctx.strokeStyle = s.color || '#0f172a';
+        ctx.fillStyle = s.color || '#0f172a';
+        ctx.lineWidth = 3;
+        if (s.type === 'line') {
+          ctx.beginPath();
+          ctx.moveTo(s.x1, s.y1);
+          ctx.lineTo(s.x2, s.y2);
+          ctx.stroke();
+        } else if (s.type === 'rect') {
+          ctx.strokeRect(s.x, s.y, s.w, s.h);
+        } else if (s.type === 'text') {
+          ctx.font = 'bold 14px Inter, sans-serif';
+          ctx.fillText(s.text, s.x, s.y);
+        }
+      });
+    }
+
+    function uploadBlueprintBackground(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        bpBgImageDataUrl = e.target.result;
+        const img = new Image();
+        img.onload = () => {
+          bpBgImgObj = img;
+          redrawBlueprintCanvas();
+          saveBlueprintChanges(true);
+        };
+        img.src = bpBgImageDataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function undoBlueprintShape() {
+      bpShapes.pop();
+      redrawBlueprintCanvas();
+    }
+
+    function saveBlueprintChanges(silent = false) {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      if (!p) return;
+      p.blueprintShapes = JSON.parse(JSON.stringify(bpShapes));
+      p.blueprintBgDataUrl = bpBgImageDataUrl;
+      saveAppState();
+      if (!silent) alert('Bouwtekening en wijzigingen zijn veilig opgeslagen!');
+    }
+
+    function toggleRiskChecked(projId, riskId) {
+      const p = appState.projects.find(x => x.id === projId);
+      const r = p && p.risks.find(x => x.id === riskId);
+      if (r) {
+        r.checked = !r.checked;
+        saveAppState();
+        renderActiveProjectDetail();
+      }
+    }
+
+    function promoteRiskToPhase0(projId, riskId) {
+      const p = appState.projects.find(x => x.id === projId);
+      const r = p && p.risks.find(x => x.id === riskId);
+      if (!p || !r) return;
+      p.steps.unshift({
+        id: 'st-rk-' + Date.now(),
+        phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
+        title: `Offerte-eis controleren: ${r.title}`,
+        date: new Date().toISOString().split('T')[0],
+        assignee: 'Geert',
+        note: r.action,
+        done: false
+      });
+      saveAppState();
+      switchProjectSubTab('planning');
+      renderActiveProjectDetail();
+    }
+
+    function openAddRiskModal() {
+      document.getElementById('add-risk-modal').classList.remove('hidden');
+    }
+
+    function saveNewRiskItem() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      const title = document.getElementById('rk-title').value.trim();
+      const action = document.getElementById('rk-action').value.trim();
+      if (!p || !title) return alert('Vul een risico in.');
+      p.risks.push({ id: 'rk-' + Date.now(), title, action, checked: false });
+      appState.lessons.unshift({
+        id: 'les-' + Date.now(),
+        project: p.title,
+        title,
+        impact: 'Vastgelegd tijdens projectvoorbereiding.',
+        rule: action
+      });
+      document.getElementById('rk-title').value = '';
+      document.getElementById('rk-action').value = '';
+      closeModal('add-risk-modal');
+      saveAppState();
+      renderActiveProjectDetail();
+    }
+
+    function openLessonsModal() {
+      const container = document.getElementById('lessons-list-container');
+      container.innerHTML = appState.lessons.map(l => `
+        <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/60 space-y-1.5">
+          <span class="text-[11px] font-bold uppercase text-amber-800">${escapeHtml(l.project)}</span>
+          <h4 class="font-extrabold text-sm text-slate-900">${escapeHtml(l.title)}</h4>
+          <p class="text-xs text-slate-600">${escapeHtml(l.impact)}</p>
+          <p class="text-xs font-semibold text-emerald-900 bg-emerald-100/80 px-3 py-1.5 rounded-xl mt-1">✅ Standaard Offerte-eis: ${escapeHtml(l.rule)}</p>
+        </div>
+      `).join('');
+      document.getElementById('lessons-modal').classList.remove('hidden');
+    }
+
+    function openSmartWizardModal() {
+      document.getElementById('new-project-modal').classList.remove('hidden');
+    }
+
+    function openNewProjectModal() {
+      document.getElementById('new-project-modal').classList.remove('hidden');
+    }
+
+    function createSmartProject() {
+      const title = document.getElementById('np-title').value.trim();
+      const room = document.getElementById('np-room').value.trim() || 'Algemeen';
+      const type = document.getElementById('np-type').value;
+      const desc = document.getElementById('np-desc').value.trim() || 'Nieuw verbouwingsproject';
+      if (!title) return alert('Vul een projectnaam in.');
+
+      const today = new Date().toISOString().split('T')[0];
+      const steps = [
+        { id: 's1-' + Date.now(), phase: 'Fase 0: Voorbereiding, Offerte & Sloop', title: 'Steekproef & inspectie onderliggende constructie vóór tekenen offerte', date: today, assignee: 'Geert', note: 'Les uit Yoga Studio: leg verborgen constructies vooraf schriftelijk vast.', done: false },
+        { id: 's2-' + Date.now(), phase: 'Fase 1: Constructie & Ondergrond', title: 'Ruimte vrijmaken, sloopwerk uitvoeren en ondergrond voorbereiden', date: today, assignee: 'Aannemer', note: '', done: false },
+        { id: 's3-' + Date.now(), phase: 'Fase 3: Opbouw & Afwerking', title: 'Nieuwe afwerking plaatsen en opleverronde lopen', date: today, assignee: 'Geert & Aannemer', note: '', done: false }
+      ];
+
+      if (type === 'vloer') {
+        steps.splice(2, 0, { id: 'sv-' + Date.now(), phase: 'Fase 2: Installaties & Droogtijden', title: 'Primer & egaline aanbrengen + CM-restvochtmeting', date: today, assignee: 'Vloerenlegger', note: 'Minimaal 24-48 uur droogtijd aanhouden.', done: false });
+      }
+
+      const inheritedRisks = appState.lessons.map((l, idx) => ({
+        id: 'inh-' + Date.now() + '-' + idx,
+        title: l.title,
+        action: l.rule,
+        checked: false
+      }));
+
+      appState.projects.unshift({
+        id: 'proj-' + Date.now(),
+        title,
+        room,
+        budget: 'Offerte nog vast te stellen',
+        description: desc,
+        steps,
+        photos: [],
+        risks: inheritedRisks,
+        blueprintShapes: [],
+        blueprintBgDataUrl: null
+      });
+
+      document.getElementById('np-title').value = '';
+      document.getElementById('np-desc').value = '';
+      closeModal('new-project-modal');
+      saveAppState();
+      renderProjectsGrid();
+    }
+
+    function renderEquipment() {
+      const grid = document.getElementById('equipment-grid');
+      grid.innerHTML = appState.equipment.map(eq => `
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold text-emerald-600">${escapeHtml(eq.dept)}</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${escapeHtml(eq.status)}</span>
+          </div>
+          <h3 class="font-extrabold text-sm text-slate-900">${escapeHtml(eq.name)}</h3>
+          <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${escapeHtml(eq.nextDate)}</strong></p>
+        </div>
+      `).join('');
+    }
+
+    function openNewEquipmentModal() {
+      document.getElementById('new-equip-modal').classList.remove('hidden');
+    }
+
+    function saveNewEquipment() {
+      const name = document.getElementById('eq-name').value.trim();
+      if (!name) return;
+      appState.equipment.unshift({
+        id: 'eq-' + Date.now(),
+        name,
+        dept: document.getElementById('eq-dept').value.trim() || 'Fitness',
+        nextDate: document.getElementById('eq-next').value || '2026-12-31',
+        status: 'Operationeel'
+      });
+      closeModal('new-equip-modal');
+      saveAppState();
+      renderEquipment();
+    }
+
+    function renderTeam() {
+      const grid = document.getElementById('team-grid');
+      grid.innerHTML = appState.team.map(m => `
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
+          <h3 class="font-extrabold text-base text-slate-900">👤 ${escapeHtml(m.name)}</h3>
+          <p class="text-xs font-semibold text-emerald-700">${escapeHtml(m.role)}</p>
+          <p class="text-xs text-slate-500">🕒 ${escapeHtml(m.shift)}</p>
+        </div>
+      `).join('');
+    }
+
+    function openAddMemberModal() {
+      document.getElementById('add-member-modal').classList.remove('hidden');
+    }
+
+    function saveNewMember() {
+      const name = document.getElementById('tm-name').value.trim();
+      if (!name) return;
+      appState.team.push({
+        id: 'tm-' + Date.now(),
+        name,
+        role: document.getElementById('tm-role').value.trim() || 'Technische Dienst',
+        shift: document.getElementById('tm-shift').value.trim() || 'Flexibel'
+      });
+      closeModal('add-member-modal');
+      saveAppState();
+      renderTeam();
+    }
+
+    function exportBackupJson() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TREE11-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function importBackupJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          appState = { ...appState, ...data };
+          saveAppState();
+          renderAll();
+          alert('Backup succesvol hersteld!');
+        } catch (err) {
+          alert('Ongeldig backupbestand.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function updateCloudBadge() {
+      const badge = document.getElementById('cloud-status-badge');
+      if (appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
+        badge.textContent = '☁️ Cloud verbonden';
+        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/40';
+      } else {
+        badge.textContent = 'Lokale opslag';
+        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+      }
+    }
+
+    function openCloudSyncModal() {
+      document.getElementById('sb-url').value = appState.cloudConfig.url || '';
+      document.getElementById('sb-key').value = appState.cloudConfig.key || '';
+      document.getElementById('cloud-sync-modal').classList.remove('hidden');
+    }
+
+    async function saveCloudConfigAndPush() {
+      appState.cloudConfig = {
+        url: document.getElementById('sb-url').value.trim().replace(/\/$/, ''),
+        key: document.getElementById('sb-key').value.trim()
+      };
+      saveAppState(false);
+      await pushToCloudSilent(true);
+      closeModal('cloud-sync-modal');
+    }
+
+    async function pushToCloudSilent(showAlert = false) {
+      const cfg = appState.cloudConfig || {};
+      const cleanUrl = (cfg.url || '').trim().replace(/\/+$/, '');
+      const cleanKey = (cfg.key || '').trim();
+      if (!cleanUrl || !cleanKey) return;
+
+      const headers = buildSupabaseHeaders(cleanKey);
+
+      try {
+        const res = await fetch(`${cleanUrl}/rest/v1/tree11_state`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ id: 'main', payload: appState })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText || 'Onbekende fout'}`);
+        }
+
+        if (showAlert) {
+          alert('Gegevens zijn gesynchroniseerd naar de Cloud!');
+        }
+      } catch (err) {
+        if (showAlert) {
+          alert(`Synchronisatie mislukt: ${err.message}`);
+        }
+      }
+    }
+
+    async function pullFromCloud() {
+      const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
+      const key = document.getElementById('sb-key').value.trim();
+      if (!url || !key) return alert('Vul eerst de Supabase URL en Key in.');
+      try {
+        const res = await fetch(`${url}/rest/v1/tree11_state?id=eq.main&select=payload`, {
+          headers: buildSupabaseHeaders(key)
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const rows = await res.json();
+        if (rows && rows[0] && rows[0].payload) {
+          appState = { ...rows[0].payload, cloudConfig: { url, key } };
+          saveAppState(false);
+          renderAll();
+          closeModal('cloud-sync-modal');
+          alert('Laatste gegevens uit de Cloud opgehaald!');
+        } else {
+          alert('Nog geen opgeslagen gegevens gevonden in de Cloud.');
+        }
+      } catch (e) {
+        alert(`Ophalen uit Cloud mislukt: ${e.message}`);
+      }
+    }
+
+    loadAppState();
+  </script>
+</body>
+</html>
