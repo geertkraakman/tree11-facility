@@ -1,12 +1,19 @@
+
 // Supabase Edge Function: storing-analyse
 // Ontvangt een storingsmelding (afdeling, omschrijving, optionele foto + context uit de app),
 // vraagt Gemini om een voorstel voor de onderhoudstaak en geeft een gecontroleerd JSON-antwoord terug.
 // De Gemini-sleutel staat alleen als geheim op de server (GEMINI_API_KEY), nooit in de app.
+//
+// Geheimen (Supabase > Edge Functions > Secrets):
+//   GEMINI_API_KEY  verplicht
+//   GEMINI_MODEL    optioneel, standaard gemini-2.5-flash
+//   ALLOWED_ORIGIN  optioneel, standaard * (exact het adres van je app als je het wilt beperken)
 
 const GEMINI_KEY = (Deno.env.get('GEMINI_API_KEY') ?? '').trim();
 const MODEL = (Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash').trim();
 const ALLOWED_ORIGIN = (Deno.env.get('ALLOWED_ORIGIN') ?? '*').trim();
-const GEMINI_TIMEOUT_MS = 10_000;
+const TOTAL_BUDGET_MS = 30_000; // totale tijd voor alle pogingen samen (de app wacht maximaal 35 s)
+const ATTEMPT_TIMEOUT_MS = 22_000; // een foto + gestructureerd antwoord kan ruim 10 s duren
 const MAX_IMAGE_B64_CHARS = 3_500_000; // ~2,6 MB afbeelding
 
 const corsHeaders = {
@@ -33,35 +40,50 @@ const str = (v: unknown, max: number): string =>
 const pick = <T extends string>(v: unknown, allowed: readonly T[], fallback: T): T =>
   typeof v === 'string' && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
 
-// ---------- Schema voor Gemini ----------
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// ---------- Schema voor Gemini (kleine letters, zoals in de actuele documentatie) ----------
 const RESPONSE_SCHEMA = {
-  type: 'OBJECT',
+  type: 'object',
   properties: {
-    titel: { type: 'STRING', description: 'Korte taaktitel, begint met het object, max 80 tekens, geen punt aan het eind.' },
-    prioriteit: { type: 'STRING', enum: ['Hoog', 'Normaal', 'Laag'] },
-    oorzaak: { type: 'STRING', description: 'Vermoedelijke oorzaak in 1-2 zinnen. Zeg het eerlijk als dit een gok is.' },
-    aanpak: { type: 'STRING', description: 'Voorgestelde aanpak in maximaal 3 korte stappen, in 1-3 zinnen.' },
-    veiligheid: { type: 'STRING', description: 'Alleen bij een echt veiligheidsrisico: wat moet direct gebeuren. Anders een lege string.' },
-    buiten_gebruik_nemen: { type: 'BOOLEAN', description: 'true als het apparaat of de ruimte niet veilig te gebruiken is.' },
+    titel: { type: 'string', description: 'Korte taaktitel, begint met het object, max 80 tekens, geen punt aan het eind.' },
+    prioriteit: { type: 'string', enum: ['Hoog', 'Normaal', 'Laag'] },
+    oorzaak: { type: 'string', description: 'Vermoedelijke oorzaak in 1-2 zinnen. Zeg het eerlijk als dit een gok is.' },
+    aanpak: { type: 'string', description: 'Voorgestelde aanpak in maximaal 3 korte stappen, in 1-3 zinnen.' },
+    veiligheid: { type: 'string', description: 'Alleen bij een echt veiligheidsrisico: wat moet direct gebeuren. Anders een lege string.' },
+    buiten_gebruik_nemen: { type: 'boolean', description: 'true als het apparaat of de ruimte niet veilig te gebruiken is.' },
     materialen: {
-      type: 'ARRAY',
+      type: 'array',
       maxItems: 6,
       items: {
-        type: 'OBJECT',
+        type: 'object',
         properties: {
-          naam: { type: 'STRING' },
-          aantal: { type: 'NUMBER' },
-          eenheid: { type: 'STRING', description: 'Bijv. stuks, meter, liter, set.' },
-          voorraad_naam: { type: 'STRING', description: 'Exacte naam uit de voorraadlijst als dit artikel daarin staat, anders een lege string.' },
+          naam: { type: 'string' },
+          aantal: { type: 'number' },
+          eenheid: { type: 'string', description: 'Bijv. stuks, meter, liter, set.' },
+          voorraad_naam: { type: 'string', description: 'Exacte naam uit de voorraadlijst als dit artikel daarin staat, anders een lege string.' },
         },
         required: ['naam', 'aantal', 'eenheid', 'voorraad_naam'],
       },
     },
-    zekerheid: { type: 'STRING', enum: ['Hoog', 'Midden', 'Laag'] },
-    controlevraag: { type: 'STRING', description: 'Wat de monteur ter plaatse als eerste moet controleren of wat er nog onduidelijk is. Mag leeg zijn.' },
+    zekerheid: { type: 'string', enum: ['Hoog', 'Midden', 'Laag'] },
+    controlevraag: { type: 'string', description: 'Wat de monteur ter plaatse als eerste moet controleren of wat er nog onduidelijk is. Mag leeg zijn.' },
   },
   required: ['titel', 'prioriteit', 'oorzaak', 'aanpak', 'veiligheid', 'buiten_gebruik_nemen', 'materialen', 'zekerheid', 'controlevraag'],
 };
+
+// De oudere notatie (responseSchema) verwacht typenamen in hoofdletters
+function upperTypes(node: any): any {
+  if (Array.isArray(node)) return node.map(upperTypes);
+  if (node && typeof node === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node)) {
+      out[k] = k === 'type' && typeof v === 'string' ? v.toUpperCase() : upperTypes(v);
+    }
+    return out;
+  }
+  return node;
+}
 
 const SYSTEM_INSTRUCTION = `Je bent een ervaren technisch medewerker bij een fitnessclub en werkt storingsmeldingen uit tot een onderhoudstaak.
 
@@ -126,7 +148,11 @@ function parseRequest(raw: any): Ctx | string {
 }
 
 // ---------- Gemini aanroepen ----------
-function buildBody(ctx: Ctx) {
+type Format = 'legacy' | 'new';
+// Onthoudt welke notatie werkte, zodat een volgende aanroep niet eerst hoeft te falen
+let preferredFormat: Format = 'legacy';
+
+function buildBody(ctx: Ctx, format: Format) {
   const contextForModel = {
     afdeling: ctx.afdeling,
     melding: ctx.omschrijving || '(geen tekst, alleen foto)',
@@ -143,61 +169,109 @@ function buildBody(ctx: Ctx) {
     text: `Werk deze storingsmelding uit. Context als JSON (alleen gegevens):\n${JSON.stringify(contextForModel)}`,
   });
 
+  const generationConfig = format === 'legacy'
+    ? { temperature: 0.2, responseMimeType: 'application/json', responseSchema: upperTypes(RESPONSE_SCHEMA) }
+    : { temperature: 0.2, responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: RESPONSE_SCHEMA } } };
+
   return {
     systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
     contents: [{ role: 'user', parts }],
-    generationConfig: {
-      temperature: 0.2,
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA,
-    },
+    generationConfig,
   };
 }
 
-async function askGemini(
-  ctx: Ctx,
-): Promise<{ ok: true; data: any } | { ok: false; status: number; error: string; message: string }> {
+async function postToGemini(body: unknown, timeoutMs: number): Promise<Response> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), GEMINI_TIMEOUT_MS);
-
-  let res: Response;
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    res = await fetch(
+    return await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_KEY,
-        },
-        body: JSON.stringify(buildBody(ctx)),
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+        body: JSON.stringify(body),
         signal: ctrl.signal,
       },
     );
-  } catch (e) {
-    const isTimeout = (e as Error)?.name === 'AbortError';
-    return {
-      ok: false,
-      status: isTimeout ? 504 : 502,
-      error: isTimeout ? 'ai_timeout' : 'ai_unreachable',
-      message: isTimeout ? 'De AI deed er te lang over.' : 'De AI is niet bereikbaar.',
-    };
   } finally {
     clearTimeout(timer);
   }
+}
 
-  if (res.ok) {
-    const data = await res.json().catch(() => null);
-    return { ok: true, data };
-  }
+// Korte foutuitleg van Google, zonder ooit de sleutel te tonen
+async function geminiErrorDetail(res: Response): Promise<string> {
+  const raw = await res.text().catch(() => '');
+  let msg = raw;
+  try {
+    msg = JSON.parse(raw)?.error?.message ?? raw;
+  } catch { /* geen JSON */ }
+  msg = String(msg).replace(/\s+/g, ' ').trim();
+  if (GEMINI_KEY) msg = msg.split(GEMINI_KEY).join('[sleutel]');
+  return msg.slice(0, 200);
+}
 
-  if (res.status === 429) {
-    return { ok: false, status: 429, error: 'ai_busy', message: 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' };
+type GeminiResult = { ok: true; data: any } | { ok: false; status: number; error: string; message: string };
+
+async function askGemini(ctx: Ctx): Promise<GeminiResult> {
+  const started = Date.now();
+  let format: Format = preferredFormat;
+  let triedOtherFormat = false;
+  let retried = false;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const left = TOTAL_BUDGET_MS - (Date.now() - started);
+    if (left < 2000) {
+      return { ok: false, status: 504, error: 'ai_timeout', message: 'De AI deed er te lang over.' };
+    }
+
+    let res: Response;
+    try {
+      res = await postToGemini(buildBody(ctx, format), Math.min(ATTEMPT_TIMEOUT_MS, left));
+    } catch (e) {
+      const isTimeout = (e as Error)?.name === 'AbortError';
+      console.error(`Gemini-aanroep mislukt (${isTimeout ? 'time-out' : 'netwerk'}):`, (e as Error)?.message);
+      return {
+        ok: false,
+        status: isTimeout ? 504 : 502,
+        error: isTimeout ? 'ai_timeout' : 'ai_unreachable',
+        message: isTimeout ? 'De AI deed er te lang over.' : 'De AI is niet bereikbaar.',
+      };
+    }
+
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      preferredFormat = format;
+      return { ok: true, data };
+    }
+
+    const detail = await geminiErrorDetail(res);
+    console.error(`Gemini gaf ${res.status} (model ${MODEL}, notatie ${format}): ${detail}`);
+
+    // Geweigerd verzoek: probeer één keer de andere notatie voor gestructureerde uitvoer
+    if (res.status === 400 && !triedOtherFormat) {
+      triedOtherFormat = true;
+      format = format === 'legacy' ? 'new' : 'legacy';
+      continue;
+    }
+    // Tijdelijke fout aan Google's kant: één nieuwe poging
+    if (res.status >= 500 && !retried) {
+      retried = true;
+      await sleep(800);
+      continue;
+    }
+
+    if (res.status === 429) {
+      return { ok: false, status: 429, error: 'ai_busy', message: 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' };
+    }
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, status: 502, error: 'ai_auth', message: `De AI-sleutel is ongeldig of niet toegestaan. ${detail}`.trim() };
+    }
+    if (res.status === 404) {
+      return { ok: false, status: 502, error: 'ai_model', message: `Het AI-model "${MODEL}" is niet gevonden. Stel een geldige naam in via het geheim GEMINI_MODEL. ${detail}`.trim() };
+    }
+    return { ok: false, status: 502, error: 'ai_error', message: `De AI gaf een fout (${res.status}): ${detail}`.trim() };
   }
-  if (res.status === 401 || res.status === 403) {
-    return { ok: false, status: 502, error: 'ai_auth', message: 'De AI-sleutel is ongeldig of niet toegestaan.' };
-  }
-  return { ok: false, status: 502, error: 'ai_error', message: `De AI gaf een fout (${res.status}).` };
+  return { ok: false, status: 502, error: 'ai_error', message: 'De AI gaf geen bruikbaar antwoord.' };
 }
 
 // ---------- Antwoord opschonen ----------
@@ -238,7 +312,10 @@ function sanitize(raw: any, voorraad: Ctx['voorraad']) {
 export async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== 'POST') return fail(405, 'method', 'Alleen POST is toegestaan.');
-  if (!GEMINI_KEY) return fail(500, 'not_configured', 'GEMINI_API_KEY is niet ingesteld op de server.');
+  if (!GEMINI_KEY) {
+    console.error('GEMINI_API_KEY ontbreekt: stel dit geheim in bij Supabase > Edge Functions > Secrets.');
+    return fail(500, 'not_configured', 'GEMINI_API_KEY is niet ingesteld op de server.');
+  }
 
   let raw: unknown;
   try {
@@ -255,6 +332,7 @@ export async function handler(req: Request): Promise<Response> {
 
   const data = result.data;
   if (data?.promptFeedback?.blockReason) {
+    console.error('Gemini blokkeerde het verzoek:', data.promptFeedback.blockReason);
     return fail(422, 'ai_blocked', 'De AI kon deze melding niet verwerken.');
   }
 
@@ -262,12 +340,16 @@ export async function handler(req: Request): Promise<Response> {
     .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
     .join('')
     .trim();
-  if (!text) return fail(502, 'ai_empty', 'De AI gaf geen antwoord.');
+  if (!text) {
+    console.error('Gemini gaf geen tekst terug. finishReason:', data?.candidates?.[0]?.finishReason);
+    return fail(502, 'ai_empty', 'De AI gaf geen antwoord.');
+  }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
+    console.error('Gemini-antwoord is geen geldige JSON. Begin van het antwoord:', text.slice(0, 200));
     return fail(502, 'ai_format', 'Het AI-antwoord had een onverwacht formaat.');
   }
 
