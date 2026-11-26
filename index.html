@@ -2897,7 +2897,11 @@
       if (e && (e.status === 401 || e.status === 403) && !(e.code || '').startsWith('ai_')) return 'Geen toegang tot de AI-functie (controleer de Supabase-sleutel).' + tail;
       if (e && e.code === 'ai_busy') return 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' + tail;
       if (e && e.code === 'ai_blocked') return 'De AI kon deze melding niet verwerken.' + tail;
-      return 'De AI is nu niet bereikbaar.' + tail;
+      // Geen antwoord van de server (netwerk, verkeerd adres of CORS): fetch gooit dan een TypeError
+      if (e && e.name === 'TypeError') return 'Geen verbinding met Supabase gekregen (technisch: ' + e.message + '). Controleer het Supabase-adres in ☁️ Cloud Sync, of de instelling ALLOWED_ORIGIN van de functie.' + tail;
+      // Serverfout: toon de oorzaak zodat die te herstellen is
+      const detail = e && (e.code || e.status) ? ' (' + (String(e.code || '') + (e.status ? ' ' + e.status : '')).trim() + (e.message ? ': ' + String(e.message).slice(0, 240) : '') + ')' : '';
+      return 'De AI is nu niet bereikbaar' + detail + '.' + tail;
     }
 
     // Antwoord van de server nog eens defensief controleren voordat het in het formulier komt
