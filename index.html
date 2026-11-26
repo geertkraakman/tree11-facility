@@ -39,6 +39,15 @@
       transform: scale(0.98);
       background-color: #0f271c;
     }
+
+    /* Telefoon: grotere tikvlakken en geen inzoomen op invoervelden (iOS zoomt bij tekst kleiner dan 16px) */
+    @media (max-width: 639px) {
+      input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]), select, textarea { font-size: 16px !important; }
+      [id$="-modal"] button, [id$="-modal"] select,
+      [id$="-modal"] input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]) { min-height: 44px; }
+      [id$="-modal"] input[type=checkbox] { width: 22px; height: 22px; }
+      #project-subview-blueprint button, #project-subview-blueprint label { min-height: 44px; }
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
@@ -90,54 +99,75 @@
   <!-- HOOFD APPLICATIE -->
   <div id="main-app" class="hidden min-h-screen flex flex-col">
     <!-- TOP BAR (COMPACT & RESPONSIVE) -->
-    <header class="bg-slate-900 text-white z-30 shadow-md">
-      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="w-9 h-9 shrink-0 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-extrabold text-base transition">
+    <header class="relative bg-slate-900 text-white z-30 shadow-md">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0 flex-1 sm:flex-none">
+          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="w-11 h-11 shrink-0 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-extrabold text-sm shadow">
             T11
           </button>
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="font-extrabold text-sm sm:text-lg tracking-tight truncate">TREE11 Facility & Verbouwing</h1>
+              <h1 class="font-extrabold text-sm sm:text-lg tracking-tight truncate">TREE11 Facility<span class="hidden sm:inline"> & Verbouwing</span></h1>
               <span id="cloud-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 whitespace-nowrap">Lokale opslag</span>
             </div>
             <p class="text-[11px] text-slate-400 truncate">Ingelogd als <span id="current-user-label" class="text-emerald-400 font-semibold">Geert</span></p>
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button type="button" onclick="openDepartmentHomeScreen()" class="px-2.5 py-1.5 rounded-lg bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 text-[11px] font-bold border border-emerald-600/40 transition whitespace-nowrap">
-            🌿 8 Afdelingen
+        <!-- Telefoon: menu voor minder gebruikte acties -->
+        <button id="header-more-btn" type="button" onclick="toggleHeaderMenu(event)" aria-haspopup="true" aria-expanded="false" title="Meer acties" class="sm:hidden min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-lg font-bold leading-none">⋯</button>
+
+        <!-- Hoofdacties: op telefoon een rij van 3 grote knoppen onder de titel -->
+        <div class="grid grid-cols-3 gap-1.5 w-full order-last sm:order-none sm:w-auto sm:flex sm:flex-wrap sm:items-center">
+          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="min-h-[44px] px-2.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 text-xs font-bold border border-emerald-600/40 transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+            🌿 <span class="hidden sm:inline">8 </span>Afdelingen
           </button>
-          <button type="button" onclick="openCloudSyncModal()" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-[11px] font-bold transition flex items-center gap-1 whitespace-nowrap">
-            <span>☁️ Cloud Sync</span>
+          <button id="header-fault-btn" type="button" onclick="openFaultModal()" class="min-h-[44px] px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+            🛠️ <span class="sm:hidden">Storing</span><span class="hidden sm:inline">Storing melden</span>
           </button>
-          <button type="button" onclick="exportBackupJson()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition whitespace-nowrap">
-            💾 Backup
+          <button type="button" onclick="openCloudSyncModal()" class="min-h-[44px] px-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+            ☁️ <span class="sm:hidden">Cloud</span><span class="hidden sm:inline">Cloud Sync</span>
           </button>
-          <label class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition cursor-pointer whitespace-nowrap">
-            📂 Herstel
-            <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
-          </label>
-          <button type="button" onclick="logoutUser()" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-[11px] font-semibold border border-rose-500/30 transition whitespace-nowrap">
-            Uitloggen
-          </button>
+
+          <!-- Desktop: overige acties direct zichtbaar -->
+          <div class="hidden sm:flex items-center gap-1.5">
+            <button type="button" onclick="exportBackupJson()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition">
+              💾 Backup
+            </button>
+            <label class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition cursor-pointer whitespace-nowrap">
+              📂 Herstel
+              <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
+            </label>
+            <button type="button" onclick="logoutUser()" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-[11px] font-semibold border border-rose-500/30 transition">
+              Uitloggen
+            </button>
+          </div>
         </div>
+      </div>
+
+      <!-- Telefoon: uitklapmenu -->
+      <div id="header-more-menu" role="menu" class="hidden sm:hidden absolute right-3 top-[58px] w-60 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-1.5 z-40">
+        <button type="button" role="menuitem" onclick="closeHeaderMenu(); exportBackupJson()" class="w-full flex items-center gap-2 text-left px-3.5 min-h-[44px] rounded-xl hover:bg-slate-100 text-sm font-semibold">💾 Backup maken</button>
+        <label role="menuitem" class="w-full flex items-center gap-2 px-3.5 min-h-[44px] rounded-xl hover:bg-slate-100 text-sm font-semibold cursor-pointer">
+          📂 Backup terugzetten
+          <input type="file" accept=".json" onchange="importBackupJson(event); closeHeaderMenu()" class="hidden" />
+        </label>
+        <button type="button" role="menuitem" onclick="closeHeaderMenu(); logoutUser()" class="w-full flex items-center gap-2 text-left px-3.5 min-h-[44px] rounded-xl hover:bg-rose-50 text-sm font-semibold text-rose-700">🚪 Uitloggen</button>
       </div>
 
       <!-- NAVIGATIE TABS -->
       <div id="main-nav-tabs" class="bg-slate-950/60 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 flex gap-1.5 overflow-x-auto">
-          <button id="nav-tasks" type="button" onclick="switchMainTab('tasks')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition tab-active">
+          <button id="nav-tasks" type="button" onclick="switchMainTab('tasks')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-active">
             ✅ Takenlijst & Afdelingen
           </button>
-          <button id="nav-projects" type="button" onclick="switchMainTab('projects')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
+          <button id="nav-projects" type="button" onclick="switchMainTab('projects')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
             🏗️ Projecten & Verbouwing (A-Z)
           </button>
-          <button id="nav-equipment" type="button" onclick="switchMainTab('equipment')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
+          <button id="nav-equipment" type="button" onclick="switchMainTab('equipment')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
             🏋️ Apparatuur & Onderhoud
           </button>
-          <button id="nav-roster" type="button" onclick="switchMainTab('roster')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
+          <button id="nav-roster" type="button" onclick="switchMainTab('roster')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
             📅 Dienstrooster & Team
           </button>
         </div>
@@ -193,6 +223,9 @@
             </div>
 
             <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="openFaultModal()" class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition">
+                🛠️ Storing melden
+              </button>
               <button type="button" onclick="openNewTaskModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
                 + Nieuwe Taak
               </button>
@@ -340,10 +373,10 @@
 
             <div class="flex flex-wrap items-center gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <span class="text-xs font-bold text-slate-600 mr-1">Gereedschap:</span>
-              <button onclick="setBpTool('line')" id="bptool-line" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white">📏 Lijn / Wand</button>
-              <button onclick="setBpTool('rect')" id="bptool-rect" class="px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">⬜ Vlak / Object</button>
-              <button onclick="setBpTool('text')" id="bptool-text" class="px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">🔤 Tekst / Maat</button>
-              <input id="bp-color" type="color" value="#dc2626" class="w-8 h-7 rounded cursor-pointer border border-slate-300" title="Kleur kiezen" />
+              <button onclick="setBpTool('line')" id="bptool-line" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-slate-900 text-white">📏 Lijn / Wand</button>
+              <button onclick="setBpTool('rect')" id="bptool-rect" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">⬜ Vlak / Object</button>
+              <button onclick="setBpTool('text')" id="bptool-text" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">🔤 Tekst / Maat</button>
+              <input id="bp-color" type="color" value="#dc2626" class="w-11 h-11 sm:w-8 sm:h-7 rounded cursor-pointer border border-slate-300" title="Kleur kiezen" />
             </div>
 
             <div class="border-2 border-slate-300 rounded-2xl overflow-hidden bg-white flex justify-center">
@@ -399,87 +432,89 @@
   <!-- ==================== MODALS ==================== -->
 
   <!-- MODAL: TAAK AFRONDEN (VERPLICHTE WERKOMSCHRIJVING & MATERIAALOPGAVE + VOORRAAD + HISTORIE) -->
-  <div id="complete-task-modal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4">
-      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
-        <div>
-          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Taak Afronden & Dossier Vastleggen</span>
-          <h3 id="ct-task-title" class="font-extrabold text-lg text-slate-900 mt-0.5"></h3>
+  <div id="complete-task-modal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-xl w-full shadow-2xl max-h-[94vh] sm:max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-start gap-3 border-b border-slate-100 px-5 pt-5 pb-3">
+        <div class="min-w-0">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Taak afronden</span>
+          <h3 id="ct-task-title" class="font-extrabold text-lg text-slate-900 mt-0.5 break-words"></h3>
           <p id="ct-task-meta" class="text-xs text-slate-500"></p>
         </div>
-        <button onclick="cancelCompleteTaskModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+        <button type="button" onclick="cancelCompleteTaskModal()" aria-label="Sluiten" class="shrink-0 min-w-[44px] min-h-[44px] -mr-2 -mt-1 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
       </div>
 
-      <!-- Eerdere verbruikshistorie suggesties voor vergelijkbare taken -->
-      <div id="ct-similar-history" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 space-y-1.5">
-        <div class="text-xs font-extrabold text-[#163828]">💡 Eerdere verbruikshistorie bij vergelijkbare klussen:</div>
-        <div id="ct-similar-history-list" class="space-y-1 text-xs text-slate-700"></div>
-      </div>
+      <div class="px-5 py-4 space-y-4 overflow-y-auto flex-1">
+        <!-- Eerdere verbruikshistorie suggesties voor vergelijkbare taken -->
+        <div id="ct-similar-history" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 space-y-1.5">
+          <div class="text-xs font-extrabold text-[#163828]">💡 Eerder bij vergelijkbare klussen gebruikt:</div>
+          <div id="ct-similar-history-list" class="space-y-1 text-xs text-slate-700"></div>
+        </div>
 
-      <!-- 1. VERPLICHTE WERKOMSCHRIJVING -->
-      <div>
-        <label class="block text-xs font-extrabold text-slate-800 mb-1">
-          1. Werkomschrijving (verplicht) <span class="text-rose-600">*</span>
-        </label>
-        <textarea id="ct-work-desc" rows="3" placeholder="Beschrijf kort en duidelijk wat er is uitgevoerd, vervangen of hersteld (handig voor latere reparaties)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"></textarea>
-      </div>
-
-      <!-- 2. VERPLICHTE MATERIAALOPGAVE -->
-      <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-        <div class="flex items-center justify-between gap-2">
-          <label class="text-xs font-extrabold text-slate-800">
-            2. Materiaalopgave (verplicht) <span class="text-rose-600">*</span>
+        <!-- 1. WERKOMSCHRIJVING -->
+        <div>
+          <label for="ct-work-desc" class="block text-sm font-extrabold text-slate-800 mb-1.5">
+            1. Wat is er gedaan? <span class="text-rose-600">*</span>
           </label>
-          <span class="text-[11px] text-slate-500">Kies voorraad, nieuw materiaal of "Geen materiaal"</span>
+          <textarea id="ct-work-desc" rows="3" placeholder="Wat is uitgevoerd, vervangen of hersteld? (handig voor latere reparaties)" class="w-full px-3.5 py-3 rounded-xl border border-slate-300 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
         </div>
 
-        <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-slate-200 cursor-pointer">
-          <input id="ct-no-material" type="checkbox" onchange="toggleNoMaterialMode()" class="w-4 h-4 accent-[#163828]" />
-          <span class="text-xs font-bold text-slate-800">Geen materiaal verbruikt bij deze taak</span>
-        </label>
-
-        <div id="ct-material-inputs" class="space-y-3">
-          <!-- Voorraadregel toevoegen -->
-          <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Uit voorraad (automatische voorraadmutatie)</div>
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <select id="ct-stock-select" class="sm:col-span-7 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
-              <input id="ct-stock-qty" type="number" min="0.1" step="any" value="1" placeholder="Aantal" class="sm:col-span-3 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-              <button type="button" onclick="addStockUsageRow()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">
-                + Toevoegen
-              </button>
-            </div>
+        <!-- 2. MATERIAAL -->
+        <div class="space-y-3 bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200">
+          <div>
+            <div class="text-sm font-extrabold text-slate-800">2. Materiaal <span class="text-rose-600">*</span></div>
+            <div class="text-[11px] text-slate-500">Kies uit voorraad, voeg nieuw materiaal toe of vink "geen materiaal" aan.</div>
           </div>
 
-          <!-- Nieuw / niet in voorraad materiaal toevoegen -->
-          <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Nieuw / ander materiaal (niet in voorraadlijst)</div>
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-              <input id="ct-new-mat-name" type="text" placeholder="Naam materiaal (bijv. RVS bout M8x40)" class="sm:col-span-5 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-              <input id="ct-new-mat-qty" type="number" min="0.1" step="any" value="1" placeholder="Aantal" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-              <input id="ct-new-mat-unit" type="text" value="stuks" placeholder="Eenheid" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-              <button type="button" onclick="addNewMaterialUsageRow()" class="sm:col-span-3 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold">
-                + Nieuw item
-              </button>
-            </div>
-            <label class="flex items-center gap-2 text-[11px] text-slate-600 pt-0.5 cursor-pointer">
-              <input id="ct-add-to-stock" type="checkbox" checked class="w-3.5 h-3.5 accent-[#163828]" />
-              <span>Ook opnemen in de voorraadlijst voor toekomstig gebruik</span>
-            </label>
-          </div>
+          <label class="flex items-center gap-3 px-3.5 min-h-[52px] rounded-xl bg-white border border-slate-200 cursor-pointer">
+            <input id="ct-no-material" type="checkbox" onchange="toggleNoMaterialMode()" class="w-5 h-5 shrink-0 accent-[#163828]" />
+            <span class="text-sm font-bold text-slate-800">Geen materiaal verbruikt</span>
+          </label>
 
-          <!-- Geselecteerde verbruiksregels -->
-          <div id="ct-selected-materials" class="space-y-1.5"></div>
+          <div id="ct-material-inputs" class="space-y-3">
+            <!-- Uit voorraad -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Uit voorraad (voorraad wordt automatisch bijgewerkt)</div>
+              <div class="grid grid-cols-2 sm:grid-cols-12 gap-2">
+                <select id="ct-stock-select" aria-label="Voorraadartikel" class="col-span-2 sm:col-span-7 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs bg-white"></select>
+                <input id="ct-stock-qty" type="number" inputmode="decimal" min="0.1" step="any" value="1" aria-label="Aantal" placeholder="Aantal" class="col-span-1 sm:col-span-3 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs" />
+                <button type="button" onclick="addStockUsageRow()" class="col-span-1 sm:col-span-2 px-3 min-h-[48px] rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-sm sm:text-xs font-bold">
+                  + Toevoegen
+                </button>
+              </div>
+            </div>
+
+            <!-- Nieuw / niet in voorraad -->
+            <div class="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ander materiaal (niet in de voorraadlijst)</div>
+              <div class="grid grid-cols-2 sm:grid-cols-12 gap-2">
+                <input id="ct-new-mat-name" type="text" aria-label="Naam materiaal" placeholder="Naam (bijv. RVS bout M8x40)" class="col-span-2 sm:col-span-5 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs" />
+                <input id="ct-new-mat-qty" type="number" inputmode="decimal" min="0.1" step="any" value="1" aria-label="Aantal" placeholder="Aantal" class="col-span-1 sm:col-span-2 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs" />
+                <input id="ct-new-mat-unit" type="text" value="stuks" aria-label="Eenheid" placeholder="Eenheid" class="col-span-1 sm:col-span-2 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs" />
+                <button type="button" onclick="addNewMaterialUsageRow()" class="col-span-2 sm:col-span-3 px-3 min-h-[48px] rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm sm:text-xs font-bold">
+                  + Nieuw item
+                </button>
+              </div>
+              <label class="flex items-center gap-2.5 min-h-[44px] text-xs text-slate-600 cursor-pointer">
+                <input id="ct-add-to-stock" type="checkbox" checked class="w-5 h-5 shrink-0 accent-[#163828]" />
+                <span>Ook opnemen in de voorraadlijst voor toekomstig gebruik</span>
+              </label>
+            </div>
+
+            <!-- Gekozen materiaalregels -->
+            <div id="ct-selected-materials" class="space-y-1.5"></div>
+          </div>
         </div>
       </div>
 
-      <p id="ct-error-msg" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></p>
-
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="cancelCompleteTaskModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">Annuleren</button>
-        <button onclick="confirmCompleteTaskWithLog()" class="px-5 py-2.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold shadow">
-          ✓ Taak Afronden & Opslaan
-        </button>
+      <!-- Vaste onderbalk: foutmelding en knoppen blijven altijd zichtbaar -->
+      <div class="px-5 pt-3 pb-4 border-t border-slate-100 bg-white rounded-b-3xl space-y-2">
+        <p id="ct-error-msg" role="alert" class="hidden text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></p>
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <button type="button" onclick="cancelCompleteTaskModal()" class="px-4 min-h-[48px] sm:min-h-0 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm sm:text-xs font-bold">Annuleren</button>
+          <button type="button" onclick="confirmCompleteTaskWithLog()" class="px-5 min-h-[48px] sm:min-h-0 sm:py-2.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-sm sm:text-xs font-bold shadow">
+            ✓ Taak afronden & opslaan
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -560,6 +595,102 @@
       <div class="flex justify-end gap-2 pt-2">
         <button onclick="closeProjectPhotoModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">Annuleren</button>
         <button onclick="handleSaveProjectPhoto()" class="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow">Opslaan & Planning Genereren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEKST OF MAAT OP DE TEKENING -->
+  <div id="bp-text-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 shadow-2xl space-y-3">
+      <h3 class="font-extrabold text-base text-slate-900">🔤 Tekst of maat op de tekening</h3>
+      <input id="bp-text-input" type="text" maxlength="80" placeholder="Bijv. 3,20 m of Elektra hier" onkeydown="if (event.key === 'Enter') { event.preventDefault(); confirmBpText(); }" class="w-full px-3.5 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-sm" />
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <button type="button" onclick="cancelBpText()" class="px-4 min-h-[48px] sm:min-h-0 sm:py-2 rounded-xl bg-slate-100 text-sm sm:text-xs font-bold">Annuleren</button>
+        <button type="button" onclick="confirmBpText()" class="px-5 min-h-[48px] sm:min-h-0 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm sm:text-xs font-bold">Plaatsen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: STORING MELDEN (MET AI-VOORSTEL) -->
+  <div id="fault-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">🛠️ Storing melden</h3>
+        <button type="button" onclick="closeFaultModal()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+      </div>
+
+      <!-- Stap 1: melding invoeren -->
+      <div id="fault-step-input" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+          <select id="fault-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Wat is er aan de hand?</label>
+          <textarea id="fault-desc" rows="3" maxlength="1500" placeholder="Bijv. Loopband 3 piept en schokt bij hoge snelheid" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Foto (optioneel, maar helpt de AI enorm)</label>
+          <input id="fault-photo" type="file" accept="image/*" onchange="handleFaultPhoto(event)" class="block w-full text-xs text-slate-600 file:mr-3 file:px-3 file:py-2 file:rounded-xl file:border-0 file:bg-slate-100 file:text-slate-800 file:font-bold" />
+          <div id="fault-photo-preview" class="hidden mt-2 flex items-center gap-3">
+            <img id="fault-photo-img" alt="Voorbeeld van de foto" class="h-24 rounded-xl object-cover border border-slate-200" />
+            <button type="button" onclick="clearFaultPhoto()" class="text-xs font-bold text-rose-600 hover:underline">Foto verwijderen</button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">De foto wordt alleen voor de analyse naar de AI gestuurd en niet in de app bewaard.</p>
+        </div>
+        <div id="fault-error" class="hidden text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></div>
+        <div class="flex flex-wrap justify-end gap-2 pt-1">
+          <button type="button" onclick="closeFaultModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+          <button type="button" onclick="continueFaultWithoutAI()" class="px-4 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">Zonder AI doorgaan</button>
+          <button type="button" id="fault-analyze-btn" onclick="analyzeFault()" class="px-5 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold disabled:opacity-60 disabled:cursor-wait">🤖 Analyseer met AI</button>
+        </div>
+      </div>
+
+      <!-- Stap 2: voorstel controleren -->
+      <div id="fault-step-review" class="hidden space-y-3">
+        <div id="fault-ai-banner" class="text-xs font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2"></div>
+        <div id="fault-safety" class="hidden text-xs font-bold text-rose-800 bg-rose-50 border border-rose-300 rounded-xl px-3 py-2"></div>
+        <div id="fault-question" class="hidden text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"></div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Taak</label>
+          <input id="fault-title" type="text" maxlength="120" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Prioriteit</label>
+            <select id="fault-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="Normaal">Normaal</option>
+              <option value="Hoog">Hoog / Spoed</option>
+              <option value="Laag">Laag</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+            <input id="fault-dept-label" type="text" readonly class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-600" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
+            <input id="fault-assignee" type="text" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Datum</label>
+            <input id="fault-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Notitie (oorzaak, aanpak, materiaal)</label>
+          <textarea id="fault-notes" rows="6" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+        <div id="fault-materials-box" class="hidden">
+          <div class="text-xs font-bold text-slate-700 mb-1">Verwacht materiaal</div>
+          <div id="fault-materials" class="flex flex-wrap gap-1.5"></div>
+        </div>
+        <div class="flex justify-between gap-2 pt-1">
+          <button type="button" onclick="backToFaultInput()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">← Terug</button>
+          <button type="button" onclick="saveFaultTask()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Taak opslaan</button>
+        </div>
       </div>
     </div>
   </div>
@@ -842,6 +973,14 @@
   </div>
 
   <script>
+    // Kalenderdagen optellen zonder tijdzone/zomertijd-effecten (alles in UTC-middernacht)
+    function addDaysIso(iso, days) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return getLocalTodayIso();
+      const t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) + days * 86400000;
+      return new Date(t).toISOString().split('T')[0];
+    }
+
     function getLocalTodayIso() {
       const now = new Date();
       const offsetMs = now.getTimezoneOffset() * 60000;
@@ -877,6 +1016,8 @@
     let bpTool = 'line';
     let isDrawingBp = false;
     let bpStart = { x: 0, y: 0 };
+    let bpPointerId = null;
+    let bpTextPos = null;
     let bpShapes = [];
     let bpBgImageDataUrl = null;
     let bpBgImgObj = null;
@@ -1325,7 +1466,7 @@
       return `
         <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-emerald-200/70 bg-slate-50/60' : 'border-slate-200 shadow-sm'} flex items-start justify-between gap-3">
           <div class="flex items-start gap-3 flex-1">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-1 w-5 h-5 accent-[#163828] cursor-pointer" />
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-0.5 w-6 h-6 shrink-0 accent-[#163828] cursor-pointer" />
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-bold text-sm ${t.done ? 'line-through text-slate-500' : 'text-slate-900'}">${esc(t.title)}</span>
@@ -1333,7 +1474,7 @@
                 ${t.done ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828]">✓ Afgerond</span>' : ''}
                 ${!t.done && t.priority === 'Hoog' ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔥 Hoog</span>' : ''}
               </div>
-              ${t.notes ? `<p class="text-xs text-slate-600 mt-1">${esc(t.notes)}</p>` : ''}
+              ${t.notes ? `<p class="text-xs text-slate-600 mt-1 whitespace-pre-line">${esc(t.notes)}</p>` : ''}
               ${logHtml}
               <div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
                 <span>👤 ${esc(t.assignee || 'Geert')}</span>
@@ -1341,7 +1482,7 @@
               </div>
             </div>
           </div>
-          <button onclick="deleteTask(${jsArg(t.id)})" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-2 py-1">✕</button>
+          <button onclick="deleteTask(${jsArg(t.id)})" aria-label="Taak verwijderen" class="shrink-0 min-w-[44px] min-h-[44px] -mr-2 -mt-1.5 text-slate-400 hover:text-rose-600 text-base font-bold">✕</button>
         </div>
       `;
     }
@@ -1590,7 +1731,7 @@
               ${m.source === 'voorraad' ? 'Uit voorraad' : (m.addToStock ? 'Nieuw + naar voorraad' : 'Nieuw materiaal')}
             </span>
           </div>
-          <button type="button" onclick="removePendingMaterial(${jsArg(m.id)})" class="text-rose-600 font-bold hover:underline">✕</button>
+          <button type="button" onclick="removePendingMaterial(${jsArg(m.id)})" aria-label="Verwijderen" class="shrink-0 min-w-[44px] min-h-[44px] -my-2 -mr-2 text-rose-600 font-bold text-base">✕</button>
         </div>
       `).join('');
     }
@@ -1757,6 +1898,9 @@
     }
 
     function deleteTask(id) {
+      const task = appState.tasks.find(x => x.id === id);
+      if (!task) return;
+      if (!confirm(`Taak "${task.title}" verwijderen?`)) return;
       appState.tasks = appState.tasks.filter(x => x.id !== id);
       saveAppState();
       renderDepartmentFilters();
@@ -2154,11 +2298,8 @@
           stepCandidates.push(`Situatie op foto's beoordelen & vervolgactie uitzetten (${p.title})`);
         }
 
-        const baseDate = new Date(startDateStr);
         stepCandidates.forEach((stepTitle, idx) => {
-          const d = new Date(baseDate);
-          d.setDate(d.getDate() + idx);
-          const isoDate = d.toISOString().split('T')[0];
+          const isoDate = addDaysIso(startDateStr, idx);
           const smart = detectSmartPhaseAndTip(stepTitle);
 
           p.steps.push({
@@ -2236,31 +2377,35 @@
         redrawBlueprintCanvas();
       }
 
-      canvas.onmousedown = (e) => {
+      const bpPoint = (e) => {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        return {
+          x: (e.clientX - rect.left) * (canvas.width / rect.width),
+          y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        };
+      };
+
+      // Pointer events werken voor muis, vinger en stylus (de oude muis-events deden niets bij slepen op een telefoon)
+      canvas.onpointerdown = (e) => {
+        if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        e.preventDefault();
+        const { x, y } = bpPoint(e);
         const color = document.getElementById('bp-color').value;
 
         if (bpTool === 'text') {
-          const txt = prompt('Typ maatvoering of notitie voor op de tekening:');
-          if (txt) {
-            bpShapes.push({ type: 'text', x, y, text: txt, color });
-            redrawBlueprintCanvas();
-          }
+          openBpTextModal(x, y, color);
           return;
         }
         isDrawingBp = true;
+        bpPointerId = e.pointerId;
         bpStart = { x, y };
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       };
 
-      canvas.onmousemove = (e) => {
-        if (!isDrawingBp) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      canvas.onpointermove = (e) => {
+        if (!isDrawingBp || e.pointerId !== bpPointerId) return;
+        e.preventDefault();
+        const { x, y } = bpPoint(e);
         redrawBlueprintCanvas();
         const ctx = canvas.getContext('2d');
         ctx.strokeStyle = document.getElementById('bp-color').value;
@@ -2275,21 +2420,48 @@
         }
       };
 
-      canvas.onmouseup = (e) => {
-        if (!isDrawingBp) return;
+      const finishBpDraw = (e, commit) => {
+        if (!isDrawingBp || e.pointerId !== bpPointerId) return;
         isDrawingBp = false;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        const color = document.getElementById('bp-color').value;
-
-        if (bpTool === 'line') {
-          bpShapes.push({ type: 'line', x1: bpStart.x, y1: bpStart.y, x2: x, y2: y, color });
-        } else if (bpTool === 'rect') {
-          bpShapes.push({ type: 'rect', x: bpStart.x, y: bpStart.y, w: x - bpStart.x, h: y - bpStart.y, color });
+        bpPointerId = null;
+        try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+        if (commit) {
+          const { x, y } = bpPoint(e);
+          const color = document.getElementById('bp-color').value;
+          // Een los tikje (bijna geen beweging) maakt geen vorm aan
+          if (Math.hypot(x - bpStart.x, y - bpStart.y) >= 4) {
+            if (bpTool === 'line') {
+              bpShapes.push({ type: 'line', x1: bpStart.x, y1: bpStart.y, x2: x, y2: y, color });
+            } else if (bpTool === 'rect') {
+              bpShapes.push({ type: 'rect', x: bpStart.x, y: bpStart.y, w: x - bpStart.x, h: y - bpStart.y, color });
+            }
+          }
         }
         redrawBlueprintCanvas();
       };
+      canvas.onpointerup = (e) => finishBpDraw(e, true);
+      canvas.onpointercancel = (e) => finishBpDraw(e, false);
+    }
+
+    // Tekst/maat plaatsen via een eigen invoerveld (prompt() werkt slecht op telefoons)
+    function openBpTextModal(x, y, color) {
+      bpTextPos = { x, y, color };
+      const input = document.getElementById('bp-text-input');
+      input.value = '';
+      document.getElementById('bp-text-modal').classList.remove('hidden');
+      setTimeout(() => input.focus(), 50);
+    }
+    function cancelBpText() {
+      bpTextPos = null;
+      closeModal('bp-text-modal');
+    }
+    function confirmBpText() {
+      const txt = document.getElementById('bp-text-input').value.trim();
+      if (txt && bpTextPos) {
+        bpShapes.push({ type: 'text', x: bpTextPos.x, y: bpTextPos.y, text: txt, color: bpTextPos.color });
+        redrawBlueprintCanvas();
+      }
+      cancelBpText();
     }
 
     function setBpTool(tool) {
@@ -2297,9 +2469,9 @@
       ['line', 'rect', 'text'].forEach(t => {
         const btn = document.getElementById(`bptool-${t}`);
         if (t === tool) {
-          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white';
+          btn.className = 'px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-slate-900 text-white';
         } else {
-          btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700';
+          btn.className = 'px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700';
         }
       });
     }
@@ -2561,6 +2733,324 @@
       closeModal('add-member-modal');
       saveAppState();
       renderTeam();
+    }
+
+    // ==================== HEADER-MENU, MELDING (TOAST) ====================
+    function toggleHeaderMenu(ev) {
+      if (ev) ev.stopPropagation();
+      const menu = document.getElementById('header-more-menu');
+      const btn = document.getElementById('header-more-btn');
+      const opened = menu.classList.toggle('hidden') === false;
+      btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+    }
+    function closeHeaderMenu() {
+      const menu = document.getElementById('header-more-menu');
+      const btn = document.getElementById('header-more-btn');
+      if (menu) menu.classList.add('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('header-more-menu');
+      if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) closeHeaderMenu();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHeaderMenu(); });
+
+    function showToast(msg) {
+      const el = document.createElement('div');
+      el.setAttribute('role', 'status');
+      el.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] bg-slate-900 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-xl max-w-[90vw] text-center';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2600);
+    }
+
+    // ==================== STORING MELDEN (AI-VOORSTEL VIA GEMINI) ====================
+    // De app praat nooit rechtstreeks met Gemini: de sleutel staat veilig in de Supabase Edge Function.
+    const FAULT_FUNCTION = 'storing-analyse';
+    let faultPhotoDataUrl = '';
+    let faultBusy = false;
+    let faultFromAI = false;
+
+    function showFaultError(msg) {
+      const el = document.getElementById('fault-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+    function clearFaultError() { document.getElementById('fault-error').classList.add('hidden'); }
+
+    function openFaultModal() {
+      const sel = document.getElementById('fault-dept');
+      sel.innerHTML = '<option value="">Kies afdeling…</option>' +
+        appState.departments.map(d => `<option value="${esc(d.name)}">${esc(d.icon)} ${esc(d.name)}</option>`).join('');
+      const onDeptPage = !document.getElementById('view-tasks').classList.contains('hidden');
+      sel.value = (onDeptPage && selectedDeptFilter !== 'ALL') ? selectedDeptFilter : '';
+      document.getElementById('fault-desc').value = '';
+      document.getElementById('fault-photo').value = '';
+      clearFaultPhoto();
+      clearFaultError();
+      setFaultBusy(false);
+      document.getElementById('fault-step-input').classList.remove('hidden');
+      document.getElementById('fault-step-review').classList.add('hidden');
+      document.getElementById('fault-modal').classList.remove('hidden');
+    }
+
+    function closeFaultModal() {
+      faultPhotoDataUrl = '';
+      closeModal('fault-modal');
+    }
+
+    function clearFaultPhoto() {
+      faultPhotoDataUrl = '';
+      const input = document.getElementById('fault-photo');
+      if (input) input.value = '';
+      document.getElementById('fault-photo-img').removeAttribute('src');
+      document.getElementById('fault-photo-preview').classList.add('hidden');
+    }
+
+    // Foto verkleinen: scheelt data, kosten en wachttijd, en de AI heeft geen volle resolutie nodig
+    function handleFaultPhoto(event) {
+      clearFaultError();
+      const file = (event.target.files || [])[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        event.target.value = '';
+        return showFaultError('Kies een afbeelding (foto).');
+      }
+      const objUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        faultPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        URL.revokeObjectURL(objUrl);
+        document.getElementById('fault-photo-img').src = faultPhotoDataUrl;
+        document.getElementById('fault-photo-preview').classList.remove('hidden');
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        event.target.value = '';
+        showFaultError('Deze foto kon niet worden gelezen. Probeer een andere foto.');
+      };
+      img.src = objUrl;
+    }
+
+    function setFaultBusy(busy) {
+      faultBusy = busy;
+      const btn = document.getElementById('fault-analyze-btn');
+      btn.disabled = busy;
+      btn.textContent = busy ? '⏳ AI analyseert…' : '🤖 Analyseer met AI';
+    }
+
+    // Alleen relevante context meesturen (niet de hele database)
+    function buildFaultContext(dept, desc) {
+      const words = desc.toLowerCase().split(/\s+/).filter(w => w.length >= 4);
+      const asMat = (m) => ({ naam: m.name, aantal: m.qty, eenheid: m.unit });
+      const historie = appState.usageHistory
+        .filter(h => !h.noMaterial && Array.isArray(h.materials) && h.materials.length)
+        .filter(h => h.dept === dept || words.some(w => `${h.taskTitle} ${h.workDescription}`.toLowerCase().includes(w)))
+        .slice(0, 6)
+        .map(h => ({ taak: h.taskTitle, afdeling: h.dept, werk: String(h.workDescription || '').slice(0, 200), materialen: h.materials.map(asMat) }));
+      return {
+        voorraad: appState.inventory.slice(0, 80).map(i => ({ naam: i.name, aantal: i.qty, eenheid: i.unit })),
+        historie,
+        apparatuur: appState.equipment.filter(e => e.dept === dept).slice(0, 15).map(e => ({ naam: e.name, status: e.status }))
+      };
+    }
+
+    async function requestFaultProposal(payload) {
+      const cfg = appState.cloudConfig || {};
+      const url = (cfg.url || '').trim().replace(/\/+$/, '');
+      const key = (cfg.key || '').trim();
+      if (!url || !key) { const e = new Error('Geen Supabase-koppeling'); e.code = 'NO_CLOUD'; throw e; }
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 35000);
+      try {
+        const res = await fetch(`${url}/functions/v1/${FAULT_FUNCTION}`, {
+          method: 'POST',
+          headers: cloudHeaders(key),
+          body: JSON.stringify(payload),
+          signal: ctrl.signal
+        });
+        let data = null;
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok || !data || data.error || !data.voorstel) {
+          const e = new Error((data && data.message) || `HTTP ${res.status}`);
+          e.code = (data && data.error) || `HTTP_${res.status}`;
+          e.status = res.status;
+          throw e;
+        }
+        return data.voorstel;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function faultErrorText(e) {
+      const tail = ' Je kunt de melding ook zonder AI invullen.';
+      if (e && e.code === 'NO_CLOUD') return 'De AI is nog niet gekoppeld: vul eerst via ☁️ Cloud Sync je Supabase-gegevens in.' + tail;
+      if (e && e.name === 'AbortError') return 'De AI deed er te lang over.' + tail;
+      if (e && e.status === 404) return 'De AI-functie is nog niet geïnstalleerd in Supabase.' + tail;
+      if (e && (e.status === 401 || e.status === 403) && !(e.code || '').startsWith('ai_')) return 'Geen toegang tot de AI-functie (controleer de Supabase-sleutel).' + tail;
+      if (e && e.code === 'ai_busy') return 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' + tail;
+      if (e && e.code === 'ai_blocked') return 'De AI kon deze melding niet verwerken.' + tail;
+      return 'De AI is nu niet bereikbaar.' + tail;
+    }
+
+    // Antwoord van de server nog eens defensief controleren voordat het in het formulier komt
+    function normalizeFaultProposal(v) {
+      const s = (x, n) => (typeof x === 'string' ? x.trim().slice(0, n) : '');
+      return {
+        titel: s(v && v.titel, 120),
+        prioriteit: ['Hoog', 'Normaal', 'Laag'].includes(v && v.prioriteit) ? v.prioriteit : 'Normaal',
+        oorzaak: s(v && v.oorzaak, 400),
+        aanpak: s(v && v.aanpak, 500),
+        veiligheid: s(v && v.veiligheid, 300),
+        buiten_gebruik_nemen: !!(v && v.buiten_gebruik_nemen),
+        materialen: (Array.isArray(v && v.materialen) ? v.materialen : []).slice(0, 6).map(m => ({
+          naam: s(m && m.naam, 80),
+          aantal: Number(m && m.aantal) > 0 ? Number(m.aantal) : 1,
+          eenheid: s(m && m.eenheid, 20) || 'stuks',
+          voorraad_naam: s(m && m.voorraad_naam, 80)
+        })).filter(m => m.naam),
+        zekerheid: ['Hoog', 'Midden', 'Laag'].includes(v && v.zekerheid) ? v.zekerheid : 'Laag',
+        controlevraag: s(v && v.controlevraag, 300)
+      };
+    }
+
+    async function analyzeFault() {
+      if (faultBusy) return;
+      clearFaultError();
+      const dept = document.getElementById('fault-dept').value;
+      const desc = document.getElementById('fault-desc').value.trim();
+      if (!dept) return showFaultError('Kies eerst de afdeling waar de storing is.');
+      if (!desc && !faultPhotoDataUrl) return showFaultError('Beschrijf de storing of voeg een foto toe.');
+
+      setFaultBusy(true);
+      try {
+        const ctx = buildFaultContext(dept, desc);
+        const proposal = await requestFaultProposal({
+          afdeling: dept,
+          omschrijving: desc,
+          foto: faultPhotoDataUrl || null,
+          ...ctx
+        });
+        const p = normalizeFaultProposal(proposal);
+        if (!p.titel) throw new Error('Leeg voorstel');
+        faultFromAI = true;
+        showFaultReview(dept, desc, p);
+      } catch (e) {
+        console.warn('AI-analyse mislukt:', e);
+        showFaultError(faultErrorText(e));
+      } finally {
+        setFaultBusy(false);
+      }
+    }
+
+    function continueFaultWithoutAI() {
+      clearFaultError();
+      const dept = document.getElementById('fault-dept').value;
+      const desc = document.getElementById('fault-desc').value.trim();
+      if (!dept) return showFaultError('Kies eerst de afdeling waar de storing is.');
+      if (!desc) return showFaultError('Beschrijf de storing om door te gaan.');
+      faultFromAI = false;
+      showFaultReview(dept, desc, null);
+    }
+
+    function showFaultReview(dept, desc, p) {
+      const banner = document.getElementById('fault-ai-banner');
+      const safety = document.getElementById('fault-safety');
+      const question = document.getElementById('fault-question');
+      const matBox = document.getElementById('fault-materials-box');
+      const matList = document.getElementById('fault-materials');
+
+      document.getElementById('fault-dept-label').value = dept;
+      document.getElementById('fault-date').value = getLocalTodayIso();
+      document.getElementById('fault-assignee').value = 'Geert';
+
+      const lines = [`Melding (${currentUser.name}): ${desc || 'zie foto'}`];
+
+      if (p) {
+        banner.textContent = `🤖 AI-voorstel (zekerheid: ${p.zekerheid}). Controleer en pas aan voordat je opslaat.`;
+        banner.className = 'text-xs font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2';
+        document.getElementById('fault-title').value = p.titel;
+        document.getElementById('fault-priority').value = p.prioriteit;
+
+        if (p.oorzaak) lines.push('Vermoedelijke oorzaak: ' + p.oorzaak);
+        if (p.aanpak) lines.push('Aanpak: ' + p.aanpak);
+        if (p.materialen.length) lines.push('Verwacht materiaal: ' + p.materialen.map(m => `${m.aantal} ${m.eenheid} ${m.naam}`).join(', '));
+        if (p.veiligheid) lines.push('⚠️ ' + p.veiligheid);
+        lines.push('🤖 AI-voorstel, controleer ter plaatse.');
+
+        if (p.veiligheid || p.buiten_gebruik_nemen) {
+          safety.textContent = '⚠️ ' + (p.buiten_gebruik_nemen ? 'Neem het apparaat/de ruimte buiten gebruik. ' : '') + p.veiligheid;
+          safety.classList.remove('hidden');
+        } else {
+          safety.classList.add('hidden');
+        }
+
+        if (p.controlevraag) {
+          question.textContent = '🔎 Eerst controleren: ' + p.controlevraag;
+          question.classList.remove('hidden');
+        } else {
+          question.classList.add('hidden');
+        }
+
+        if (p.materialen.length) {
+          matList.innerHTML = p.materialen.map(m => {
+            const stock = m.voorraad_naam ? appState.inventory.find(i => i.name === m.voorraad_naam) : null;
+            const label = stock
+              ? `${esc(m.aantal)} ${esc(m.eenheid)} ${esc(m.naam)} <span class="font-semibold text-emerald-700">· voorraad: ${esc(stock.qty)} ${esc(stock.unit)}${stock.qty < m.aantal ? ' ⚠️ te weinig' : ''}</span>`
+              : `${esc(m.aantal)} ${esc(m.eenheid)} ${esc(m.naam)} <span class="font-semibold text-amber-700">· niet in voorraad</span>`;
+            return `<span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-800">${label}</span>`;
+          }).join('');
+          matBox.classList.remove('hidden');
+        } else {
+          matBox.classList.add('hidden');
+        }
+      } else {
+        banner.textContent = 'Handmatige melding: vul de taak aan en sla op.';
+        banner.className = 'text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2';
+        document.getElementById('fault-title').value = desc.length > 80 ? desc.slice(0, 77) + '…' : desc;
+        document.getElementById('fault-priority').value = 'Normaal';
+        safety.classList.add('hidden');
+        question.classList.add('hidden');
+        matBox.classList.add('hidden');
+      }
+
+      document.getElementById('fault-notes').value = lines.join('\n');
+      document.getElementById('fault-step-input').classList.add('hidden');
+      document.getElementById('fault-step-review').classList.remove('hidden');
+    }
+
+    function backToFaultInput() {
+      document.getElementById('fault-step-review').classList.add('hidden');
+      document.getElementById('fault-step-input').classList.remove('hidden');
+    }
+
+    function saveFaultTask() {
+      const title = document.getElementById('fault-title').value.trim();
+      if (!title) return alert('Vul een taakomschrijving in.');
+      appState.tasks.unshift({
+        id: 't-' + Date.now(),
+        title,
+        dept: document.getElementById('fault-dept-label').value,
+        priority: document.getElementById('fault-priority').value,
+        assignee: document.getElementById('fault-assignee').value.trim() || 'Geert',
+        date: document.getElementById('fault-date').value,
+        notes: document.getElementById('fault-notes').value.trim(),
+        done: false,
+        completionLog: null
+      });
+      closeFaultModal();
+      showToast('✓ Taak aangemaakt');
+      saveAppState();
+      renderDepartmentFilters();
+      renderTasks();
+      renderHome8Tiles();
     }
 
     // ==================== BACKUP & CLOUD SYNC (SUPABASE) ====================
