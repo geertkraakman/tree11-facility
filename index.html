@@ -848,6 +848,20 @@
       return new Date(now.getTime() - offsetMs).toISOString().split('T')[0];
     }
 
+    // ==================== VEILIGHEID: HTML-ESCAPING ====================
+    // Alle gebruikerstekst die in innerHTML terechtkomt gaat door esc().
+    function esc(v) {
+      return String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+    // Veilig argument voor een inline onclick="fn(...)" (string-literal, attribuut-veilig)
+    function jsArg(v) { return esc(JSON.stringify(String(v === null || v === undefined ? '' : v))); }
+    // Alleen echte afbeeldingen als src toestaan
+    function safeImgSrc(src) {
+      return /^data:image\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\/=]+$/.test(src || '') ? src : '';
+    }
+
     // ==================== STATE & STORAGE ====================
     const STORAGE_KEY = 'tree11_facility_master_v4';
     let currentUser = { name: 'Geert', role: 'Beheerder & Technische Dienst' };
@@ -1080,43 +1094,67 @@
       cloudConfig: { url: '', key: '' }
     };
 
+    const clone = (o) => JSON.parse(JSON.stringify(o));
+
+    // Maakt van ruwe data (localStorage, cloud, backup) een complete, geldige state.
+    // Een lege lijst (bijv. alle taken verwijderd) blijft leeg en wordt niet meer door standaarddata vervangen.
+    function normalizeState(saved) {
+      const has = (k) => !!saved && Array.isArray(saved[k]);
+      const list = (k, def) => has(k) ? saved[k] : clone(def);
+      const s = {
+        departments: (has('departments') && saved.departments.length) ? saved.departments : clone(DEFAULT_DEPARTMENTS),
+        tasks: list('tasks', DEFAULT_TASKS),
+        projects: list('projects', DEFAULT_PROJECTS),
+        lessons: list('lessons', DEFAULT_LESSONS),
+        equipment: list('equipment', DEFAULT_EQUIPMENT),
+        team: list('team', DEFAULT_TEAM),
+        inventory: list('inventory', DEFAULT_INVENTORY),
+        usageHistory: list('usageHistory', DEFAULT_USAGE_HISTORY),
+        cloudConfig: (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' },
+        updatedAt: (saved && saved.updatedAt) ? saved.updatedAt : ''
+      };
+      DEFAULT_PROJECTS.forEach(defProj => {
+        if (!s.projects.some(p => p.id === defProj.id)) s.projects.push(clone(defProj));
+      });
+      return s;
+    }
+
     function loadAppState() {
       let saved = null;
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) saved = JSON.parse(raw);
       } catch (e) {}
-
-      appState.departments = (saved && Array.isArray(saved.departments) && saved.departments.length) ? saved.departments : JSON.parse(JSON.stringify(DEFAULT_DEPARTMENTS));
-      appState.tasks = (saved && Array.isArray(saved.tasks) && saved.tasks.length) ? saved.tasks : JSON.parse(JSON.stringify(DEFAULT_TASKS));
-      appState.projects = (saved && Array.isArray(saved.projects) && saved.projects.length) ? saved.projects : JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
-      appState.lessons = (saved && Array.isArray(saved.lessons) && saved.lessons.length) ? saved.lessons : JSON.parse(JSON.stringify(DEFAULT_LESSONS));
-      appState.equipment = (saved && Array.isArray(saved.equipment) && saved.equipment.length) ? saved.equipment : JSON.parse(JSON.stringify(DEFAULT_EQUIPMENT));
-      appState.team = (saved && Array.isArray(saved.team) && saved.team.length) ? saved.team : JSON.parse(JSON.stringify(DEFAULT_TEAM));
-      appState.inventory = (saved && Array.isArray(saved.inventory) && saved.inventory.length) ? saved.inventory : JSON.parse(JSON.stringify(DEFAULT_INVENTORY));
-      appState.usageHistory = (saved && Array.isArray(saved.usageHistory)) ? saved.usageHistory : JSON.parse(JSON.stringify(DEFAULT_USAGE_HISTORY));
-      appState.cloudConfig = (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' };
-
-      DEFAULT_PROJECTS.forEach(defProj => {
-        if (!appState.projects.some(p => p.id === defProj.id)) {
-          appState.projects.push(JSON.parse(JSON.stringify(defProj)));
-        }
-      });
-
+      appState = normalizeState(saved);
       saveAppState(false);
     }
 
+    function showStorageWarning(show) {
+      let el = document.getElementById('storage-warning');
+      if (!show) { if (el) el.remove(); return; }
+      if (el) return;
+      el = document.createElement('div');
+      el.id = 'storage-warning';
+      el.className = 'fixed bottom-3 left-3 right-3 sm:left-auto sm:max-w-sm z-[60] bg-rose-600 text-white text-xs font-semibold p-3 rounded-xl shadow-xl';
+      el.textContent = '⚠️ Opslag vol: je laatste wijzigingen zijn NIET lokaal bewaard. Maak nu een backup (💾) of verwijder oude foto\'s.';
+      document.body.appendChild(el);
+    }
+
+    // pushCloud = true betekent: dit is een echte wijziging door de gebruiker
     function saveAppState(pushCloud = true) {
+      if (pushCloud) appState.updatedAt = new Date().toISOString();
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        showStorageWarning(false);
       } catch (e) {
         console.warn('Opslaglimiet bereikt:', e);
+        showStorageWarning(true);
       }
       updateCloudBadge();
       const histBadge = document.getElementById('home-history-count');
       if (histBadge) histBadge.textContent = appState.usageHistory.length;
       if (pushCloud && appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
-        pushToCloudSilent();
+        scheduleCloudPush();
       }
     }
 
@@ -1205,13 +1243,13 @@
       const eightDepts = appState.departments.slice(0, 8);
       grid.innerHTML = eightDepts.map(d => {
         const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
-        const label = (d.tileLabel || d.name).toUpperCase();
+        const label = esc((d.tileLabel || d.name).toUpperCase());
         return `
           <button
             type="button"
-            onclick="selectDepartmentFromHome('${d.name.replace(/'/g, "\\'")}')"
+            onclick="selectDepartmentFromHome(${jsArg(d.name)})"
             class="t11-dept-tile flex-col gap-1"
-            title="${d.name} — ${openCount} openstaande taken"
+            title="${esc(d.name)} — ${openCount} openstaande taken"
           >
             <span class="font-extrabold text-sm sm:text-base tracking-wide leading-tight">${label}</span>
             <span class="text-[11px] font-semibold text-emerald-200/90">${openCount} open</span>
@@ -1253,9 +1291,9 @@
         const doneCount = deptTasks.filter(t => t.done).length;
         const active = selectedDeptFilter === d.name;
         html += `
-          <button onclick="selectDeptFilter('${d.name.replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${active ? 'bg-[#163828] text-white border-[#163828]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
-            <span>${d.icon}</span>
-            <span>${d.name}</span>
+          <button onclick="selectDeptFilter(${jsArg(d.name)})" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${active ? 'bg-[#163828] text-white border-[#163828]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
+            <span>${esc(d.icon)}</span>
+            <span>${esc(d.name)}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}">${openCount} open · ${doneCount} klaar</span>
           </button>
         `;
@@ -1274,12 +1312,12 @@
       if (t.done && t.completionLog) {
         const mats = t.completionLog.noMaterial
           ? 'Geen materiaal verbruikt'
-          : (t.completionLog.materials || []).map(m => `${m.qty} ${m.unit} ${m.name}`).join(', ');
+          : (t.completionLog.materials || []).map(m => `${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}`).join(', ');
         logHtml = `
           <div class="mt-2 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-1">
-            <div><strong class="text-[#163828]">Werkomschrijving:</strong> ${t.completionLog.workDescription}</div>
+            <div><strong class="text-[#163828]">Werkomschrijving:</strong> ${esc(t.completionLog.workDescription)}</div>
             <div><strong class="text-[#163828]">Materiaal:</strong> ${mats || 'Niet opgegeven'}</div>
-            <div class="text-[11px] text-slate-500">Afgerond door: ${t.completionLog.completedBy || 'Geert'} ${t.completionLog.completedAt ? 'op ' + t.completionLog.completedAt : ''}</div>
+            <div class="text-[11px] text-slate-500">Afgerond door: ${esc(t.completionLog.completedBy || 'Geert')} ${t.completionLog.completedAt ? 'op ' + esc(t.completionLog.completedAt) : ''}</div>
           </div>
         `;
       }
@@ -1287,23 +1325,23 @@
       return `
         <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-emerald-200/70 bg-slate-50/60' : 'border-slate-200 shadow-sm'} flex items-start justify-between gap-3">
           <div class="flex items-start gap-3 flex-1">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle('${t.id}', this)" class="mt-1 w-5 h-5 accent-[#163828] cursor-pointer" />
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-1 w-5 h-5 accent-[#163828] cursor-pointer" />
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-bold text-sm ${t.done ? 'line-through text-slate-500' : 'text-slate-900'}">${t.title}</span>
-                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${t.dept}</span>
+                <span class="font-bold text-sm ${t.done ? 'line-through text-slate-500' : 'text-slate-900'}">${esc(t.title)}</span>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(t.dept)}</span>
                 ${t.done ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828]">✓ Afgerond</span>' : ''}
                 ${!t.done && t.priority === 'Hoog' ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔥 Hoog</span>' : ''}
               </div>
-              ${t.notes ? `<p class="text-xs text-slate-600 mt-1">${t.notes}</p>` : ''}
+              ${t.notes ? `<p class="text-xs text-slate-600 mt-1">${esc(t.notes)}</p>` : ''}
               ${logHtml}
               <div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
-                <span>👤 ${t.assignee || 'Geert'}</span>
-                <span>📅 ${t.date || 'Geen datum'}</span>
+                <span>👤 ${esc(t.assignee || 'Geert')}</span>
+                <span>📅 ${esc(t.date || 'Geen datum')}</span>
               </div>
             </div>
           </div>
-          <button onclick="deleteTask('${t.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-2 py-1">✕</button>
+          <button onclick="deleteTask(${jsArg(t.id)})" class="text-slate-400 hover:text-rose-600 text-xs font-bold px-2 py-1">✕</button>
         </div>
       `;
     }
@@ -1414,7 +1452,7 @@
         return;
       }
       sel.innerHTML = appState.inventory.map(item =>
-        `<option value="${item.id}">${item.name} (voorraad: ${item.qty} ${item.unit})</option>`
+        `<option value="${esc(item.id)}">${esc(item.name)} (voorraad: ${esc(item.qty)} ${esc(item.unit)})</option>`
       ).join('');
     }
 
@@ -1436,9 +1474,9 @@
       }
 
       list.innerHTML = matches.map(m => {
-        const mats = m.materials.map(x => `${x.qty} ${x.unit} ${x.name}`).join(', ');
+        const mats = m.materials.map(x => `${esc(x.qty)} ${esc(x.unit)} ${esc(x.name)}`).join(', ');
         return `<div class="bg-white/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/70">
-          <strong>${m.taskTitle}</strong> (${m.dept}, ${m.date}): <span class="font-semibold text-[#163828]">${mats}</span>
+          <strong>${esc(m.taskTitle)}</strong> (${esc(m.dept)}, ${esc(m.date)}): <span class="font-semibold text-[#163828]">${mats}</span>
         </div>`;
       }).join('');
       box.classList.remove('hidden');
@@ -1547,12 +1585,12 @@
       container.innerHTML = pendingMaterialUsages.map(m => `
         <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-xs">
           <div>
-            <span class="font-bold text-slate-900">${m.qty} ${m.unit} — ${m.name}</span>
+            <span class="font-bold text-slate-900">${esc(m.qty)} ${esc(m.unit)} — ${esc(m.name)}</span>
             <span class="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${m.source === 'voorraad' ? 'bg-emerald-200/70 text-[#163828]' : 'bg-amber-100 text-amber-800'}">
               ${m.source === 'voorraad' ? 'Uit voorraad' : (m.addToStock ? 'Nieuw + naar voorraad' : 'Nieuw materiaal')}
             </span>
           </div>
-          <button type="button" onclick="removePendingMaterial('${m.id}')" class="text-rose-600 font-bold hover:underline">✕</button>
+          <button type="button" onclick="removePendingMaterial(${jsArg(m.id)})" class="text-rose-600 font-bold hover:underline">✕</button>
         </div>
       `).join('');
     }
@@ -1681,12 +1719,12 @@
       invContainer.innerHTML = appState.inventory.map(i => `
         <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white">
           <div>
-            <div class="font-bold text-xs text-slate-900">${i.name}</div>
-            <div class="text-[11px] font-semibold ${i.qty <= 2 ? 'text-rose-600' : 'text-[#163828]'}">Voorraad: ${i.qty} ${i.unit}</div>
+            <div class="font-bold text-xs text-slate-900">${esc(i.name)}</div>
+            <div class="text-[11px] font-semibold ${i.qty <= 2 ? 'text-rose-600' : 'text-[#163828]'}">Voorraad: ${esc(i.qty)} ${esc(i.unit)}</div>
           </div>
           <div class="flex items-center gap-1.5">
-            <button onclick="adjustInventoryStock('${i.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">-</button>
-            <button onclick="adjustInventoryStock('${i.id}', 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">+</button>
+            <button onclick="adjustInventoryStock(${jsArg(i.id)}, -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">-</button>
+            <button onclick="adjustInventoryStock(${jsArg(i.id)}, 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">+</button>
           </div>
         </div>
       `).join('');
@@ -1701,18 +1739,18 @@
         const matsHtml = h.noMaterial
           ? `<span class="text-slate-500 italic">Geen materiaal verbruikt</span>`
           : (h.materials || []).map(m =>
-              `<span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828] font-bold text-[11px] mr-1 mb-1">${m.qty} ${m.unit} ${m.name}</span>`
+              `<span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828] font-bold text-[11px] mr-1 mb-1">${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}</span>`
             ).join('');
 
         return `
           <div class="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-1.5">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="font-extrabold text-xs text-slate-900">${h.taskTitle}</span>
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${h.dept} • ${h.date}</span>
+              <span class="font-extrabold text-xs text-slate-900">${esc(h.taskTitle)}</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(h.dept)} • ${esc(h.date)}</span>
             </div>
-            <p class="text-xs text-slate-600">${h.workDescription}</p>
+            <p class="text-xs text-slate-600">${esc(h.workDescription)}</p>
             <div class="pt-1">${matsHtml}</div>
-            <div class="text-[11px] text-slate-400">Uitgevoerd door: ${h.completedBy || 'Geert'}</div>
+            <div class="text-[11px] text-slate-400">Uitgevoerd door: ${esc(h.completedBy || 'Geert')}</div>
           </div>
         `;
       }).join('');
@@ -1727,7 +1765,7 @@
     }
 
     function populateDeptSelects() {
-      const opts = appState.departments.map(d => `<option value="${d.name}">${d.icon} ${d.name}</option>`).join('');
+      const opts = appState.departments.map(d => `<option value="${esc(d.name)}">${esc(d.icon)} ${esc(d.name)}</option>`).join('');
       document.getElementById('nt-dept').innerHTML = opts;
       document.getElementById('bt-dept').innerHTML = opts;
     }
@@ -1826,15 +1864,15 @@
         const hasDrawing = (p.blueprintShapes && p.blueprintShapes.length > 0) || !!p.blueprintBgDataUrl;
 
         return `
-          <div onclick="openProjectDetail('${p.id}')" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-400 transition cursor-pointer flex flex-col justify-between">
+          <div onclick="openProjectDetail(${jsArg(p.id)})" class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-400 transition cursor-pointer flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between gap-2 mb-3">
                 <span class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl font-bold border border-emerald-100">🏗️</span>
                 <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">${pct}% gereed</span>
               </div>
-              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">${p.room}</span>
-              <h3 class="font-extrabold text-base text-slate-900 mt-0.5">${p.title}</h3>
-              <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">${p.description}</p>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600">${esc(p.room)}</span>
+              <h3 class="font-extrabold text-base text-slate-900 mt-0.5">${esc(p.title)}</h3>
+              <p class="text-xs text-slate-500 mt-1.5 line-clamp-2">${esc(p.description)}</p>
             </div>
 
             <div class="mt-4 pt-3 border-t border-slate-100">
@@ -1893,18 +1931,18 @@
           const phaseSteps = p.steps.filter(s => s.phase === phase);
           return `
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
-              <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg">${phase}</h4>
+              <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg">${esc(phase)}</h4>
               ${phaseSteps.map(s => `
                 <div class="flex items-start justify-between gap-3 p-2.5 rounded-xl border ${s.done ? 'bg-slate-50 border-slate-100 opacity-70' : 'bg-white border-slate-200'}">
                   <div class="flex items-start gap-3">
-                    <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleProjectStep('${p.id}', '${s.id}')" class="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer" />
+                    <input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleProjectStep(${jsArg(p.id)}, ${jsArg(s.id)})" class="mt-1 w-4 h-4 accent-emerald-600 cursor-pointer" />
                     <div>
-                      <div class="font-bold text-sm ${s.done ? 'line-through text-slate-400' : 'text-slate-900'}">${s.title}</div>
-                      ${s.note ? `<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 mt-1">💡 ${s.note}</p>` : ''}
-                      <div class="text-[11px] text-slate-400 mt-1">👤 ${s.assignee} • 📅 ${s.date}</div>
+                      <div class="font-bold text-sm ${s.done ? 'line-through text-slate-400' : 'text-slate-900'}">${esc(s.title)}</div>
+                      ${s.note ? `<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 mt-1">💡 ${esc(s.note)}</p>` : ''}
+                      <div class="text-[11px] text-slate-400 mt-1">👤 ${esc(s.assignee)} • 📅 ${esc(s.date)}</div>
                     </div>
                   </div>
-                  <button onclick="deleteProjectStep('${p.id}', '${s.id}')" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
+                  <button onclick="deleteProjectStep(${jsArg(p.id)}, ${jsArg(s.id)})" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
                 </div>
               `).join('')}
             </div>
@@ -1918,12 +1956,12 @@
       } else {
         photosGrid.innerHTML = p.photos.map(ph => `
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
-            <img src="${ph.dataUrl}" onclick="openLightbox('${ph.dataUrl}')" class="w-full h-48 object-cover cursor-zoom-in bg-slate-100" />
+            <img src="${esc(safeImgSrc(ph.dataUrl))}" onclick="openLightbox(this.src)" class="w-full h-48 object-cover cursor-zoom-in bg-slate-100" />
             <div class="p-3.5 flex-1 flex flex-col justify-between">
-              <p class="text-xs font-semibold text-slate-800">${ph.caption || 'Projectfoto'}</p>
+              <p class="text-xs font-semibold text-slate-800">${esc(ph.caption || 'Projectfoto')}</p>
               <div class="flex justify-between items-center text-[11px] text-slate-400 mt-2 pt-2 border-t border-slate-100">
-                <span>📅 ${ph.date || ''}</span>
-                <button onclick="deleteProjectPhoto('${p.id}', '${ph.id}')" class="text-rose-500 hover:underline font-bold">Verwijderen</button>
+                <span>📅 ${esc(ph.date || '')}</span>
+                <button onclick="deleteProjectPhoto(${jsArg(p.id)}, ${jsArg(ph.id)})" class="text-rose-500 hover:underline font-bold">Verwijderen</button>
               </div>
             </div>
           </div>
@@ -1934,13 +1972,13 @@
       risksList.innerHTML = (p.risks || []).map(r => `
         <div class="bg-white p-4 rounded-2xl border ${r.checked ? 'border-emerald-300 bg-emerald-50/30' : 'border-amber-200'} flex items-start justify-between gap-3">
           <div class="flex items-start gap-3">
-            <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="toggleRiskChecked('${p.id}', '${r.id}')" class="mt-1 w-4 h-4 accent-emerald-600" />
+            <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="toggleRiskChecked(${jsArg(p.id)}, ${jsArg(r.id)})" class="mt-1 w-4 h-4 accent-emerald-600" />
             <div>
-              <div class="font-bold text-sm text-slate-900">${r.title}</div>
-              <p class="text-xs text-slate-600 mt-1">${r.action}</p>
+              <div class="font-bold text-sm text-slate-900">${esc(r.title)}</div>
+              <p class="text-xs text-slate-600 mt-1">${esc(r.action)}</p>
             </div>
           </div>
-          <button onclick="promoteRiskToPhase0('${p.id}', '${r.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold whitespace-nowrap">+ Zet in Fase 0</button>
+          <button onclick="promoteRiskToPhase0(${jsArg(p.id)}, ${jsArg(r.id)})" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold whitespace-nowrap">+ Zet in Fase 0</button>
         </div>
       `).join('');
     }
@@ -2400,10 +2438,10 @@
       const container = document.getElementById('lessons-list-container');
       container.innerHTML = appState.lessons.map(l => `
         <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/60 space-y-1.5">
-          <span class="text-[11px] font-bold uppercase text-amber-800">${l.project}</span>
-          <h4 class="font-extrabold text-sm text-slate-900">${l.title}</h4>
-          <p class="text-xs text-slate-600">${l.impact}</p>
-          <p class="text-xs font-semibold text-emerald-900 bg-emerald-100/80 px-3 py-1.5 rounded-xl mt-1">✅ Standaard Offerte-eis: ${l.rule}</p>
+          <span class="text-[11px] font-bold uppercase text-amber-800">${esc(l.project)}</span>
+          <h4 class="font-extrabold text-sm text-slate-900">${esc(l.title)}</h4>
+          <p class="text-xs text-slate-600">${esc(l.impact)}</p>
+          <p class="text-xs font-semibold text-emerald-900 bg-emerald-100/80 px-3 py-1.5 rounded-xl mt-1">✅ Standaard Offerte-eis: ${esc(l.rule)}</p>
         </div>
       `).join('');
       document.getElementById('lessons-modal').classList.remove('hidden');
@@ -2468,11 +2506,11 @@
       grid.innerHTML = appState.equipment.map(eq => `
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-bold text-emerald-600">${eq.dept}</span>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${eq.status}</span>
+            <span class="text-xs font-bold text-emerald-600">${esc(eq.dept)}</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(eq.status)}</span>
           </div>
-          <h3 class="font-extrabold text-sm text-slate-900">${eq.name}</h3>
-          <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${eq.nextDate}</strong></p>
+          <h3 class="font-extrabold text-sm text-slate-900">${esc(eq.name)}</h3>
+          <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${esc(eq.nextDate)}</strong></p>
         </div>
       `).join('');
     }
@@ -2500,9 +2538,9 @@
       const grid = document.getElementById('team-grid');
       grid.innerHTML = appState.team.map(m => `
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-1.5">
-          <h3 class="font-extrabold text-base text-slate-900">👤 ${m.name}</h3>
-          <p class="text-xs font-semibold text-emerald-700">${m.role}</p>
-          <p class="text-xs text-slate-500">🕒 ${m.shift}</p>
+          <h3 class="font-extrabold text-base text-slate-900">👤 ${esc(m.name)}</h3>
+          <p class="text-xs font-semibold text-emerald-700">${esc(m.role)}</p>
+          <p class="text-xs text-slate-500">🕒 ${esc(m.shift)}</p>
         </div>
       `).join('');
     }
@@ -2527,12 +2565,15 @@
 
     // ==================== BACKUP & CLOUD SYNC (SUPABASE) ====================
     function exportBackupJson() {
-      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      // De Supabase-sleutel hoort niet in een backupbestand
+      const { cloudConfig, ...data } = appState;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `TREE11-backup-${getLocalTodayIso()}.json`;
       a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function importBackupJson(event) {
@@ -2542,8 +2583,11 @@
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (!data || typeof data !== 'object') throw new Error('Ongeldige structuur');
-          appState = { ...appState, ...data };
+          if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Ongeldige structuur');
+          const known = ['departments', 'tasks', 'projects', 'lessons', 'equipment', 'team', 'inventory', 'usageHistory'];
+          if (!known.some(k => Array.isArray(data[k]))) throw new Error('Geen TREE11-data gevonden');
+          if (!confirm('Backup herstellen? Je huidige gegevens worden vervangen.')) return;
+          appState = normalizeState({ ...data, cloudConfig: appState.cloudConfig });
           saveAppState();
           renderAll();
           alert('Backup succesvol hersteld!');
@@ -2552,11 +2596,26 @@
         }
       };
       reader.readAsText(file);
+      event.target.value = '';
     }
+
+    let cloudStatus = 'idle'; // idle | ok | error
+    let cloudPushTimer = null;
+    let cloudPushing = false;
+    let cloudPushQueued = false;
+    const LAST_SYNC_KEY = 'tree11_last_cloud_sync';
+
+    function getLastSync() { try { return localStorage.getItem(LAST_SYNC_KEY) || ''; } catch (e) { return ''; } }
+    function setLastSync(v) { try { localStorage.setItem(LAST_SYNC_KEY, v || ''); } catch (e) {} }
 
     function updateCloudBadge() {
       const badge = document.getElementById('cloud-status-badge');
-      if (appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key) {
+      if (!badge) return;
+      const connected = appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key;
+      if (connected && cloudStatus === 'error') {
+        badge.textContent = '⚠️ Sync mislukt';
+        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40';
+      } else if (connected) {
         badge.textContent = '☁️ Cloud verbonden';
         badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/40';
       } else {
@@ -2571,9 +2630,32 @@
       document.getElementById('cloud-sync-modal').classList.remove('hidden');
     }
 
+    function cloudHeaders(key, extra) {
+      const h = Object.assign({ 'apikey': key, 'Content-Type': 'application/json' }, extra || {});
+      if (key.startsWith('eyJ')) h['Authorization'] = `Bearer ${key}`;
+      return h;
+    }
+
+    // Haalt de cloud-rij op. metaOnly = alleen het tijdstip van de laatste wijziging (licht)
+    async function fetchCloudRow(url, key, metaOnly) {
+      const select = encodeURIComponent(metaOnly ? 'updatedAt:payload->>updatedAt' : 'payload');
+      const res = await fetch(`${url}/rest/v1/tree11_state?id=eq.main&select=${select}`, { headers: cloudHeaders(key) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text() || 'Onbekende fout'}`);
+      const rows = await res.json();
+      if (!Array.isArray(rows) || !rows[0]) return null;
+      return metaOnly ? { updatedAt: rows[0].updatedAt || '' } : { payload: rows[0].payload, updatedAt: (rows[0].payload && rows[0].payload.updatedAt) || '' };
+    }
+
+    function applyRemotePayload(payload) {
+      appState = normalizeState({ ...payload, cloudConfig: appState.cloudConfig });
+      setLastSync(appState.updatedAt);
+      saveAppState(false);
+      renderAll();
+    }
+
     async function saveCloudConfigAndPush() {
       appState.cloudConfig = {
-        url: document.getElementById('sb-url').value.trim().replace(/\/$/, ''),
+        url: document.getElementById('sb-url').value.trim().replace(/\/+$/, ''),
         key: document.getElementById('sb-key').value.trim()
       };
       saveAppState(false);
@@ -2581,71 +2663,121 @@
       closeModal('cloud-sync-modal');
     }
 
+    // Wijzigingen worden gebundeld: pas 2 seconden na de laatste wijziging naar de cloud
+    function scheduleCloudPush() {
+      clearTimeout(cloudPushTimer);
+      cloudPushTimer = setTimeout(() => { cloudPushTimer = null; pushToCloudSilent(false); }, 2000);
+    }
+
     async function pushToCloudSilent(showAlert = false) {
       const cfg = appState.cloudConfig || {};
       const cleanUrl = (cfg.url || '').trim().replace(/\/+$/, '');
       const cleanKey = (cfg.key || '').trim();
       if (!cleanUrl || !cleanKey) return;
-
-      const headers = {
-        'apikey': cleanKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      };
-      if (cleanKey.startsWith('eyJ')) {
-        headers['Authorization'] = `Bearer ${cleanKey}`;
-      }
+      if (cloudPushing) { cloudPushQueued = true; return; }
+      cloudPushing = true;
 
       try {
+        // Conflictcontrole: is de cloud intussen door iemand anders gewijzigd?
+        const remote = await fetchCloudRow(cleanUrl, cleanKey, true);
+        if (remote && remote.updatedAt && remote.updatedAt > getLastSync()) {
+          const takeCloud = confirm(
+            'In de cloud staan nieuwere gegevens (gewijzigd op een ander apparaat of door een collega).\n\n' +
+            'OK = cloud-versie ophalen (jouw lokale wijzigingen gaan verloren)\n' +
+            'Annuleren = jouw versie toch opslaan (de cloud-versie wordt overschreven)'
+          );
+          if (takeCloud) {
+            const full = await fetchCloudRow(cleanUrl, cleanKey, false);
+            if (full && full.payload) {
+              applyRemotePayload(full.payload);
+              cloudStatus = 'ok';
+              updateCloudBadge();
+              return;
+            }
+          }
+        }
+
+        if (!appState.updatedAt) appState.updatedAt = new Date().toISOString();
+        const { cloudConfig, ...payload } = appState; // sleutel niet mee de cloud in
+
         const res = await fetch(`${cleanUrl}/rest/v1/tree11_state`, {
           method: 'POST',
-          headers,
-          body: JSON.stringify({ id: 'main', payload: appState })
+          headers: cloudHeaders(cleanKey, { 'Prefer': 'resolution=merge-duplicates' }),
+          body: JSON.stringify({ id: 'main', payload })
         });
-
         if (!res.ok) {
           const errText = await res.text();
           throw new Error(`HTTP ${res.status}: ${errText || 'Onbekende fout'}`);
         }
-
-        if (showAlert) {
-          alert('Gegevens zijn gesynchroniseerd naar de Cloud!');
-        }
+        setLastSync(payload.updatedAt);
+        cloudStatus = 'ok';
+        if (showAlert) alert('Gegevens zijn gesynchroniseerd naar de Cloud!');
       } catch (err) {
-        if (showAlert) {
-          alert(`Synchronisatie mislukt: ${err.message}`);
-        }
+        cloudStatus = 'error';
+        console.warn('Cloud-sync mislukt:', err);
+        if (showAlert) alert(`Synchronisatie mislukt: ${err.message}`);
+      } finally {
+        cloudPushing = false;
+        updateCloudBadge();
+        if (cloudPushQueued) { cloudPushQueued = false; scheduleCloudPush(); }
       }
     }
 
     async function pullFromCloud() {
-      const url = document.getElementById('sb-url').value.trim().replace(/\/$/, '');
+      const url = document.getElementById('sb-url').value.trim().replace(/\/+$/, '');
       const key = document.getElementById('sb-key').value.trim();
       if (!url || !key) return alert('Vul eerst de Supabase URL en Key in.');
       try {
-        const res = await fetch(`${url}/rest/v1/tree11_state?id=eq.main&select=payload`, {
-          headers: Object.assign(
-            { 'apikey': key, 'Content-Type': 'application/json' },
-            key.startsWith('eyJ') ? { 'Authorization': `Bearer ${key}` } : {}
-          )
-        });
-        const rows = await res.json();
-        if (rows && rows[0] && rows[0].payload) {
-          appState = { ...rows[0].payload, cloudConfig: { url, key } };
-          saveAppState(false);
-          renderAll();
-          closeModal('cloud-sync-modal');
-          alert('Laatste gegevens uit de Cloud opgehaald!');
-        } else {
-          alert('Nog geen opgeslagen gegevens gevonden in de Cloud.');
-        }
+        const row = await fetchCloudRow(url, key, false);
+        if (!row || !row.payload) return alert('Nog geen opgeslagen gegevens gevonden in de Cloud.');
+        if (!confirm('Je lokale gegevens vervangen door de cloud-versie?')) return;
+        appState.cloudConfig = { url, key };
+        applyRemotePayload(row.payload);
+        cloudStatus = 'ok';
+        updateCloudBadge();
+        closeModal('cloud-sync-modal');
+        alert('Laatste gegevens uit de Cloud opgehaald!');
       } catch (e) {
-        alert('Ophalen uit Cloud mislukt.');
+        alert(`Ophalen uit Cloud mislukt: ${e.message}`);
       }
     }
 
+    // Bij het openen van de app: nieuwere cloud-gegevens automatisch ophalen
+    async function syncOnStartup() {
+      const cfg = appState.cloudConfig || {};
+      const url = (cfg.url || '').trim().replace(/\/+$/, '');
+      const key = (cfg.key || '').trim();
+      if (!url || !key) return;
+      try {
+        const row = await fetchCloudRow(url, key, false);
+        if (!row || !row.payload) return;
+        const lastSync = getLastSync();
+        const localDirty = (appState.updatedAt || '') > lastSync;
+        if (row.updatedAt && row.updatedAt > lastSync) {
+          if (!localDirty || confirm('In de cloud staan nieuwere gegevens, maar je hebt ook lokale wijzigingen die nog niet gesynchroniseerd zijn.\n\nOK = cloud-versie ophalen (lokale wijzigingen gaan verloren)\nAnnuleren = lokale versie houden')) {
+            applyRemotePayload(row.payload);
+          }
+        }
+        cloudStatus = 'ok';
+      } catch (e) {
+        cloudStatus = 'error';
+        console.warn('Ophalen bij opstarten mislukt:', e);
+      }
+      updateCloudBadge();
+    }
+
+    // Niets kwijtraken als het tabblad sluit voordat de uitgestelde sync is gelopen
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && cloudPushTimer) {
+        clearTimeout(cloudPushTimer);
+        cloudPushTimer = null;
+        pushToCloudSilent(false);
+      }
+    });
+
     // INIT
     loadAppState();
+    syncOnStartup();
   </script>
 </body>
 </html>
