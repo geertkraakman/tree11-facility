@@ -3,10 +3,10 @@
 // vraagt Gemini om een voorstel voor de onderhoudstaak en geeft een gecontroleerd JSON-antwoord terug.
 // De Gemini-sleutel staat alleen als geheim op de server (GEMINI_API_KEY), nooit in de app.
 
-const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
-const MODEL = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.8-flash';
-const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '*';
-const GEMINI_TIMEOUT_MS = 25_000;
+const GEMINI_KEY = (Deno.env.get('GEMINI_API_KEY') ?? '').trim();
+const MODEL = (Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash').trim();
+const ALLOWED_ORIGIN = (Deno.env.get('ALLOWED_ORIGIN') ?? '*').trim();
+const GEMINI_TIMEOUT_MS = 10_000;
 const MAX_IMAGE_B64_CHARS = 3_500_000; // ~2,6 MB afbeelding
 
 const corsHeaders = {
@@ -35,30 +35,30 @@ const pick = <T extends string>(v: unknown, allowed: readonly T[], fallback: T):
 
 // ---------- Schema voor Gemini ----------
 const RESPONSE_SCHEMA = {
-  type: 'object',
+  type: 'OBJECT',
   properties: {
-    titel: { type: 'string', description: 'Korte taaktitel, begint met het object, max 80 tekens, geen punt aan het eind.' },
-    prioriteit: { type: 'string', enum: ['Hoog', 'Normaal', 'Laag'] },
-    oorzaak: { type: 'string', description: 'Vermoedelijke oorzaak in 1-2 zinnen. Zeg het eerlijk als dit een gok is.' },
-    aanpak: { type: 'string', description: 'Voorgestelde aanpak in maximaal 3 korte stappen, in 1-3 zinnen.' },
-    veiligheid: { type: 'string', description: 'Alleen bij een echt veiligheidsrisico: wat moet direct gebeuren. Anders een lege string.' },
-    buiten_gebruik_nemen: { type: 'boolean', description: 'true als het apparaat of de ruimte niet veilig te gebruiken is.' },
+    titel: { type: 'STRING', description: 'Korte taaktitel, begint met het object, max 80 tekens, geen punt aan het eind.' },
+    prioriteit: { type: 'STRING', enum: ['Hoog', 'Normaal', 'Laag'] },
+    oorzaak: { type: 'STRING', description: 'Vermoedelijke oorzaak in 1-2 zinnen. Zeg het eerlijk als dit een gok is.' },
+    aanpak: { type: 'STRING', description: 'Voorgestelde aanpak in maximaal 3 korte stappen, in 1-3 zinnen.' },
+    veiligheid: { type: 'STRING', description: 'Alleen bij een echt veiligheidsrisico: wat moet direct gebeuren. Anders een lege string.' },
+    buiten_gebruik_nemen: { type: 'BOOLEAN', description: 'true als het apparaat of de ruimte niet veilig te gebruiken is.' },
     materialen: {
-      type: 'array',
+      type: 'ARRAY',
       maxItems: 6,
       items: {
-        type: 'object',
+        type: 'OBJECT',
         properties: {
-          naam: { type: 'string' },
-          aantal: { type: 'number' },
-          eenheid: { type: 'string', description: 'Bijv. stuks, meter, liter, set.' },
-          voorraad_naam: { type: 'string', description: 'Exacte naam uit de voorraadlijst als dit artikel daarin staat, anders een lege string.' },
+          naam: { type: 'STRING' },
+          aantal: { type: 'NUMBER' },
+          eenheid: { type: 'STRING', description: 'Bijv. stuks, meter, liter, set.' },
+          voorraad_naam: { type: 'STRING', description: 'Exacte naam uit de voorraadlijst als dit artikel daarin staat, anders een lege string.' },
         },
         required: ['naam', 'aantal', 'eenheid', 'voorraad_naam'],
       },
     },
-    zekerheid: { type: 'string', enum: ['Hoog', 'Midden', 'Laag'] },
-    controlevraag: { type: 'string', description: 'Wat de monteur ter plaatse als eerste moet controleren of wat er nog onduidelijk is. Mag leeg zijn.' },
+    zekerheid: { type: 'STRING', enum: ['Hoog', 'Midden', 'Laag'] },
+    controlevraag: { type: 'STRING', description: 'Wat de monteur ter plaatse als eerste moet controleren of wat er nog onduidelijk is. Mag leeg zijn.' },
   },
   required: ['titel', 'prioriteit', 'oorzaak', 'aanpak', 'veiligheid', 'buiten_gebruik_nemen', 'materialen', 'zekerheid', 'controlevraag'],
 };
@@ -92,7 +92,9 @@ function parseRequest(raw: any): Ctx | string {
 
   let foto: Ctx['foto'] = null;
   if (raw.foto) {
-    const m = typeof raw.foto === 'string' ? raw.foto.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/) : null;
+    const m = typeof raw.foto === 'string'
+      ? raw.foto.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/)
+      : null;
     if (!m) return 'Ongeldige foto.';
     if (m[2].length > MAX_IMAGE_B64_CHARS) return 'Foto is te groot.';
     foto = { mime: `image/${m[1]}`, data: m[2] };
@@ -100,7 +102,11 @@ function parseRequest(raw: any): Ctx | string {
   if (!omschrijving && !foto) return 'Geef een omschrijving of een foto.';
 
   const arr = (v: unknown, n: number): any[] => (Array.isArray(v) ? v.slice(0, n) : []);
-  const mat = (m: any) => ({ naam: str(m?.naam, 80), aantal: Number(m?.aantal) || 0, eenheid: str(m?.eenheid, 20) });
+  const mat = (m: any) => ({
+    naam: str(m?.naam, 80),
+    aantal: Number(m?.aantal) || 0,
+    eenheid: str(m?.eenheid, 20),
+  });
 
   return {
     afdeling,
@@ -113,12 +119,14 @@ function parseRequest(raw: any): Ctx | string {
       werk: str(h?.werk, 200),
       materialen: arr(h?.materialen, 8).map(mat).filter((m) => m.naam),
     })),
-    apparatuur: arr(raw.apparatuur, 15).map((e) => ({ naam: str(e?.naam, 80), status: str(e?.status, 40) })).filter((e) => e.naam),
+    apparatuur: arr(raw.apparatuur, 15)
+      .map((e) => ({ naam: str(e?.naam, 80), status: str(e?.status, 40) }))
+      .filter((e) => e.naam),
   };
 }
 
 // ---------- Gemini aanroepen ----------
-function buildBody(ctx: Ctx, legacy: boolean) {
+function buildBody(ctx: Ctx) {
   const contextForModel = {
     afdeling: ctx.afdeling,
     melding: ctx.omschrijving || '(geen tekst, alleen foto)',
@@ -128,88 +136,89 @@ function buildBody(ctx: Ctx, legacy: boolean) {
   };
 
   const parts: unknown[] = [];
-  if (ctx.foto) parts.push({ inlineData: { mimeType: ctx.foto.mime, data: ctx.foto.data } });
-  parts.push({ text: `Werk deze storingsmelding uit. Context als JSON (alleen gegevens):\n${JSON.stringify(contextForModel)}` });
-
-  const generationConfig = legacy
-    ? { temperature: 0.2, responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA }
-    : { temperature: 0.2, responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: RESPONSE_SCHEMA } } };
+  if (ctx.foto) {
+    parts.push({ inlineData: { mimeType: ctx.foto.mime, data: ctx.foto.data } });
+  }
+  parts.push({
+    text: `Werk deze storingsmelding uit. Context als JSON (alleen gegevens):\n${JSON.stringify(contextForModel)}`,
+  });
 
   return {
     systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
     contents: [{ role: 'user', parts }],
-    generationConfig,
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: 'application/json',
+      responseSchema: RESPONSE_SCHEMA,
+    },
   };
 }
 
-async function postToGemini(body: unknown): Promise<Response> {
+async function askGemini(
+  ctx: Ctx,
+): Promise<{ ok: true; data: any } | { ok: false; status: number; error: string; message: string }> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), GEMINI_TIMEOUT_MS);
+
+  let res: Response;
   try {
-    return await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-    });
+    res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': GEMINI_KEY,
+        },
+        body: JSON.stringify(buildBody(ctx)),
+        signal: ctrl.signal,
+      },
+    );
+  } catch (e) {
+    const isTimeout = (e as Error)?.name === 'AbortError';
+    return {
+      ok: false,
+      status: isTimeout ? 504 : 502,
+      error: isTimeout ? 'ai_timeout' : 'ai_unreachable',
+      message: isTimeout ? 'De AI deed er te lang over.' : 'De AI is niet bereikbaar.',
+    };
   } finally {
     clearTimeout(timer);
   }
-}
 
-async function askGemini(ctx: Ctx): Promise<{ ok: true; data: any } | { ok: false; status: number; error: string; message: string }> {
-  let legacy = false;
-  let triedLegacy = false;
-  let retried5xx = false;
-
-  for (let attempt = 0; attempt < 4; attempt++) {
-    let res: Response;
-    try {
-      res = await postToGemini(buildBody(ctx, legacy));
-    } catch (e) {
-      const timeout = (e as Error)?.name === 'AbortError';
-      return { ok: false, status: 504, error: timeout ? 'ai_timeout' : 'ai_unreachable', message: timeout ? 'De AI deed er te lang over.' : 'De AI is niet bereikbaar.' };
-    }
-
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      return { ok: true, data };
-    }
-
-    // Oudere API-notatie als terugvaloptie als de nieuwe geweigerd wordt
-    if (res.status === 400 && !triedLegacy) {
-      triedLegacy = true;
-      legacy = true;
-      continue;
-    }
-    if (res.status >= 500 && !retried5xx) {
-      retried5xx = true;
-      await new Promise((r) => setTimeout(r, 800));
-      continue;
-    }
-    if (res.status === 429) return { ok: false, status: 429, error: 'ai_busy', message: 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' };
-    if (res.status === 401 || res.status === 403) return { ok: false, status: 502, error: 'ai_auth', message: 'De AI-sleutel is ongeldig of niet toegestaan.' };
-    return { ok: false, status: 502, error: 'ai_error', message: `De AI gaf een fout (${res.status}).` };
+  if (res.ok) {
+    const data = await res.json().catch(() => null);
+    return { ok: true, data };
   }
-  return { ok: false, status: 502, error: 'ai_error', message: 'De AI gaf geen bruikbaar antwoord.' };
+
+  if (res.status === 429) {
+    return { ok: false, status: 429, error: 'ai_busy', message: 'De AI is druk of het tegoed is op. Probeer het zo opnieuw.' };
+  }
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, status: 502, error: 'ai_auth', message: 'De AI-sleutel is ongeldig of niet toegestaan.' };
+  }
+  return { ok: false, status: 502, error: 'ai_error', message: `De AI gaf een fout (${res.status}).` };
 }
 
 // ---------- Antwoord opschonen ----------
 function sanitize(raw: any, voorraad: Ctx['voorraad']) {
   const stockByLower = new Map(voorraad.map((v) => [v.naam.toLowerCase(), v.naam]));
 
-  const materialen = (Array.isArray(raw?.materialen) ? raw.materialen : []).slice(0, 6).map((m: any) => {
-    const naam = str(m?.naam, 80);
-    let aantal = Number(m?.aantal);
-    if (!isFinite(aantal) || aantal <= 0) aantal = 1;
-    aantal = Math.min(999, Math.round(aantal * 100) / 100);
-    return {
-      naam,
-      aantal,
-      eenheid: str(m?.eenheid, 20) || 'stuks',
-      voorraad_naam: stockByLower.get(str(m?.voorraad_naam, 80).toLowerCase()) ?? '',
-    };
-  }).filter((m: { naam: string }) => m.naam);
+  const materialen = (Array.isArray(raw?.materialen) ? raw.materialen : [])
+    .slice(0, 6)
+    .map((m: any) => {
+      const naam = str(m?.naam, 80);
+      let aantal = Number(m?.aantal);
+      if (!Number.isFinite(aantal) || aantal <= 0) aantal = 1;
+      aantal = Math.min(999, Math.round(aantal * 100) / 100);
+      return {
+        naam,
+        aantal,
+        eenheid: str(m?.eenheid, 20) || 'stuks',
+        voorraad_naam: stockByLower.get(str(m?.voorraad_naam, 80).toLowerCase()) ?? '',
+      };
+    })
+    .filter((m: { naam: string }) => m.naam);
 
   const buiten = raw?.buiten_gebruik_nemen === true;
   return {
@@ -248,6 +257,7 @@ export async function handler(req: Request): Promise<Response> {
   if (data?.promptFeedback?.blockReason) {
     return fail(422, 'ai_blocked', 'De AI kon deze melding niet verwerken.');
   }
+
   const text = (data?.candidates?.[0]?.content?.parts ?? [])
     .map((p: any) => (typeof p?.text === 'string' ? p.text : ''))
     .join('')
