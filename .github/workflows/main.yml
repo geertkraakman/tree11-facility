@@ -16,5 +16,5 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase link --project-ref hnatqmrpxzptldbodnlf
-          supabase functions deploy storing-analyse --no-verify-jwt--yes
+          supabase functions deploy storing-analyse --no-verify-jwt --yes
           
