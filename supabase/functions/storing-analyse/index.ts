@@ -1,4 +1,3 @@
-
 // Supabase Edge Function: storing-analyse
 // Ontvangt een storingsmelding (afdeling, omschrijving, optionele foto + context uit de app),
 // vraagt Gemini om een voorstel voor de onderhoudstaak en geeft een gecontroleerd JSON-antwoord terug.
@@ -169,9 +168,13 @@ function buildBody(ctx: Ctx, format: Format) {
     text: `Werk deze storingsmelding uit. Context als JSON (alleen gegevens):\n${JSON.stringify(contextForModel)}`,
   });
 
+  // gemini-2.5-flash "denkt" standaard eerst, wat met een foto al snel 20 s+ kost. Voor deze
+  // eenvoudige invultaak is dat niet nodig, dus uitzetten (alleen voor 2.5-flash; andere modellen
+  // kennen deze instelling mogelijk niet en zouden het verzoek weigeren).
+  const thinking = /^gemini-2\.5-flash/.test(MODEL) ? { thinkingConfig: { thinkingBudget: 0 } } : {};
   const generationConfig = format === 'legacy'
-    ? { temperature: 0.2, responseMimeType: 'application/json', responseSchema: upperTypes(RESPONSE_SCHEMA) }
-    : { temperature: 0.2, responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: RESPONSE_SCHEMA } } };
+    ? { temperature: 0.2, maxOutputTokens: 2048, ...thinking, responseMimeType: 'application/json', responseSchema: upperTypes(RESPONSE_SCHEMA) }
+    : { temperature: 0.2, maxOutputTokens: 2048, ...thinking, responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: RESPONSE_SCHEMA } } };
 
   return {
     systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
@@ -239,6 +242,7 @@ async function askGemini(ctx: Ctx): Promise<GeminiResult> {
     }
 
     if (res.ok) {
+      console.log(`Gemini antwoordde in ${Date.now() - started} ms (model ${MODEL}, notatie ${format})`);
       const data = await res.json().catch(() => null);
       preferredFormat = format;
       return { ok: true, data };
