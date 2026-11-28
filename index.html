@@ -191,6 +191,7 @@
             <p class="text-xs font-semibold text-slate-500 mt-1">Hoofdlocatie • Kies een afdeling voor openstaande taken</p>
           </div>
 
+          <div id="home-day-summary" class="grid grid-cols-3 gap-2 text-center"></div>
           <div id="home-8-tiles-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5"></div>
 
           <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
@@ -248,6 +249,13 @@
         <!-- ZOEK & WEERGAVE VAN OPENSTAANDE EN AFGERONDE TAKEN -->
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-2.5">
           <input id="task-search" oninput="renderTasks()" type="text" placeholder="Zoek op taak, materiaal, werkomschrijving of monteur..." class="flex-1 min-w-[180px] px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <select id="task-urgency-filter" onchange="renderTasks()" aria-label="Filter op urgentie" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
+            <option value="all">Alle urgenties</option>
+            <option value="Spoed">1 • Spoed</option>
+            <option value="Hoog">2 • Hoog</option>
+            <option value="Normaal">3 • Normaal</option>
+            <option value="Laag">4 • Laag</option>
+          </select>
           <select id="task-status-filter" onchange="renderTasks()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
             <option value="all">Openstaand + Afgerond (alles van afdeling)</option>
             <option value="open">Alleen openstaand</option>
@@ -406,9 +414,14 @@
             <h2 class="text-xl font-extrabold text-slate-900">Fitness-, Padel- & Klimaatapparatuur</h2>
             <p class="text-xs text-slate-500">Beheer periodiek onderhoud, serienummers en storingen.</p>
           </div>
-          <button onclick="openNewEquipmentModal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
-            + Apparaat toevoegen
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="openSuppliersModal()" class="min-h-[44px] px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold shadow-sm">
+              🏭 Leveranciers
+            </button>
+            <button onclick="openNewEquipmentModal()" class="min-h-[44px] px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
+              + Apparaat toevoegen
+            </button>
+          </div>
         </div>
         <div id="equipment-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
@@ -424,6 +437,8 @@
             + Teamlid toevoegen
           </button>
         </div>
+        <div id="roster-week" class="space-y-4"></div>
+        <h3 class="text-sm font-extrabold text-slate-800 pt-2">Teamleden</h3>
         <div id="team-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
       </section>
     </main>
@@ -659,9 +674,10 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Prioriteit</label>
             <select id="fault-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
-              <option value="Normaal">Normaal</option>
-              <option value="Hoog">Hoog / Spoed</option>
-              <option value="Laag">Laag</option>
+              <option value="Spoed">1 • Spoed (vandaag)</option>
+              <option value="Hoog">2 • Hoog</option>
+              <option value="Normaal" selected>3 • Normaal</option>
+              <option value="Laag">4 • Laag</option>
             </select>
           </div>
           <div>
@@ -715,9 +731,10 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Prioriteit</label>
             <select id="nt-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
-              <option value="Normaal">Normaal</option>
-              <option value="Hoog">Hoog / Spoed</option>
-              <option value="Laag">Laag</option>
+              <option value="Spoed">1 • Spoed (vandaag)</option>
+              <option value="Hoog">2 • Hoog</option>
+              <option value="Normaal" selected>3 • Normaal</option>
+              <option value="Laag">4 • Laag</option>
             </select>
           </div>
         </div>
@@ -943,10 +960,39 @@
         <input id="eq-name" type="text" placeholder="Naam apparaat (bijv. Technogym Skillrun 1)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
         <input id="eq-dept" type="text" placeholder="Afdeling (bijv. Fitness)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
         <input id="eq-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        <select id="eq-supplier" aria-label="Leverancier" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
       </div>
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('new-equip-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
         <button onclick="saveNewEquipment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LEVERANCIERS BEHEREN -->
+  <div id="suppliers-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">🏭 Leveranciers</h3>
+        <button type="button" onclick="closeModal('suppliers-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="px-5 py-4 space-y-4 overflow-y-auto">
+        <div id="suppliers-list" class="space-y-2"></div>
+        <div class="space-y-2.5 border-t border-slate-100 pt-4">
+          <h4 id="sup-form-title" class="text-sm font-extrabold text-slate-800">+ Leverancier toevoegen</h4>
+          <input id="sup-company" type="text" maxlength="80" placeholder="Bedrijfsnaam *" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          <div class="grid grid-cols-2 gap-2.5">
+            <input id="sup-contact" type="text" maxlength="80" placeholder="Contactpersoon" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            <input id="sup-customerno" type="text" maxlength="40" placeholder="Klantnummer" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            <input id="sup-phone" type="tel" maxlength="30" placeholder="Telefoon" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            <input id="sup-email" type="email" maxlength="120" placeholder="E-mail" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <input id="sup-specialism" type="text" maxlength="120" placeholder="Specialisme (bijv. spinfietsen, trappers)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+        <button type="button" onclick="resetSupplierForm()" class="min-h-[44px] px-4 rounded-xl bg-slate-100 text-xs font-bold">Leegmaken</button>
+        <button type="button" onclick="saveSupplier()" class="min-h-[44px] px-5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
       </div>
     </div>
   </div>
@@ -1217,6 +1263,32 @@
       { id: 'eq-4', name: 'Rig & Atletiekrekken', dept: 'The Box', nextDate: '2026-12-10', status: 'Operationeel' }
     ];
 
+    // Urgentieniveaus 1 t/m 4 (de opgeslagen waarde blijft de bekende tekst, zodat oude data en sync gewoon werken)
+    const URGENCY_LEVELS = [
+      { value: 'Spoed',   n: 1, label: '1 • Spoed',   badge: 'bg-rose-600 text-white',         border: 'border-l-4 border-l-rose-600',  icon: '🚨' },
+      { value: 'Hoog',    n: 2, label: '2 • Hoog',    badge: 'bg-amber-100 text-amber-900',    border: 'border-l-4 border-l-amber-400', icon: '🔥' },
+      { value: 'Normaal', n: 3, label: '3 • Normaal', badge: 'bg-slate-100 text-slate-700',    border: '',                              icon: '' },
+      { value: 'Laag',    n: 4, label: '4 • Laag',    badge: 'bg-slate-50 text-slate-500',     border: '',                              icon: '' }
+    ];
+    function urgencyOf(p) { return URGENCY_LEVELS.find(u => u.value === p) || URGENCY_LEVELS[2]; }
+
+    // Rooster: vaste dienstsoorten (tijden zoals het team ze gebruikt)
+    const SHIFT_TYPES = [
+      { id: 'D_12_2030', label: '12:00 - 20:30', badge: 'bg-[#163828] text-white' },
+      { id: 'D_08_1630', label: '08:00 - 16:30', badge: 'bg-emerald-700 text-white' },
+      { id: 'D_07_1530', label: '07:00 - 15:30', badge: 'bg-emerald-600 text-white' },
+      { id: 'D_05_1300', label: '05:00 - 13:00', badge: 'bg-teal-600 text-white' },
+      { id: 'D_05_0900', label: '05:00 - 09:00', badge: 'bg-teal-500 text-white' },
+      { id: 'VRIJ',      label: 'Vrij',          badge: 'bg-slate-100 text-slate-500' }
+    ];
+
+    // Leveranciers: alleen namen; telefoon/e-mail vul je zelf in (geen verzonnen gegevens)
+    const DEFAULT_SUPPLIERS = [
+      { id: 'sup-1', company: 'Indoor Cycling leverancier', contact: '', phone: '', email: '', specialism: 'Spinfietsen, trappers & zadels', customerNo: '' },
+      { id: 'sup-2', company: 'Concept2 Nederland', contact: '', phone: '', email: '', specialism: 'Roeiers, SkiErgs & BikeErgs', customerNo: '' },
+      { id: 'sup-3', company: 'Matrix Fitness Nederland', contact: '', phone: '', email: '', specialism: 'Cardio & krachttoestellen', customerNo: '' }
+    ];
+
     const DEFAULT_TEAM = [
       { id: 'tm-1', name: 'Geert', role: 'Hoofd Technische Dienst & Verbouwing', shift: 'Ma - Vr | 08:00 - 17:00' },
       { id: 'tm-2', name: 'Facility Team', role: 'Dagelijkse Schoonmaak & Rondes', shift: 'Ma - Zo | 07:00 - 13:00' },
@@ -1232,6 +1304,8 @@
       team: [],
       inventory: [],
       usageHistory: [],
+      suppliers: [],
+      roster: { shifts: {} },
       cloudConfig: { url: '', key: '' }
     };
 
@@ -1251,6 +1325,8 @@
         team: list('team', DEFAULT_TEAM),
         inventory: list('inventory', DEFAULT_INVENTORY),
         usageHistory: list('usageHistory', DEFAULT_USAGE_HISTORY),
+        suppliers: list('suppliers', DEFAULT_SUPPLIERS),
+        roster: normalizeRoster(saved && saved.roster),
         cloudConfig: (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' },
         updatedAt: (saved && saved.updatedAt) ? saved.updatedAt : ''
       };
@@ -1258,6 +1334,20 @@
         if (!s.projects.some(p => p.id === defProj.id)) s.projects.push(clone(defProj));
       });
       return s;
+    }
+
+    // Rooster: { shifts: { 'YYYY-MM-DD': { <teamlid-id>: <dienst-id> } } } met opschoning van rommel
+    function normalizeRoster(r) {
+      const out = { shifts: {} };
+      const src = r && typeof r === 'object' && r.shifts && typeof r.shifts === 'object' ? r.shifts : {};
+      const validIds = SHIFT_TYPES.map(x => x.id);
+      Object.keys(src).forEach(day => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !src[day] || typeof src[day] !== 'object') return;
+        Object.keys(src[day]).forEach(mid => {
+          if (validIds.includes(src[day][mid])) (out.shifts[day] = out.shifts[day] || {})[mid] = src[day][mid];
+        });
+      });
+      return out;
     }
 
     function loadAppState() {
@@ -1353,6 +1443,9 @@
         btn.classList.toggle('tab-active', t === tab);
         btn.classList.toggle('tab-inactive', t !== tab);
       });
+      if (tab === 'roster') {
+        renderRoster();
+      }
       if (tab === 'tasks') {
         renderDepartmentFilters();
         renderTasks();
@@ -1373,6 +1466,7 @@
       renderProjectsGrid();
       renderEquipment();
       renderTeam();
+      renderRoster();
       document.getElementById('lessons-count-badge').textContent = appState.lessons.length;
       document.getElementById('home-history-count').textContent = appState.usageHistory.length;
     }
@@ -1384,6 +1478,7 @@
       const eightDepts = appState.departments.slice(0, 8);
       grid.innerHTML = eightDepts.map(d => {
         const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
+        const urgentCount = appState.tasks.filter(t => t.dept === d.name && !t.done && (t.priority === 'Spoed' || t.priority === 'Hoog')).length;
         const label = esc((d.tileLabel || d.name).toUpperCase());
         return `
           <button
@@ -1394,9 +1489,25 @@
           >
             <span class="font-extrabold text-sm sm:text-base tracking-wide leading-tight">${label}</span>
             <span class="text-[11px] font-semibold text-emerald-200/90">${openCount} open</span>
+            ${urgentCount ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white">🔥 ${urgentCount} urgent</span>` : ''}
           </button>
         `;
       }).join('');
+      renderHomeSummary();
+    }
+
+    function renderHomeSummary() {
+      const el = document.getElementById('home-day-summary');
+      if (!el) return;
+      const today = getLocalTodayIso();
+      const open = appState.tasks.filter(t => !t.done);
+      const todayN = open.filter(t => t.date === today).length;
+      const lateN = open.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.date || '') && t.date < today).length;
+      const spoedN = open.filter(t => t.priority === 'Spoed').length;
+      el.innerHTML = `
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 px-2 py-2.5"><div class="text-lg font-extrabold text-slate-900">${todayN}</div><div class="text-[11px] font-semibold text-slate-500">gepland vandaag</div></div>
+        <div class="rounded-2xl ${lateN ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'} border px-2 py-2.5"><div class="text-lg font-extrabold ${lateN ? 'text-amber-800' : 'text-slate-900'}">${lateN}</div><div class="text-[11px] font-semibold text-slate-500">achterstallig</div></div>
+        <div class="rounded-2xl ${spoedN ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'} border px-2 py-2.5"><div class="text-lg font-extrabold ${spoedN ? 'text-rose-700' : 'text-slate-900'}">${spoedN}</div><div class="text-[11px] font-semibold text-slate-500">spoed</div></div>`;
     }
 
     // ==================== AFDELINGEN & TAKEN ====================
@@ -1464,7 +1575,7 @@
       }
 
       return `
-        <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-emerald-200/70 bg-slate-50/60' : 'border-slate-200 shadow-sm'} flex items-start justify-between gap-3">
+        <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-emerald-200/70 bg-slate-50/60' : 'border-slate-200 shadow-sm ' + urgencyOf(t.priority).border} flex items-start justify-between gap-3">
           <div class="flex items-start gap-3 flex-1">
             <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-0.5 w-6 h-6 shrink-0 accent-[#163828] cursor-pointer" />
             <div class="flex-1">
@@ -1472,7 +1583,7 @@
                 <span class="font-bold text-sm ${t.done ? 'line-through text-slate-500' : 'text-slate-900'}">${esc(t.title)}</span>
                 <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(t.dept)}</span>
                 ${t.done ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828]">✓ Afgerond</span>' : ''}
-                ${!t.done && t.priority === 'Hoog' ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🔥 Hoog</span>' : ''}
+                ${!t.done ? `<button type="button" onclick="cycleTaskUrgency(${jsArg(t.id)})" title="Tik om de urgentie te wijzigen" aria-label="Urgentie ${esc(urgencyOf(t.priority).label)}, tik om te wijzigen" class="text-[11px] font-bold px-2.5 min-h-[28px] rounded-full ${urgencyOf(t.priority).badge}">${urgencyOf(t.priority).icon} ${esc(urgencyOf(t.priority).label)}</button>` : ''}
               </div>
               ${t.notes ? `<p class="text-xs text-slate-600 mt-1 whitespace-pre-line">${esc(t.notes)}</p>` : ''}
               ${logHtml}
@@ -1485,6 +1596,18 @@
           <button onclick="deleteTask(${jsArg(t.id)})" aria-label="Taak verwijderen" class="shrink-0 min-w-[44px] min-h-[44px] -mr-2 -mt-1.5 text-slate-400 hover:text-rose-600 text-base font-bold">✕</button>
         </div>
       `;
+    }
+
+    function cycleTaskUrgency(id) {
+      const t = appState.tasks.find(x => x.id === id);
+      if (!t) return;
+      const cur = urgencyOf(t.priority);
+      t.priority = URGENCY_LEVELS[cur.n % URGENCY_LEVELS.length].value;
+      saveAppState();
+      renderTasks();
+      renderHome8Tiles();
+      renderRoster();
+      showToast('Urgentie: ' + urgencyOf(t.priority).label);
     }
 
     function renderTasks() {
@@ -1504,7 +1627,11 @@
         return true;
       });
 
-      const openTasks = deptTasks.filter(t => !t.done);
+      const urgencyFilter = (document.getElementById('task-urgency-filter') || {}).value || 'all';
+      // Open taken: eerst de hoogste urgentie, dan op datum (zonder datum onderaan)
+      const openTasks = deptTasks
+        .filter(t => !t.done && (urgencyFilter === 'all' || urgencyOf(t.priority).value === urgencyFilter))
+        .sort((a, b) => (urgencyOf(a.priority).n - urgencyOf(b.priority).n) || String(a.date || '9999').localeCompare(String(b.date || '9999')));
       const doneTasks = deptTasks.filter(t => t.done);
 
       if (statusFilter === 'open') {
@@ -1915,6 +2042,7 @@
     }
 
     function openNewTaskModal() {
+      pendingTaskEquipmentId = '';
       populateDeptSelects();
       if (selectedDeptFilter !== 'ALL') {
         document.getElementById('nt-dept').value = selectedDeptFilter;
@@ -1935,8 +2063,10 @@
         date: document.getElementById('nt-date').value,
         notes: document.getElementById('nt-notes').value.trim(),
         done: false,
-        completionLog: null
+        completionLog: null,
+        ...(pendingTaskEquipmentId ? { equipmentId: pendingTaskEquipmentId } : {})
       });
+      pendingTaskEquipmentId = '';
       document.getElementById('nt-title').value = '';
       document.getElementById('nt-notes').value = '';
       closeModal('new-task-modal');
@@ -1944,6 +2074,8 @@
       renderDepartmentFilters();
       renderTasks();
       renderHome8Tiles();
+      renderEquipment();
+      renderRoster();
     }
 
     function openBulkTaskModal() {
@@ -2673,21 +2805,137 @@
     }
 
     // ==================== APPARATUUR & TEAM ====================
+    // Veilige contactlinks: alleen geldige vormen worden een link, de rest blijft gewone tekst
+    function telHref(p) {
+      const digits = String(p || '').replace(/[^\d+]/g, '');
+      return /^\+?\d{6,15}$/.test(digits) ? 'tel:' + digits : '';
+    }
+    function mailHref(e) {
+      const v = String(e || '').trim();
+      return /^[^\s@<>"'`]+@[^\s@<>"'`]+\.[^\s@<>"'`]+$/.test(v) ? 'mailto:' + v : '';
+    }
+
     function renderEquipment() {
       const grid = document.getElementById('equipment-grid');
-      grid.innerHTML = appState.equipment.map(eq => `
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+      grid.innerHTML = appState.equipment.map(eq => {
+        const sup = appState.suppliers.find(x => x.id === eq.supplierId);
+        const tel = sup ? telHref(sup.phone) : '';
+        const mail = sup ? mailHref(sup.email) : '';
+        const linked = appState.tasks.filter(t => !t.done && t.equipmentId === eq.id);
+        const supOpts = `<option value="">— geen leverancier —</option>` +
+          appState.suppliers.map(x => `<option value="${esc(x.id)}"${x.id === eq.supplierId ? ' selected' : ''}>${esc(x.company)}</option>`).join('');
+        return `
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
           <div class="flex justify-between items-start">
             <span class="text-xs font-bold text-emerald-600">${esc(eq.dept)}</span>
             <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(eq.status)}</span>
           </div>
           <h3 class="font-extrabold text-sm text-slate-900">${esc(eq.name)}</h3>
           <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${esc(eq.nextDate)}</strong></p>
-        </div>
-      `).join('');
+          ${linked.length ? `<div class="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">🔧 ${linked.length} open ${linked.length === 1 ? 'taak' : 'taken'}: ${esc(linked.slice(0, 2).map(t => t.title).join(' • '))}${linked.length > 2 ? ' …' : ''}</div>` : ''}
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-2">
+            <label class="block text-[11px] font-bold text-slate-600">Leverancier</label>
+            <select onchange="setEquipmentSupplier(${jsArg(eq.id)}, this.value)" aria-label="Leverancier van ${esc(eq.name)}" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs bg-white">${supOpts}</select>
+            ${sup ? `<div class="text-[11px] text-slate-600">${sup.contact ? '👤 ' + esc(sup.contact) + ' • ' : ''}${sup.customerNo ? 'Klantnr ' + esc(sup.customerNo) : ''}</div>
+            <div class="flex flex-wrap gap-1.5">
+              ${tel ? `<a href="${esc(tel)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-[#163828] text-white text-xs font-bold">📞 ${esc(sup.phone)}</a>` : (sup.phone ? `<span class="text-[11px] text-slate-600">📞 ${esc(sup.phone)}</span>` : '')}
+              ${mail ? `<a href="${esc(mail)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-emerald-100 text-[#163828] text-xs font-bold">✉️ E-mail</a>` : (sup.email ? `<span class="text-[11px] text-slate-600">✉️ ${esc(sup.email)}</span>` : '')}
+              ${!sup.phone && !sup.email ? '<span class="text-[11px] text-slate-400">Nog geen telefoon of e-mail ingevuld (via Leveranciers).</span>' : ''}
+            </div>` : ''}
+          </div>
+          <button type="button" onclick="openTaskForEquipment(${jsArg(eq.id)})" class="w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">+ Taak voor dit apparaat</button>
+        </div>`;
+      }).join('') || '<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-500 text-center">Nog geen apparatuur toegevoegd.</div>';
+    }
+
+    function setEquipmentSupplier(eqId, supId) {
+      const eq = appState.equipment.find(x => x.id === eqId);
+      if (!eq) return;
+      if (supId && appState.suppliers.some(x => x.id === supId)) eq.supplierId = supId; else delete eq.supplierId;
+      saveAppState();
+      renderEquipment();
+    }
+
+    let pendingTaskEquipmentId = '';
+    function openTaskForEquipment(eqId) {
+      const eq = appState.equipment.find(x => x.id === eqId);
+      if (!eq) return;
+      openNewTaskModal();
+      pendingTaskEquipmentId = eq.id;
+      if (appState.departments.some(d => d.name === eq.dept)) document.getElementById('nt-dept').value = eq.dept;
+      document.getElementById('nt-title').value = eq.name + ': ';
+    }
+
+    // ----- Leveranciersbeheer -----
+    let editingSupplierId = '';
+    function openSuppliersModal() {
+      resetSupplierForm();
+      renderSuppliersList();
+      document.getElementById('suppliers-modal').classList.remove('hidden');
+    }
+    function resetSupplierForm() {
+      editingSupplierId = '';
+      ['sup-company', 'sup-contact', 'sup-phone', 'sup-email', 'sup-specialism', 'sup-customerno'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('sup-form-title').textContent = '+ Leverancier toevoegen';
+    }
+    function renderSuppliersList() {
+      const box = document.getElementById('suppliers-list');
+      box.innerHTML = appState.suppliers.map(sp => {
+        const n = appState.equipment.filter(e => e.supplierId === sp.id).length;
+        return `<div class="flex items-start justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+          <div class="min-w-0">
+            <div class="text-sm font-extrabold text-slate-900 break-words">${esc(sp.company)}</div>
+            <div class="text-[11px] text-slate-500 break-words">${esc([sp.contact, sp.phone, sp.email].filter(Boolean).join(' • ') || 'Geen contactgegevens')}${sp.specialism ? ' — ' + esc(sp.specialism) : ''}</div>
+            <div class="text-[11px] text-slate-400">${n} ${n === 1 ? 'apparaat' : 'apparaten'} gekoppeld</div>
+          </div>
+          <div class="flex shrink-0">
+            <button type="button" onclick="editSupplier(${jsArg(sp.id)})" aria-label="Bewerk ${esc(sp.company)}" class="min-w-[44px] min-h-[44px] text-slate-500 hover:text-slate-900">✎</button>
+            <button type="button" onclick="deleteSupplier(${jsArg(sp.id)})" aria-label="Verwijder ${esc(sp.company)}" class="min-w-[44px] min-h-[44px] text-slate-400 hover:text-rose-600 font-bold">✕</button>
+          </div>
+        </div>`;
+      }).join('') || '<div class="text-xs text-slate-500 p-3">Nog geen leveranciers.</div>';
+    }
+    function editSupplier(id) {
+      const sp = appState.suppliers.find(x => x.id === id);
+      if (!sp) return;
+      editingSupplierId = id;
+      document.getElementById('sup-company').value = sp.company || '';
+      document.getElementById('sup-contact').value = sp.contact || '';
+      document.getElementById('sup-phone').value = sp.phone || '';
+      document.getElementById('sup-email').value = sp.email || '';
+      document.getElementById('sup-specialism').value = sp.specialism || '';
+      document.getElementById('sup-customerno').value = sp.customerNo || '';
+      document.getElementById('sup-form-title').textContent = 'Leverancier bewerken';
+    }
+    function saveSupplier() {
+      const v = (id) => document.getElementById(id).value.trim();
+      const company = v('sup-company').slice(0, 80);
+      if (!company) { showToast('Vul de naam van het bedrijf in.'); return; }
+      const data = { company, contact: v('sup-contact').slice(0, 80), phone: v('sup-phone').slice(0, 30), email: v('sup-email').slice(0, 120), specialism: v('sup-specialism').slice(0, 120), customerNo: v('sup-customerno').slice(0, 40) };
+      const existing = editingSupplierId && appState.suppliers.find(x => x.id === editingSupplierId);
+      if (existing) Object.assign(existing, data);
+      else appState.suppliers.push({ id: 'sup-' + Date.now(), ...data });
+      saveAppState();
+      resetSupplierForm();
+      renderSuppliersList();
+      renderEquipment();
+      showToast('Leverancier opgeslagen ✓');
+    }
+    function deleteSupplier(id) {
+      const sp = appState.suppliers.find(x => x.id === id);
+      if (!sp) return;
+      if (!confirm('Leverancier "' + sp.company + '" verwijderen? Gekoppelde apparaten blijven bestaan.')) return;
+      appState.suppliers = appState.suppliers.filter(x => x.id !== id);
+      appState.equipment.forEach(e => { if (e.supplierId === id) delete e.supplierId; });
+      saveAppState();
+      resetSupplierForm();
+      renderSuppliersList();
+      renderEquipment();
     }
 
     function openNewEquipmentModal() {
+      document.getElementById('eq-supplier').innerHTML = '<option value="">— geen leverancier —</option>' +
+        appState.suppliers.map(x => `<option value="${esc(x.id)}">${esc(x.company)}</option>`).join('');
       document.getElementById('new-equip-modal').classList.remove('hidden');
     }
 
@@ -2699,11 +2947,159 @@
         name,
         dept: document.getElementById('eq-dept').value.trim() || 'Fitness',
         nextDate: document.getElementById('eq-next').value || '2026-12-31',
-        status: 'Operationeel'
+        status: 'Operationeel',
+        ...(document.getElementById('eq-supplier').value ? { supplierId: document.getElementById('eq-supplier').value } : {})
       });
       closeModal('new-equip-modal');
       saveAppState();
       renderEquipment();
+    }
+
+    // ==================== WEEKROOSTER, TAKEN PER DAG & AGENDA-EXPORT (.ics) ====================
+    let rosterWeekStart = '';
+    function mondayOfIso(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return mondayOfIso(getLocalTodayIso());
+      const dow = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay(); // 0 = zondag
+      return addDaysIso(iso, dow === 0 ? -6 : 1 - dow);
+    }
+    function formatDayNl(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+      const names = ['zo', 'ma', 'di', 'wo', 'do', 'vr', 'za'];
+      return names[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] + ' ' + m[3] + '-' + m[2];
+    }
+    function changeRosterWeek(delta) {
+      rosterWeekStart = delta === 0 ? mondayOfIso(getLocalTodayIso()) : addDaysIso(rosterWeekStart || mondayOfIso(getLocalTodayIso()), delta * 7);
+      renderRoster();
+    }
+    function setShift(memberId, day, shiftId) {
+      const shifts = appState.roster.shifts;
+      if (!shiftId) {
+        if (shifts[day]) { delete shifts[day][memberId]; if (!Object.keys(shifts[day]).length) delete shifts[day]; }
+      } else if (SHIFT_TYPES.some(x => x.id === shiftId)) {
+        (shifts[day] = shifts[day] || {})[memberId] = shiftId;
+      }
+      saveAppState();
+      renderRoster();
+    }
+
+    function renderRoster() {
+      const box = document.getElementById('roster-week');
+      if (!box) return;
+      if (!rosterWeekStart) rosterWeekStart = mondayOfIso(getLocalTodayIso());
+      const days = Array.from({ length: 7 }, (_, i) => addDaysIso(rosterWeekStart, i));
+      const today = getLocalTodayIso();
+      const weekLabel = formatDayNl(days[0]) + ' t/m ' + formatDayNl(days[6]);
+
+      const rows = appState.team.map(m => `
+        <tr class="border-t border-slate-100">
+          <td class="sticky left-0 bg-white z-10 px-3 py-2 text-xs font-extrabold text-slate-800 whitespace-nowrap">${esc(m.name)}</td>
+          ${days.map(d => {
+            const cur = ((appState.roster.shifts[d] || {})[m.id]) || '';
+            return `<td class="px-1.5 py-1.5 ${d === today ? 'bg-emerald-50/60' : ''}">
+              <select aria-label="Dienst ${esc(m.name)} ${esc(formatDayNl(d))}" onchange="setShift(${jsArg(m.id)}, ${jsArg(d)}, this.value)" class="w-[7.5rem] px-1.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-semibold bg-white">
+                <option value=""${cur === '' ? ' selected' : ''}>—</option>
+                ${SHIFT_TYPES.map(st => `<option value="${st.id}"${cur === st.id ? ' selected' : ''}>${esc(st.label)}</option>`).join('')}
+              </select></td>`;
+          }).join('')}
+        </tr>`).join('');
+
+      const weekTasks = appState.tasks.filter(t => !t.done && days.includes(t.date));
+      const tasksByDay = days.map(d => {
+        const list = weekTasks.filter(t => t.date === d)
+          .sort((a, b) => urgencyOf(a.priority).n - urgencyOf(b.priority).n);
+        if (!list.length) return '';
+        return `<div class="space-y-1.5">
+          <div class="text-[11px] font-extrabold uppercase tracking-wider ${d === today ? 'text-emerald-700' : 'text-slate-500'}">${esc(formatDayNl(d))}${d === today ? ' • vandaag' : ''}</div>
+          ${list.map(t => `<div class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 ${urgencyOf(t.priority).border}">
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${urgencyOf(t.priority).badge}">${esc(urgencyOf(t.priority).label)}</span>
+              <span class="text-xs font-bold text-slate-900">${esc(t.title)}</span>
+              <span class="text-[11px] text-slate-500">${esc(t.dept)} • 👤 ${esc(t.assignee || 'Geert')}</span>
+            </div>`).join('')}
+        </div>`;
+      }).join('');
+
+      box.innerHTML = `
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="changeRosterWeek(-1)" aria-label="Vorige week" class="min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 font-bold">◀</button>
+              <div class="px-2 text-sm font-extrabold text-slate-900 text-center">${esc(weekLabel)}</div>
+              <button type="button" onclick="changeRosterWeek(1)" aria-label="Volgende week" class="min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 font-bold">▶</button>
+              <button type="button" onclick="changeRosterWeek(0)" class="min-h-[44px] px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#163828] text-xs font-bold border border-emerald-200">Deze week</button>
+            </div>
+            <button type="button" onclick="exportTasksIcs()" class="min-h-[44px] px-3.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">📅 Taken naar agenda (.ics)</button>
+          </div>
+          <div class="overflow-x-auto -mx-1 px-1">
+            <table class="min-w-full text-left">
+              <thead><tr>
+                <th class="sticky left-0 bg-white z-10 px-3 py-1.5 text-[11px] font-bold text-slate-400">Team</th>
+                ${days.map(d => `<th class="px-1.5 py-1.5 text-[11px] font-extrabold ${d === today ? 'text-emerald-700' : 'text-slate-500'} whitespace-nowrap">${esc(formatDayNl(d))}</th>`).join('')}
+              </tr></thead>
+              <tbody>${rows || '<tr><td class="px-3 py-3 text-xs text-slate-500">Voeg eerst teamleden toe.</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <h3 class="text-sm font-extrabold text-slate-800">Ingeplande taken deze week (${weekTasks.length})</h3>
+          ${tasksByDay || '<div class="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">Geen openstaande taken met een datum in deze week.</div>'}
+        </div>`;
+    }
+
+    // ----- Agenda-export: RFC 5545, tekst correct ge-escapet -----
+    function icsText(v) {
+      const BS = String.fromCharCode(92);
+      return String(v === null || v === undefined ? '' : v)
+        .split(BS).join(BS + BS).split(';').join(BS + ';').split(',').join(BS + ',')
+        .replace(/\r?\n/g, BS + 'n');
+    }
+    function icsFold(line) {
+      const out = [];
+      let rest = line;
+      while (rest.length > 74) { out.push(rest.slice(0, 74)); rest = ' ' + rest.slice(74); }
+      out.push(rest);
+      return out.join('\r\n');
+    }
+    function buildTasksIcs() {
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+      const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TREE11//Onderhoud//NL', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:TREE11 Onderhoud'];
+      const tasks = appState.tasks.filter(t => !t.done && /^\d{4}-\d{2}-\d{2}$/.test(t.date || ''));
+      tasks.forEach(t => {
+        const compact = t.date.replace(/-/g, '');
+        const member = appState.team.find(m => m.name.trim().toLowerCase() === String(t.assignee || '').trim().toLowerCase());
+        const shiftId = member && (appState.roster.shifts[t.date] || {})[member.id];
+        const shift = SHIFT_TYPES.find(x => x.id === shiftId);
+        const tm = shift && /^(\d{2}):(\d{2}) - (\d{2}):(\d{2})$/.exec(shift.label);
+        const u = urgencyOf(t.priority);
+        lines.push('BEGIN:VEVENT');
+        lines.push('UID:' + String(t.id).replace(/[^A-Za-z0-9_-]/g, '') + '@tree11.app');
+        lines.push('DTSTAMP:' + stamp);
+        if (tm) {
+          lines.push('DTSTART:' + compact + 'T' + tm[1] + tm[2] + '00');
+          lines.push('DTEND:' + compact + 'T' + tm[3] + tm[4] + '00');
+        } else {
+          lines.push('DTSTART;VALUE=DATE:' + compact);
+          lines.push('DTEND;VALUE=DATE:' + addDaysIso(t.date, 1).replace(/-/g, ''));
+        }
+        lines.push(icsFold('SUMMARY:' + icsText('[' + u.label + '] ' + t.title + ' (' + t.dept + ')')));
+        if (t.notes) lines.push(icsFold('DESCRIPTION:' + icsText(t.notes)));
+        lines.push('PRIORITY:' + ({ 1: 1, 2: 3, 3: 5, 4: 9 }[u.n]));
+        lines.push('END:VEVENT');
+      });
+      lines.push('END:VCALENDAR');
+      return { text: lines.join('\r\n') + '\r\n', count: tasks.length };
+    }
+    function exportTasksIcs() {
+      const { text, count } = buildTasksIcs();
+      if (!count) { showToast('Geen openstaande taken met een datum om te exporteren.'); return; }
+      const blob = new Blob([text], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TREE11-taken-${getLocalTodayIso()}.ics`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast(count + ' taken geëxporteerd naar agenda-bestand');
     }
 
     function renderTeam() {
@@ -3078,7 +3474,7 @@
         try {
           const data = JSON.parse(e.target.result);
           if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Ongeldige structuur');
-          const known = ['departments', 'tasks', 'projects', 'lessons', 'equipment', 'team', 'inventory', 'usageHistory'];
+          const known = ['departments', 'tasks', 'projects', 'lessons', 'equipment', 'team', 'inventory', 'usageHistory', 'suppliers'];
           if (!known.some(k => Array.isArray(data[k]))) throw new Error('Geen TREE11-data gevonden');
           if (!confirm('Backup herstellen? Je huidige gegevens worden vervangen.')) return;
           appState = normalizeState({ ...data, cloudConfig: appState.cloudConfig });
