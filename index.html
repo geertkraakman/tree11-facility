@@ -131,13 +131,42 @@
     .t11-tile-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 9999px; background: rgba(26,30,20,.62); color: #fff; font-size: 11px; font-weight: 800; border: 1px solid rgba(255,255,255,.14); }
     .t11-tile-badge.urgent { background: #B42318; border-color: rgba(255,255,255,.25); }
     .t11-tile-badge.oos { background: #FBBF24; color: #1A1E14; border-color: transparent; }
-    .t11-tile-title { font-size: 1.15rem; font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-transform: uppercase; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); overflow-wrap: break-word; word-break: normal; font-size: clamp(.95rem, 4.3vw, 1.15rem); }
+    .t11-tile-title { font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-transform: uppercase; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); overflow-wrap: break-word; word-break: normal; font-size: clamp(.95rem, 4.3vw, 1.15rem); }
     .t11-tile-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: var(--t11-surface); }
     .t11-tile-sub { font-size: 12px; font-weight: 600; color: var(--t11-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
     .t11-tile-count { font-size: 12px; font-weight: 800; color: var(--t11-moss); background: var(--t11-tint); border-radius: 9999px; padding: 2px 9px; flex-shrink: 0; }
 
     @media (max-width: 380px) { .t11-tile-title { font-size: 1rem; } .t11-hero h2 { font-size: 1.35rem; } }
     canvas { touch-action: none; }
+
+    /* Print / PDF van het projectdossier */
+    #print-sheet { display: none; }
+    @media print {
+      @page { margin: 14mm; }
+      body.printing-project { background: #fff !important; }
+      body.printing-project > *:not(#print-sheet) { display: none !important; }
+      body.printing-project #print-sheet { display: block !important; color: #000; background: #fff; font: 10.5pt/1.45 Inter, Arial, sans-serif; }
+      #print-sheet h1 { font-size: 20pt; font-weight: 800; margin: 0 0 2pt; }
+      #print-sheet h2 { font-size: 12pt; font-weight: 800; margin: 14pt 0 5pt; padding-bottom: 2pt; border-bottom: 1.5pt solid #3B4622; color: #3B4622; break-after: avoid; }
+      #print-sheet h3 { font-size: 10pt; font-weight: 800; margin: 9pt 0 3pt; text-transform: uppercase; letter-spacing: .04em; color: #444; break-after: avoid; }
+      #print-sheet .ps-brand { font-size: 9pt; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #3B4622; }
+      #print-sheet .ps-meta { display: flex; flex-wrap: wrap; gap: 4pt 18pt; margin: 6pt 0; font-size: 10pt; }
+      #print-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      #print-sheet th:nth-child(1) { width: 16pt; }
+      #print-sheet th:nth-child(3) { width: 62pt; }
+      #print-sheet th:nth-child(4) { width: 100pt; }
+      #print-sheet th, #print-sheet td { border-bottom: .5pt solid #bbb; padding: 3pt 4pt; text-align: left; vertical-align: top; font-size: 9.5pt; }
+      #print-sheet th { background: #eef1e6; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em; }
+      #print-sheet tr { break-inside: avoid; }
+      #print-sheet .ps-note { color: #444; font-size: 8.5pt; }
+      #print-sheet .ps-box { display: inline-block; width: 10pt; text-align: center; font-weight: 800; }
+      #print-sheet .ps-risk { break-inside: avoid; margin: 0 0 5pt; padding: 3pt 0 3pt 4pt; border-left: 2pt solid #88A138; }
+      #print-sheet .ps-photos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6pt; }
+      #print-sheet figure { margin: 0; break-inside: avoid; }
+      #print-sheet figure img { width: 100%; height: 38mm; object-fit: cover; border: .5pt solid #bbb; }
+      #print-sheet figcaption { font-size: 7.5pt; color: #444; margin-top: 1pt; overflow-wrap: anywhere; }
+      #print-sheet .ps-foot { margin-top: 16pt; font-size: 8pt; color: #666; }
+    }
 
     /* Telefoon: grotere tikvlakken en geen inzoomen op invoervelden (iOS zoomt bij tekst kleiner dan 16px) */
     @media (max-width: 639px) {
@@ -150,6 +179,7 @@
   </style>
 </head>
 <body class="min-h-screen">
+  <div id="print-sheet" aria-hidden="true"></div>
 
   <!-- LOGIN SCHERM -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950">
@@ -300,6 +330,7 @@
 
           <div class="t11-section-label">Selecteer een ruimte</div>
           <div id="home-8-tiles-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5"></div>
+          <button type="button" id="home-more-depts" onclick="toggleHomeAllDepts()" aria-expanded="false" class="hidden w-full min-h-[48px] rounded-2xl bg-white border border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-50"></button>
 
           <div class="bg-white rounded-2xl border border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
             <button onclick="selectDepartmentFromHome('ALL')" class="font-bold text-[#3B4622] hover:underline min-h-[44px]">
@@ -397,6 +428,17 @@
             </div>
           </div>
 
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-2.5">
+            <input id="proj-search" type="search" oninput="renderProjectsGrid()" placeholder="Zoek op project, ruimte, omschrijving of stap..." class="flex-1 min-w-[180px] px-3.5 py-2 rounded-xl border border-slate-200 text-sm" />
+            <select id="proj-status-filter" onchange="renderProjectsGrid()" aria-label="Filter op projectstatus" class="min-h-[40px] px-3 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
+              <option value="all">Alle projecten</option>
+              <option value="nieuw">Nog niet gestart</option>
+              <option value="lopend">Lopend</option>
+              <option value="klaar">Afgerond</option>
+              <option value="laat">Loopt uit na oplevering</option>
+            </select>
+            <span id="proj-count" class="text-[11px] font-semibold text-slate-500"></span>
+          </div>
           <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
@@ -408,6 +450,15 @@
                 ← Alle projecten
               </button>
               <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="printProject(activeProjectId)" class="px-3.5 min-h-[44px] rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold shadow-sm transition">
+                  🖨️ Print / PDF
+                </button>
+                <button type="button" onclick="openEditProjectModal(activeProjectId)" class="px-3.5 min-h-[44px] rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold shadow-sm transition">
+                  ✏️ Project bewerken
+                </button>
+                <button type="button" onclick="openReplanModal(activeProjectId)" class="px-3.5 min-h-[44px] rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold shadow-sm transition">
+                  🔄 Planning herberekenen
+                </button>
                 <button onclick="openProjectPhotoModal(activeProjectId)" class="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm transition">
                   📷 + Foto's & Planning
                 </button>
@@ -420,7 +471,8 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <span id="detail-proj-room" class="text-xs font-bold uppercase tracking-wider text-emerald-600"></span>
-                <h2 id="detail-proj-title" class="text-2xl font-extrabold text-slate-900 mt-0.5"></h2>
+                <h2 id="detail-proj-title" class="text-2xl font-extrabold text-slate-900 mt-0.5 cursor-pointer" title="Klik om de projectnaam te bewerken" onclick="openEditProjectModal(activeProjectId)"></h2>
+                <p id="detail-proj-deadline" class="text-xs font-semibold text-slate-500 mt-0.5"></p>
                 <p id="detail-proj-desc" class="text-sm text-slate-600 mt-1 max-w-3xl"></p>
               </div>
               <div class="bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 min-w-[190px]">
@@ -537,6 +589,18 @@
             </button>
           </div>
         </div>
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-2.5">
+          <input id="eq-search" type="search" oninput="renderEquipment()" placeholder="Zoek op apparaat, afdeling of leverancier..." class="flex-1 min-w-[180px] px-3.5 py-2 rounded-xl border border-slate-200 text-sm" />
+          <select id="eq-status-filter" onchange="renderEquipment()" aria-label="Filter op onderhoudsstatus" class="min-h-[40px] px-3 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
+            <option value="all">Alle apparaten</option>
+            <option value="verlopen">⛔ Onderhoud verlopen</option>
+            <option value="binnenkort">⏰ Binnen 14 dagen</option>
+            <option value="ok">✅ Onderhoud oké</option>
+            <option value="Aandacht nodig">Aandacht nodig</option>
+            <option value="Buiten gebruik">🚧 Buiten gebruik</option>
+          </select>
+          <span id="eq-count" class="text-[11px] font-semibold text-slate-500"></span>
+        </div>
         <div id="equipment-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
 
@@ -573,6 +637,24 @@
       </div>
 
       <div class="px-5 py-4 space-y-4 overflow-y-auto flex-1">
+        <div id="ct-series-box" class="hidden rounded-2xl border border-[#CFDBA6] bg-[#EEF3DC] p-3.5 space-y-2.5">
+          <p id="ct-series-title" class="text-xs font-extrabold text-slate-900"></p>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label for="ct-ser-from" class="block text-[11px] font-bold text-slate-700 mb-1">Gedaan van nummer</label>
+              <input id="ct-ser-from" type="number" min="0" max="9999" oninput="updateCtSeriesPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+            <div>
+              <label for="ct-ser-to" class="block text-[11px] font-bold text-slate-700 mb-1">t/m nummer</label>
+              <input id="ct-ser-to" type="number" min="0" max="9999" oninput="updateCtSeriesPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white" />
+            </div>
+          </div>
+          <p id="ct-ser-preview" class="text-xs font-semibold text-slate-800"></p>
+          <label class="flex items-start gap-2.5 text-xs font-semibold text-slate-800 min-h-[44px]">
+            <input id="ct-ser-maint" type="checkbox" checked class="mt-0.5 w-5 h-5 shrink-0 accent-[#3B4622]" />
+            <span>Onderhoud ook vastleggen bij deze apparaten (volgende datum bijwerken)</span>
+          </label>
+        </div>
         <!-- Eerdere verbruikshistorie suggesties voor vergelijkbare taken -->
         <div id="ct-similar-history" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 space-y-1.5">
           <div class="text-xs font-extrabold text-[#3B4622]">💡 Eerder bij vergelijkbare klussen gebruikt:</div>
@@ -880,6 +962,21 @@
             <input id="nt-date" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
           </div>
         </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+          <label for="nt-series" class="block text-xs font-bold text-slate-700">Taak voor een reeks apparaten (optioneel)</label>
+          <select id="nt-series" onchange="onTaskSeriesChange()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+          <div id="nt-series-range" class="hidden grid grid-cols-2 gap-2">
+            <div>
+              <label for="nt-ser-from" class="block text-[11px] font-bold text-slate-600 mb-1">Van nummer</label>
+              <input id="nt-ser-from" type="number" min="0" max="9999" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <div>
+              <label for="nt-ser-to" class="block text-[11px] font-bold text-slate-600 mb-1">Tot en met nummer</label>
+              <input id="nt-ser-to" type="number" min="0" max="9999" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <p class="col-span-2 text-[11px] text-slate-500">Bij het afronden kun je invullen welke nummers klaar zijn; de rest blijft als open taak staan.</p>
+          </div>
+        </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Extra notitie / benodigd materiaal</label>
           <textarea id="nt-notes" rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
@@ -948,7 +1045,67 @@
         <h3 class="font-extrabold text-lg text-slate-900">📚 Lessons Learned & Aannemers-Ervaringen</h3>
         <button onclick="closeModal('lessons-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
       </div>
-      <p class="text-xs text-slate-600">Vastgelegde praktijkervaringen die automatisch als waarschuwing en offerte-check worden meegenomen in nieuwe projecten.</p>
+      <p class="text-xs text-slate-600">Vastgelegde praktijkervaringen. Ze komen automatisch als checklist in elk nieuw project. Geef je er een controlestap bij, dan wordt die ook in de planning van nieuwe projecten gezet.</p>
+      <button type="button" onclick="toggleLessonForm()" id="les-toggle-btn" class="min-h-[44px] px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">+ Les toevoegen</button>
+      <div id="les-form" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="les-project" class="block text-xs font-bold text-slate-700 mb-1">Uit welk project?</label>
+            <input id="les-project" type="text" maxlength="100" placeholder="Bijv. Yoga Studio" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="les-title" class="block text-xs font-bold text-slate-700 mb-1">Wat ging er mis? (kort)</label>
+            <input id="les-title" type="text" maxlength="160" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label for="les-impact" class="block text-xs font-bold text-slate-700 mb-1">Gevolg (tijd, geld, overlast)</label>
+          <textarea id="les-impact" rows="2" maxlength="500" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+        </div>
+        <div>
+          <label for="les-rule" class="block text-xs font-bold text-slate-700 mb-1">Wat doen we voortaan? (eis / afspraak)</label>
+          <textarea id="les-rule" rows="2" maxlength="500" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+        </div>
+        <fieldset class="text-xs">
+          <legend class="font-bold text-slate-700 mb-1">Geldt voor soort project</legend>
+          <div class="flex flex-wrap gap-x-4">
+            <label class="flex items-center gap-2 min-h-[40px]"><input type="checkbox" class="les-type w-5 h-5 accent-emerald-600" value="vloer" checked /> Vloer</label>
+            <label class="flex items-center gap-2 min-h-[40px]"><input type="checkbox" class="les-type w-5 h-5 accent-emerald-600" value="wand" checked /> Wanden</label>
+            <label class="flex items-center gap-2 min-h-[40px]"><input type="checkbox" class="les-type w-5 h-5 accent-emerald-600" value="nat" checked /> Natte ruimte</label>
+            <label class="flex items-center gap-2 min-h-[40px]"><input type="checkbox" class="les-type w-5 h-5 accent-emerald-600" value="algemeen" checked /> Algemeen</label>
+          </div>
+        </fieldset>
+        <label class="flex items-center gap-2.5 text-xs font-bold text-slate-800 min-h-[44px]">
+          <input id="les-step-on" type="checkbox" checked onchange="document.getElementById('les-step-box').classList.toggle('hidden', !this.checked)" class="w-5 h-5 accent-emerald-600" />
+          Controlestap toevoegen aan de planning van nieuwe projecten
+        </label>
+        <div id="les-step-box" class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label for="les-step-title" class="block text-xs font-bold text-slate-700 mb-1">Omschrijving van de stap</label>
+            <input id="les-step-title" type="text" maxlength="160" placeholder="Bijv. Onderconstructie schriftelijk laten keuren" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="les-phase" class="block text-xs font-bold text-slate-700 mb-1">In welke fase</label>
+            <select id="les-phase" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="0">Fase 0: Voorbereiding, offerte & sloop</option>
+              <option value="1">Fase 1: Constructie & ondergrond</option>
+              <option value="2">Fase 2: Installaties & droogtijden</option>
+              <option value="3">Fase 3: Opbouw & afwerking</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="les-days" class="block text-xs font-bold text-slate-700 mb-1">Werkdagen</label>
+              <input id="les-days" type="number" min="1" max="60" value="1" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <div>
+              <label for="les-assignee" class="block text-xs font-bold text-slate-700 mb-1">Uitvoerende</label>
+              <input id="les-assignee" type="text" maxlength="60" value="Geert" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+            </div>
+          </div>
+        </div>
+        <button type="button" onclick="saveLesson()" class="w-full min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">Les opslaan</button>
+      </div>
       <div id="lessons-list-container" class="space-y-3"></div>
     </div>
   </div>
@@ -1100,6 +1257,7 @@
       <p class="text-xs text-slate-600 leading-relaxed">
         Koppel een gratis <strong>Supabase</strong>-project (tabel <code>tree11_state</code> met kolommen <code>id</code> text primary key en <code>payload</code> jsonb) zodat al je taken, projecten, voorraad, verbruikshistorie, foto's en tekeningen live synchroon blijven tussen al je apparaten.
       </p>
+      <div id="cloud-status-box" class="rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs space-y-0.5" role="status"></div>
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Supabase Project URL</label>
@@ -1121,23 +1279,200 @@
   </div>
 
   <!-- MODAL: APPARAAT TOEVOEGEN -->
-  <div id="new-equip-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <h3 class="font-extrabold text-lg text-slate-900">+ Apparaat / Installatie Toevoegen</h3>
-      <div class="space-y-3">
-        <input id="eq-name" type="text" placeholder="Naam apparaat (bijv. Technogym Skillrun 1)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
-        <input id="eq-dept" type="text" placeholder="Afdeling (bijv. Fitness)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        <input id="eq-next" type="date" aria-label="Volgende onderhoudsdatum" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        <select id="eq-supplier" aria-label="Leverancier" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+  <div id="new-equip-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">+ Apparaat / Installatie toevoegen</h3>
+        <button type="button" onclick="closeModal('new-equip-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
       </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('new-equip-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="saveNewEquipment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      <div class="px-5 py-4 space-y-3 overflow-y-auto">
+        <div class="grid grid-cols-2 gap-2" role="group" aria-label="Aantal toevoegen">
+          <button type="button" id="eq-mode-one" onclick="setEquipAddMode('one')" class="min-h-[44px] rounded-xl text-xs font-bold tab-active">Eén apparaat</button>
+          <button type="button" id="eq-mode-series" onclick="setEquipAddMode('series')" class="min-h-[44px] rounded-xl text-xs font-bold tab-inactive border border-slate-300">Meerdere (reeks)</button>
+        </div>
+        <div>
+          <label for="eq-name" id="eq-name-label" class="block text-xs font-bold text-slate-700 mb-1">Naam apparaat</label>
+          <input id="eq-name" type="text" maxlength="80" oninput="updateEquipPreview()" placeholder="Bijv. Technogym Skillrun 1" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div id="eq-series-box" class="hidden grid grid-cols-2 gap-3">
+          <div>
+            <label for="eq-from" class="block text-xs font-bold text-slate-700 mb-1">Van nummer</label>
+            <input id="eq-from" type="number" min="0" max="9999" value="1" oninput="updateEquipPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="eq-to" class="block text-xs font-bold text-slate-700 mb-1">Tot en met nummer</label>
+            <input id="eq-to" type="number" min="0" max="9999" value="10" oninput="updateEquipPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <p id="eq-preview" class="col-span-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></p>
+        </div>
+        <div>
+          <label for="eq-dept" class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+          <input id="eq-dept" type="text" list="eq-dept-list" placeholder="Bijv. Fitness" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          <datalist id="eq-dept-list"></datalist>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="eq-purchase" class="block text-xs font-bold text-slate-700 mb-1">Aanschafdatum (optioneel)</label>
+            <input id="eq-purchase" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="eq-next" class="block text-xs font-bold text-slate-700 mb-1">Volgend onderhoud</label>
+            <input id="eq-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="eq-interval" class="block text-xs font-bold text-slate-700 mb-1">Onderhoud elke</label>
+            <select id="eq-interval" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="30">30 dagen</option><option value="90" selected>90 dagen</option><option value="180">180 dagen</option><option value="365">365 dagen</option>
+            </select>
+          </div>
+          <div>
+            <label for="eq-supplier" class="block text-xs font-bold text-slate-700 mb-1">Leverancier</label>
+            <select id="eq-supplier" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white"></select>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500">Laat je het onderhoud leeg, dan wordt het vandaag + het gekozen interval. Aanschafdatum of onderhoud later aanpassen voor een hele reeks kan op de reekskaart.</p>
+      </div>
+      <div class="flex gap-2 px-5 py-4 border-t border-slate-100">
+        <button type="button" onclick="closeModal('new-equip-modal')" class="flex-1 min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">Annuleren</button>
+        <button type="button" onclick="saveNewEquipment()" class="flex-1 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REEKS AANPASSEN -->
+  <div id="eq-bulk-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">📅 Reeks aanpassen</h3>
+        <button type="button" onclick="closeModal('eq-bulk-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="px-5 py-4 space-y-3 overflow-y-auto">
+        <input id="eb-key" type="hidden" />
+        <p id="eb-title" class="text-sm font-extrabold text-slate-900"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="eb-from" class="block text-xs font-bold text-slate-700 mb-1">Van nummer</label>
+            <input id="eb-from" type="number" min="0" max="9999" oninput="updateBulkPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="eb-to" class="block text-xs font-bold text-slate-700 mb-1">Tot en met nummer</label>
+            <input id="eb-to" type="number" min="0" max="9999" oninput="updateBulkPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+        <p id="eb-preview" class="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="eb-purchase" class="block text-xs font-bold text-slate-700 mb-1">Aanschafdatum</label>
+            <input id="eb-purchase" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="eb-next" class="block text-xs font-bold text-slate-700 mb-1">Volgend onderhoud</label>
+            <input id="eb-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="eb-interval" class="block text-xs font-bold text-slate-700 mb-1">Onderhoud elke</label>
+            <select id="eb-interval" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="">niet wijzigen</option><option value="30">30 dagen</option><option value="90">90 dagen</option><option value="180">180 dagen</option><option value="365">365 dagen</option>
+            </select>
+          </div>
+          <div>
+            <label for="eb-status" class="block text-xs font-bold text-slate-700 mb-1">Status</label>
+            <select id="eb-status" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="">niet wijzigen</option><option value="Operationeel">Operationeel</option><option value="Aandacht nodig">Aandacht nodig</option><option value="Buiten gebruik">Buiten gebruik</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500">Alleen ingevulde velden worden aangepast. Leeg laten = ongewijzigd.</p>
+      </div>
+      <div class="flex gap-2 px-5 py-4 border-t border-slate-100">
+        <button type="button" onclick="closeModal('eq-bulk-modal')" class="flex-1 min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">Annuleren</button>
+        <button type="button" onclick="applyEquipmentBulk()" class="flex-1 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">Toepassen</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: TAAK BEWERKEN -->
+
+  <!-- PROJECT BEWERKEN -->
+  <div id="edit-project-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">✏️ Project bewerken</h3>
+        <button type="button" onclick="closeModal('edit-project-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="px-5 py-4 space-y-3 overflow-y-auto">
+        <input id="ep-id" type="hidden" />
+        <div>
+          <label for="ep-title" class="block text-xs font-bold text-slate-700 mb-1">Projectnaam</label>
+          <input id="ep-title" type="text" maxlength="120" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="ep-room" class="block text-xs font-bold text-slate-700 mb-1">Ruimte</label>
+            <input id="ep-room" type="text" maxlength="60" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="ep-dept" class="block text-xs font-bold text-slate-700 mb-1">Afdeling voor taken</label>
+            <select id="ep-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white"></select>
+          </div>
+        </div>
+        <div>
+          <label for="ep-desc" class="block text-xs font-bold text-slate-700 mb-1">Omschrijving</label>
+          <textarea id="ep-desc" rows="3" maxlength="600" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="ep-budget" class="block text-xs font-bold text-slate-700 mb-1">Budget / offerte</label>
+            <input id="ep-budget" type="text" maxlength="80" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="ep-deadline" class="block text-xs font-bold text-slate-700 mb-1">Uiterlijke oplevering</label>
+            <input id="ep-deadline" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2 px-5 py-4 border-t border-slate-100">
+        <button type="button" onclick="closeModal('edit-project-modal')" class="flex-1 min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">Annuleren</button>
+        <button type="button" onclick="saveEditedProject()" class="flex-1 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANNING HERBEREKENEN -->
+  <div id="replan-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">🔄 Planning herberekenen</h3>
+        <button type="button" onclick="closeModal('replan-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="px-5 py-4 space-y-3 overflow-y-auto">
+        <input id="rp-id" type="hidden" />
+        <p class="text-xs text-slate-600">De openstaande stappen worden in hun huidige volgorde achter elkaar gezet (alleen werkdagen). Afgeronde stappen blijven staan.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="rp-start" class="block text-xs font-bold text-slate-700 mb-1">Nieuwe startdatum</label>
+            <input id="rp-start" type="date" oninput="renderReplanPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label for="rp-days" class="block text-xs font-bold text-slate-700 mb-1">Werkdagen per stap (als duur onbekend)</label>
+            <input id="rp-days" type="number" min="1" max="60" value="1" oninput="renderReplanPreview()" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+        <label class="flex items-start gap-2.5 text-xs font-semibold text-slate-800 min-h-[44px] py-1">
+          <input id="rp-move-tasks" type="checkbox" checked class="mt-0.5 w-5 h-5 shrink-0 accent-emerald-600" />
+          <span>Gekoppelde taken met een datum meeverplaatsen naar de nieuwe stapdatum</span>
+        </label>
+        <div id="rp-preview" class="text-xs rounded-2xl border border-slate-200 bg-slate-50 p-3 space-y-1"></div>
+      </div>
+      <div class="flex gap-2 px-5 py-4 border-t border-slate-100">
+        <button type="button" onclick="closeModal('replan-modal')" class="flex-1 min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold">Annuleren</button>
+        <button type="button" onclick="applyReplan()" class="flex-1 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">Herberekenen</button>
+      </div>
+    </div>
+  </div>
+
   <div id="edit-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[94vh] flex flex-col">
       <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
@@ -1277,8 +1612,12 @@
       (MODAL_CLOSERS[top.id] || (() => closeModal(top.id)))();
       return true;
     }
+    // Eén centrale Escape-afhandeling: eerst het mobiele menu, anders de bovenste modal
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && closeTopModal()) e.preventDefault();
+      if (e.key !== 'Escape') return;
+      const menu = document.getElementById('header-more-menu');
+      if (menu && !menu.classList.contains('hidden')) { closeHeaderMenu(); e.preventDefault(); return; }
+      if (closeTopModal()) e.preventDefault();
     });
     (function () {
       let downOn = null;
@@ -1291,24 +1630,29 @@
       });
     })();
     // Elk invoerveld krijgt een naam voor schermlezers: <label for> of anders aria-label uit de placeholder
+    const labelDone = new WeakSet();
+    function labelOne(el) {
+      if (labelDone.has(el)) return;
+      if (el.type === 'hidden' || (el.type === 'file' && el.closest('label'))) { labelDone.add(el); return; }
+      if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.closest('label')) { labelDone.add(el); return; }
+      if (el.id && document.querySelector('label[for="' + el.id.replace(/"/g, '\\"') + '"]')) { labelDone.add(el); return; }
+      const prev = el.previousElementSibling;
+      if (prev && prev.tagName === 'LABEL' && !prev.getAttribute('for') && el.id) { prev.setAttribute('for', el.id); labelDone.add(el); return; }
+      const parentLabel = el.parentElement && el.parentElement.querySelector(':scope > label:not([for])');
+      if (parentLabel && el.id && el.parentElement.querySelectorAll('input,select,textarea').length === 1) { parentLabel.setAttribute('for', el.id); labelDone.add(el); return; }
+      let name = el.getAttribute('placeholder') || el.getAttribute('title');
+      if (!name && el.type === 'checkbox') {
+        const host = el.closest('li, tr, label, div');
+        const txt = host ? host.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+        name = txt ? 'Afvinken: ' + txt : 'Afvinken';
+      }
+      if (name) { el.setAttribute('aria-label', name); labelDone.add(el); }
+    }
+    // Elk invoerveld krijgt een naam voor schermlezers: <label for> of anders aria-label
     function labelFormFields(root) {
-      (root || document).querySelectorAll('input, select, textarea').forEach(el => {
-        if (el.type === 'hidden' || el.type === 'file' && el.closest('label')) return;
-        if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
-        if (el.closest('label')) return;
-        if (el.id && document.querySelector(`label[for="${el.id}"]`)) return;
-        const prev = el.previousElementSibling;
-        if (prev && prev.tagName === 'LABEL' && !prev.getAttribute('for') && el.id) { prev.setAttribute('for', el.id); return; }
-        const parentLabel = el.parentElement && el.parentElement.querySelector(':scope > label:not([for])');
-        if (parentLabel && el.id && el.parentElement.querySelectorAll('input,select,textarea').length === 1) { parentLabel.setAttribute('for', el.id); return; }
-        let name = el.getAttribute('placeholder') || el.getAttribute('title');
-        if (!name && el.type === 'checkbox') {
-          const host = el.closest('li, tr, label, div');
-          const txt = host ? host.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
-          name = txt ? 'Afvinken: ' + txt : 'Afvinken';
-        }
-        if (name) el.setAttribute('aria-label', name);
-      });
+      const r = root || document;
+      if (r.matches && r.matches('input, select, textarea')) labelOne(r);
+      if (r.querySelectorAll) r.querySelectorAll('input, select, textarea').forEach(labelOne);
     }
 
     // Kalenderdagen optellen zonder tijdzone/zomertijd-effecten (alles in UTC-middernacht)
@@ -1318,6 +1662,9 @@
       const t = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) + days * 86400000;
       return new Date(t).toISOString().split('T')[0];
     }
+
+    // Datum relatief aan vandaag (voor voorbeelddata)
+    function relDay(n) { return addDaysIso(getLocalTodayIso(), n); }
 
     function getLocalTodayIso() {
       const now = new Date();
@@ -1387,7 +1734,7 @@
     const DEFAULT_USAGE_HISTORY = [
       {
         id: 'uh-init-1',
-        date: '2026-11-18',
+        date: relDay(-7),
         dept: 'Ride/Cycling',
         taskTitle: 'Speling trapas & pedaal Bike 9 verhelpen',
         workDescription: 'Trapas nagetrokken, beschadigde pedaal vervangen en licht ingevet.',
@@ -1414,6 +1761,44 @@
       }
     ];
 
+    // Lessen uit het project Squashhal → The Box (eenmalig toegevoegd aan bestaande gegevens)
+    const SEED_LESSONS_V2 = [
+      { id: "seed2-planning", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Traject gestart zonder degelijke planning", impact: "Door het ontbreken van een totaalplan zijn meerdere vermijdbare fouten gemaakt (zie de overige lessen van dit project): dubbel werk, hergebruik dat niet paste en verkeerde volgorde van werkzaamheden.", rule: "Start de sloop pas als er een totaalplan ligt met de volgorde van werkzaamheden, per onderdeel de keuze nieuw of hergebruiken, en wie wat besluit. Loop dit plan vooraf door met de uitvoerders.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Totaalplan en volgorde van werkzaamheden vastleggen vóórdat de sloop start", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed2-glas", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Zware glazen wanden (±300 kg) eerst bewaard, later alsnog gesloopt", impact: "5 glazen squashwanden zijn de hele verbouwing verplaatst en uiteindelijk stukgeslagen en afgevoerd. Het hergebruik (kantoorraam en entree) bleek niet mogelijk. Dit had in één keer gekund toen er een speciale glasbak stond (bij de sloop van 11 banen).", rule: "Beslis vóór de sloop of hergebruik van zware of breekbare onderdelen (glas, ± 300 kg per wand) echt haalbaar is: maat, gewicht, hijsmiddelen en opslagruimte. Is dat niet zeker, sloop en voer ze direct af in de speciale bak.", appliesTo: ["wand", "algemeen"], planStep: {"title": "Hergebruik van glas en zware onderdelen beslissen vóór de sloop; zo niet: direct in de glasbak", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-kleedkamer-voorz", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Kleedkamers: voorzieningen voor schoonmaak vergeten", impact: "Er zijn te weinig stopcontacten voor schoonmaakmachines en er is geen afvoerputje voor het dweilen/schoonspoelen van de vloer.", rule: "Laat de schoonmaak meekijken in het ontwerp van kleedkamers en toiletten: voldoende stopcontacten voor machines en een afvoerputje voor dweilen/spoelen.", appliesTo: ["nat", "wand"], planStep: {"title": "Schoonmaak laten meekijken in het ontwerp: stopcontacten en afvoerputje vastleggen", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-deuren", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Goedkope boarddeuren in oude kozijnen bij intensief gebruikte ruimtes", impact: "Kleedkamers en toiletten kregen goedkope boarddeuren die niet geschikt zijn voor intensief gebruik. De bestaande kozijnen zijn blijven zitten, waardoor het opdekdeuren zijn. De beste optie was geweest: nieuwe binnenkozijnen met passende deuren.", rule: "Voor kleedkamers, toiletten en andere intensief gebruikte ruimtes: altijd nieuwe binnenkozijnen met deuren die tegen vocht en intensief gebruik kunnen. Geen boarddeuren en geen opdekdeuren in oude kozijnen.", appliesTo: ["nat", "wand"], planStep: {"title": "Deur- en kozijnspecificatie vastleggen: nieuwe kozijnen, geschikt voor intensief gebruik", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-volgorde-vloer", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Vloer ingepland terwijl de wanden nog geschilderd moesten worden", impact: "Het leggen van de vloer stond al gepland terwijl het schilderwerk aan de wanden nog moest gebeuren. Hier was niet over nagedacht.", rule: "Leg de vloer pas als al het stuc-, schilder- en plafondwerk klaar is. Zet in de planning een controlemoment vóór het leggen.", appliesTo: ["vloer", "wand", "algemeen"], planStep: {"title": "Controle: stucwerk, schilderwerk en plafond zijn klaar vóór de vloer wordt gelegd", "phaseIdx": 2, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-vloerrollen", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Nieuwe en oude vloerrollen door elkaar in twee ruimtes", impact: "Een deel van de vloer uit de oude Crossfit-hal is hergebruikt in de Box, maar de rolmaat bleek anders dan de nieuwe. Daarna is in Hal 1 ook een stuk vloer vernieuwd (rollen met dezelfde maat als de Crossfit-hal). Nu liggen er in beide ruimtes nieuwe én oude rollen. Beter was: Box volledig nieuw en Hal 1 volledig van de oude rollen, met veel minder handelingen.", rule: "Meet vooraf alle rolbreedtes en -maten (nieuw en oud) in en maak een verdeelplan: per ruimte volledig nieuw of volledig hergebruikt. Plan de vloerwerkzaamheden van alle ruimtes samen.", appliesTo: ["vloer", "algemeen"], planStep: {"title": "Vloerrollen inmeten en verdeelplan maken: per ruimte volledig nieuw of volledig hergebruikt", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-plinten", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Plinten geplaatst vóór bekend was welke vloer erin kwam (gang Box)", impact: "De wand was gestuct en de plinten zaten er al op toen pas werd bedacht wat er op de vloer moest. De plinten hadden later gemoeten.", rule: "Kies de vloerafwerking vooraf en plaats de plinten pas nadat de definitieve vloer ligt (of volg de volgorde die bij die vloer hoort).", appliesTo: ["vloer", "wand", "algemeen"], planStep: {"title": "Vloerafwerking vastleggen vóór stucwerk en plinten", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed2-tv", project: "Squashhal → The Box (Crossfit/Hyrox) + Padel + Performance Corner", title: "Schermen (tv’s) besteld en opgehangen zonder uitgewerkt plan", impact: "Voor een event zijn tv’s er snel bij besteld en opgehangen. De eerste hing al en werd te klein bevonden. Ook de aansluiting (stroom en signaal) was niet uitgedacht.", rule: "Leg vooraf vast: schermformaat, kijkafstand, ophangpunt, stroom en bekabeling, en wie aansluit. Hang pas alle schermen op na akkoord op het eerste scherm.", appliesTo: ["wand", "algemeen"], planStep: {"title": "Schermen: formaat, ophangpunten, stroom en bekabeling vastleggen vóór bestellen", "phaseIdx": 2, "days": 1, "assignee": "Geert"} }
+    ];
+    // Lessen uit het project Bowlingcentrum → Yoga Studio
+    const SEED_LESSONS_V3 = [
+      { id: "seed3-sloop-scope", project: "Bowlingcentrum → Yoga Studio", title: "Sloop en weggooien inboedel gestart zonder duidelijke afspraken", impact: "De sloop begon terwijl niet helemaal duidelijk was wat wel of niet weg moest en wie dat bepaalt. De aannemer was hiervan ook niet op de hoogte.", rule: "Leg vóór de sloop schriftelijk vast wat blijft, wat weg gaat of verkocht wordt, wie daarover beslist, en deel die lijst met de aannemer. Begin pas na akkoord.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Sloop- en inboedellijst vastleggen (blijft / weg / verkopen), beslisser aanwijzen en delen met de aannemer", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed3-tijdspad", project: "Bowlingcentrum → Yoga Studio", title: "Onrealistisch tijdspad en druk vanuit de aannemer", impact: "De doorlooptijden in het plan waren niet realistisch en de aannemer legde een bepaalde druk op, waardoor beslissingen te snel en niet doordacht genomen werden.", rule: "Laat de aannemer een gefaseerde planning indienen met levertijden en afhankelijkheden. Toets die op realisme (levertijden, droogtijden, keuringen), leg mijlpalen met buffer vast en neem geen beslissingen onder tijdsdruk.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Planning van de aannemer toetsen: levertijden, afhankelijkheden, buffer en mijlpalen vastleggen", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed3-korting", project: "Bowlingcentrum → Yoga Studio", title: "Korting van de aannemer niet getoetst: echte of schijnkorting?", impact: "Er zijn afspraken gemaakt waarvoor een korting wordt gegeven, maar het is onduidelijk of die korting realistisch is of een zogenaamde korting.", rule: "Vraag de offerte per post uitgesplitst en vergelijk het totaal zonder korting met een tweede offerte. Beoordeel een korting alleen op het eindbedrag voor het werk dat echt nodig is.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Offerte per post laten uitsplitsen en korting toetsen aan een tweede offerte", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed3-onnodig-werk", project: "Bowlingcentrum → Yoga Studio", title: "Onnodig werk in de opdracht: dak vervangen terwijl het nog 7 jaar mee kon", impact: "De aannemer kreeg er doorheen dat het dak werd vernieuwd, terwijl dit nog prima 7 jaar had meegekund en de isolatiewaarde nog voldeed.", rule: "Laat vóór de opdracht per bestaand onderdeel (dak, isolatie, installaties) vastleggen of vervangen echt nodig is, bij voorkeur met een onafhankelijke conditiecheck. Neem geen werk op dat niet onderbouwd is.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Conditiecheck bestaande onderdelen (dak, isolatie, installaties): vervangen of behouden?", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed3-leveringen", project: "Bowlingcentrum → Yoga Studio", title: "Afspraak over opperen bij leveringen: leveringen komen op het laatste moment", impact: "Er is afgesproken dat wij opperen bij materiaalleveringen, maar leveringen worden steeds op het laatste moment aangemeld. Het is dan zoeken naar mensen.", rule: "Leg in de offerte vast: vaste aanmeldtermijn voor leveringen, wie lost en opperen, hoeveel mensen en welk tijdvak. Is dat niet afdwingbaar, verreken het opperen dan in de prijs.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Afspraken over leveringen en opperen vastleggen (aanmelden vooraf, wie lost, hoeveel mensen)", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed3-luchtbehandeling", project: "Bowlingcentrum → Yoga Studio", title: "Project vastgelopen op luchtbehandeling (prijs niet rond)", impact: "Het project is in juni gestart en loopt vast omdat de luchtbehandeling geplaatst moet worden. Het ligt stil omdat de partijen er prijstechnisch niet uitkomen.", rule: "Start de bouw pas als installaties met lange levertijd (zoals luchtbehandeling) vastliggen op prijs, leverancier, levertijd en plaatsingsmoment. Zet ze in de planning als kritieke route.", appliesTo: ["nat", "wand", "algemeen"], planStep: {"title": "Installaties met lange levertijd (luchtbehandeling) vastleggen: prijs, leverancier, levertijd en plaatsing", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed3-terras-scope", project: "Bowlingcentrum → Yoga Studio", title: "Vlonder/terras weghalen: onduidelijk wat erbij hoort en wie sloopt", impact: "Bij het weghalen van het terras was onduidelijk wat erbij hoort. Onder de houten vlonder zat een staalconstructie en het was onduidelijk voor wie de sloop daarvan was.", rule: "Leg vóór de sloop van terras of vlonder schriftelijk vast wat er allemaal bij hoort (ook de onderconstructie) en wie het sloopt en afvoert.", appliesTo: ["vloer", "algemeen"], planStep: {"title": "Sloopomvang terras/vlonder inclusief onderconstructie en wie sloopt vastleggen", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed3-afhankelijkheden", project: "Bowlingcentrum → Yoga Studio", title: "Planningsfout: balken laten liggen, vloer gemaakt, kozijnen later binnengehaald", impact: "Er was druk dat het vlonder vrijdag weg moest. Op vrijdagochtend de stalen balken weghalen werd tegengehouden omdat ze moesten blijven liggen. Er werd toch een nieuwe vloer gemaakt waarna dinsdag de kozijnen naar binnen werden gehaald. Gevolg: extra kosten voor een nieuwe balklaag en underlayment platen plus een paar manuren.", rule: "Zet sloop, vloeropbouw en leveringen van zware materialen (zoals kozijnen) op één gezamenlijke planning. Wijzig de volgorde alleen na schriftelijk akkoord van beide partijen en benoem de kosten van de wijziging vooraf.", appliesTo: ["vloer", "wand", "algemeen"], planStep: {"title": "Afhankelijkheden controleren: sloop, vloeropbouw en levering zware materialen; wijzigingen alleen schriftelijk", "phaseIdx": 1, "days": 1, "assignee": "Geert"} }
+    ];
+    // Lessen uit het project Cycling/Ride (box-in-box)
+    const SEED_LESSONS_V4 = [
+      { id: "seed4-uitgangspunten", project: "Cycling/Ride (box-in-box)", title: "Gestart terwijl onduidelijk was of de achterwand blijft", impact: "Bij de start was niet duidelijk of de achterwand blijft of eruit gaat. Uiteindelijk bleef de wand staan en werd het een box-in-box-verbouwing om geluidsoverlast te voorkomen.", rule: "Leg vóór de start de ontwerpuitgangspunten vast: wat blijft staan en wat gaat eruit (wanden, installaties). Kies bij geluidsoverlast meteen de aanpak (zoals box-in-box) en laat de akoestiek vooraf adviseren.", appliesTo: ["wand", "algemeen"], planStep: {"title": "Ontwerpuitgangspunten vastleggen: wat blijft, wat gaat; aanpak geluid (box-in-box) bepalen", "phaseIdx": 0, "days": 2, "assignee": "Geert"} },
+      { id: "seed4-maatvoering", project: "Cycling/Ride (box-in-box)", title: "Kalkzandsteenwanden geplaatst zonder tekening: sluis en deuren te ver naar binnen of buiten", impact: "Er was geen tekening. De muur om de hoek (sluis met twee deuren) bleek te ver de zaal ingebouwd, ontdekt pas na het leggen van de pvc-vloer, waardoor er stukken in de vloer moesten worden bijgelegd. De eerste deur werd daarna te ver naar buiten geplaatst, waardoor een voorzetwandje nodig is voor de geluiddichte deuren.", rule: "Plaats geen wanden zonder maatvoeringstekening met de positie van wanden, sluis en deuren. Laat het uitzetten controleren vóór het metselen en controleer de deurposities vóór de deuren worden geplaatst.", appliesTo: ["wand", "algemeen"], planStep: {"title": "Maatvoeringstekening maken (wanden, sluis, deuren) en uitzetten laten controleren vóór het metselen", "phaseIdx": 1, "days": 2, "assignee": "Geert"} },
+      { id: "seed4-installatie-toegang", project: "Cycling/Ride (box-in-box)", title: "Airco laten zitten en eromheen gebouwd: filter onbereikbaar", impact: "Eerst werd gezegd dat de airco eruit gaat, later bleef hij zitten (capaciteit ruim voldoende) en werd eronderdoor gebouwd, zonder rekening te houden met het filtersysteem. Het filter is nu onbereikbaar: eruit kan nog, erin niet meer. Nu wordt een extern filtersysteem in een plafondluik geplaatst; of dat voldoende is, is nog onzeker.", rule: "Beslis vóór het bouwen of bestaande installaties blijven of weggaan. Leg bij behoud vast hoe filters en onderhoudspunten bereikbaar blijven en laat de installateur akkoord geven.", appliesTo: ["wand", "nat", "algemeen"], planStep: {"title": "Bestaande installaties (airco): behouden of weg beslissen en bereikbaarheid van filters en onderhoud vastleggen", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed4-vloer-spuitwerk", project: "Cycling/Ride (box-in-box)", title: "Vloer gelegd vóór spuitwerk en lijmwerk klaar waren: krassen in de nieuwe vloer", impact: "De vloer lag al toen de spuiter pas het plafond en de wanden ging spuiten en voordat het lijmwerk aan de kalkzandsteenmuur klaar was. Hierdoor zitten er krassen in de nieuwe vloer.", rule: "Leg de vloer pas als lijm-, spuit-, schilder- en plafondwerk klaar zijn. Moet het toch eerder, bescherm de vloer dan volledig.", appliesTo: ["vloer", "wand", "algemeen"] },
+      { id: "seed4-podium", project: "Cycling/Ride (box-in-box)", title: "Podium met subwoofer te hoog: hoofd tegen ledverlichting en in het licht kijken", impact: "Het podium met ingebouwde subwoofer heeft een bepaalde hoogte nodig, maar de ruimte is niet oneindig hoog door de dragende staalconstructie. Het podium bleek te hoog: de instructeur komt met zijn hoofd tegen de ledverlichting en kijkt vol in het licht. De verlichting loopt volgens de beoordeling ook te ver door tot aan het podium.", rule: "Maak vooraf een doorsnede met de vrije hoogte (staalconstructie), podiumhoogte en ophanghoogte en positie van de verlichting. Test met een proefopstelling of de instructeur met zijn hoofd vrij blijft en niet in het licht kijkt.", appliesTo: ["wand", "algemeen"], planStep: {"title": "Doorsnede en proefopstelling podium, verlichting en geluid: hoofdruimte en verblinding controleren", "phaseIdx": 2, "days": 1, "assignee": "Geert"} }
+    ];
+    // Lessen uit het project Kleedkamer verbouwing
+    const SEED_LESSONS_V5 = [
+      { id: "seed5-opleverdatum", project: "Kleedkamer verbouwing", title: "Opleverdatum aan klanten doorgegeven vóór het project begon", impact: "Nog voor het project begon is de datum waarop de kleedkamers weer klaar zijn al aan klanten doorgegeven. Deze datum wordt niet gehaald.", rule: "Communiceer pas een opleverdatum naar klanten nadat de planning is getoetst, er buffer in zit en de aannemer akkoord is. Noem het eerst een verwachte datum met marge.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Planning toetsen (met buffer) vóórdat een opleverdatum aan klanten wordt gecommuniceerd", "phaseIdx": 0, "days": 1, "assignee": "Geert"} },
+      { id: "seed5-opslag-route", project: "Kleedkamer verbouwing", title: "Materiaalopslag en transportroute niet afgestemd (tegels onder afdak)", impact: "De materialen voor de tegelzetter stonden onder een afdak, maar moesten daar weg. Rond de Box is nieuw straatwerk en een hardloopbaan aangelegd, waardoor de tegels niet meer verreden konden worden naar het andere pand. Alles is met de hand omgestapeld en met een pompwagen verplaatst. Er was ook miscommunicatie tussen de partijen.", rule: "Leg vooraf vast waar materialen worden opgeslagen, hoe lang, en hoe ze later vervoerd worden. Stem af met alle partijen die op het terrein werken, zodat een route of opslagplek niet dichtgaat. Verplaats materialen vóór de route dicht gaat.", appliesTo: ["vloer", "wand", "nat", "algemeen"], planStep: {"title": "Opslaglocatie en transportroute voor materialen vastleggen en afstemmen met alle partijen op het terrein", "phaseIdx": 0, "days": 1, "assignee": "Geert"} }
+    ];
+    const LESSON_SEEDS = [['v2', SEED_LESSONS_V2], ['v3', SEED_LESSONS_V3], ['v4', SEED_LESSONS_V4], ['v5', SEED_LESSONS_V5]];
+    const LESSON_SEED_VERSION = 'v5';
+
     const DEFAULT_PROJECTS = [
       {
         id: 'proj-yoga-floor',
@@ -1426,7 +1811,7 @@
             id: 'ys-0',
             phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
             title: 'Vlonderplanken zelf verwijderd & staalconstructie vrijgelegd',
-            date: '2026-11-20',
+            date: relDay(-5),
             assignee: 'Geert & Team',
             note: 'Vlonder (€ 1.000 bespaard) zelf weggehaald; verzinkte H-balken op betonnen poeren aangetroffen.',
             done: true
@@ -1435,7 +1820,7 @@
             id: 'ys-1',
             phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
             title: 'Stalen H-balken demonteren & afvoeren (betonnen poeren behouden!)',
-            date: '2026-11-26',
+            date: relDay(1),
             assignee: 'Aannemer / Metaalhandel',
             note: 'Richtprijs € 1.000–€ 1.750 (oud-ijzer verrekenen). Betonnen poeren blijven staan; draadeinden vlak afslijpen en gevelankers vrijmaken.',
             done: false
@@ -1444,7 +1829,7 @@
             id: 'ys-2',
             phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
             title: 'Maatvoering zaal (10,80m × 7,00m = 75,6 m²) & hellingshoek hoofdingang (1:12 à 1:15) uitzetten',
-            date: '2026-11-27',
+            date: relDay(2),
             assignee: 'Geert',
             note: 'Bestel ca. 83 m² vloer, primer en egaline (incl. 10% snijverlies). Houd rekening met vlak bordes vóór de openslaande deuren.',
             done: false
@@ -1453,7 +1838,7 @@
             id: 'ys-3',
             phase: 'Fase 1: Constructie & Ondergrond',
             title: 'Ondervloer schuren, stofvrij maken, primeren & egaliseren',
-            date: '2026-12-01',
+            date: relDay(6),
             assignee: 'Vloerenlegger',
             note: 'Minimale droogtijd egaline 24–48 uur aanhouden + restvochtmeting vóór verlijmen.',
             done: false
@@ -1462,7 +1847,7 @@
             id: 'ys-4',
             phase: 'Fase 3: Opbouw & Afwerking',
             title: 'Schuin oplopende hoofdingang opbouwen op bestaande poeren + bamboe vloer leggen',
-            date: '2026-12-05',
+            date: relDay(10),
             assignee: 'Aannemer & Vloerenlegger',
             note: 'Hoofdingang voorzien van antislip-afwerking, afwateringsgoot bij dorpel en entreeverlichting. Bamboe 48u laten acclimatiseren.',
             done: false
@@ -1509,7 +1894,7 @@
             id: 'cs-1',
             phase: 'Fase 0: Voorbereiding, Offerte & Sloop',
             title: 'Inventarisatie trappers, riemen, zadels en consolas van alle bikes',
-            date: '2026-11-28',
+            date: relDay(3),
             assignee: 'Geert',
             note: 'Noteer framenummers met speling op trapas.',
             done: false
@@ -1518,7 +1903,7 @@
             id: 'cs-2',
             phase: 'Fase 2: Installaties & Droogtijden',
             title: 'DMX-sfeerverlichting & ventilatiekanalen reinigen en testen',
-            date: '2026-12-03',
+            date: relDay(8),
             assignee: 'Technische Dienst',
             note: 'Check ook subwoofer-bekabeling bij podium.',
             done: false
@@ -1539,20 +1924,20 @@
     ];
 
     const DEFAULT_TASKS = [
-      { id: 't-1', title: 'Loopbanden 1 t/m 6 bandspanning en smering controleren', dept: 'Fitness', priority: 'Normaal', assignee: 'Geert', date: '2026-11-25', notes: 'Siliconenspray gebruiken indien nodig', done: false, completionLog: null },
-      { id: 't-2', title: 'Trapassen & pedalen Ride/Cycling nalopen', dept: 'Ride/Cycling', priority: 'Hoog', assignee: 'Geert', date: '2026-11-25', notes: 'Bike 7 en 12 tikken bij staand klimmen', done: false, completionLog: null },
-      { id: 't-3', title: 'Pull-up rig en halterrekken The Box controleren op losse bouten', dept: 'The Box', priority: 'Normaal', assignee: 'Geert', date: '2026-11-26', notes: '', done: false, completionLog: null },
-      { id: 't-4', title: 'Vloerbelijning en LED-armaturen Hal 1 inspecteren', dept: 'Hal 1', priority: 'Normaal', assignee: 'Geert', date: '2026-11-27', notes: '', done: false, completionLog: null },
-      { id: 't-5', title: 'Glaswandbeslag en netspanning Padel nalopen', dept: 'Padel', priority: 'Hoog', assignee: 'Geert', date: '2026-11-27', notes: '', done: false, completionLog: null },
-      { id: 't-6', title: 'Koffiemachine ontkalken en waterfilter vervangen', dept: 'Horeca', priority: 'Normaal', assignee: 'Receptie', date: '2026-11-26', notes: '', done: true, completionLog: { workDescription: 'Ontkalkingscyclus gedraaid en waterfilter vernieuwd.', noMaterial: false, materials: [{ name: 'Ontkalker / sanitairreiniger', qty: 1, unit: 'flessen', source: 'voorraad' }], completedBy: 'Receptie', completedAt: '2026-11-26' } },
-      { id: 't-7', title: 'Klimaatregeling en werkplekverlichting Kantoor controleren', dept: 'Kantoor', priority: 'Laag', assignee: 'Geert', date: '2026-11-28', notes: '', done: false, completionLog: null }
+      { id: 't-1', title: 'Loopbanden 1 t/m 6 bandspanning en smering controleren', dept: 'Fitness', priority: 'Normaal', assignee: 'Geert', date: relDay(0), notes: 'Siliconenspray gebruiken indien nodig', done: false, completionLog: null },
+      { id: 't-2', title: 'Trapassen & pedalen Ride/Cycling nalopen', dept: 'Ride/Cycling', priority: 'Hoog', assignee: 'Geert', date: relDay(0), notes: 'Bike 7 en 12 tikken bij staand klimmen', done: false, completionLog: null },
+      { id: 't-3', title: 'Pull-up rig en halterrekken The Box controleren op losse bouten', dept: 'The Box', priority: 'Normaal', assignee: 'Geert', date: relDay(1), notes: '', done: false, completionLog: null },
+      { id: 't-4', title: 'Vloerbelijning en LED-armaturen Hal 1 inspecteren', dept: 'Hal 1', priority: 'Normaal', assignee: 'Geert', date: relDay(2), notes: '', done: false, completionLog: null },
+      { id: 't-5', title: 'Glaswandbeslag en netspanning Padel nalopen', dept: 'Padel', priority: 'Hoog', assignee: 'Geert', date: relDay(2), notes: '', done: false, completionLog: null },
+      { id: 't-6', title: 'Koffiemachine ontkalken en waterfilter vervangen', dept: 'Horeca', priority: 'Normaal', assignee: 'Receptie', date: relDay(1), notes: '', done: true, completionLog: { workDescription: 'Ontkalkingscyclus gedraaid en waterfilter vernieuwd.', noMaterial: false, materials: [{ name: 'Ontkalker / sanitairreiniger', qty: 1, unit: 'flessen', source: 'voorraad' }], completedBy: 'Receptie', completedAt: relDay(1) } },
+      { id: 't-7', title: 'Klimaatregeling en werkplekverlichting Kantoor controleren', dept: 'Kantoor', priority: 'Laag', assignee: 'Geert', date: relDay(3), notes: '', done: false, completionLog: null }
     ];
 
     const DEFAULT_EQUIPMENT = [
-      { id: 'eq-1', name: 'Technogym Skillrun (6x)', dept: 'Fitness', nextDate: '2026-12-15', status: 'Operationeel' },
-      { id: 'eq-2', name: 'Indoor Bikes (28x)', dept: 'Ride/Cycling', nextDate: '2026-12-01', status: 'Aandacht nodig' },
-      { id: 'eq-3', name: 'Padelbanen Glas & Verlichting', dept: 'Padel', nextDate: '2026-12-05', status: 'Operationeel' },
-      { id: 'eq-4', name: 'Rig & Atletiekrekken', dept: 'The Box', nextDate: '2026-12-10', status: 'Operationeel' }
+      { id: 'eq-1', name: 'Technogym Skillrun (6x)', dept: 'Fitness', nextDate: relDay(20), status: 'Operationeel' },
+      { id: 'eq-2', name: 'Indoor Bikes (28x)', dept: 'Ride/Cycling', nextDate: relDay(6), status: 'Aandacht nodig' },
+      { id: 'eq-3', name: 'Padelbanen Glas & Verlichting', dept: 'Padel', nextDate: relDay(10), status: 'Operationeel' },
+      { id: 'eq-4', name: 'Rig & Atletiekrekken', dept: 'The Box', nextDate: relDay(15), status: 'Operationeel' }
     ];
 
     // Urgentieniveaus 1 t/m 4 (de opgeslagen waarde blijft de bekende tekst, zodat oude data en sync gewoon werken)
@@ -1620,12 +2005,35 @@
         suppliers: list('suppliers', DEFAULT_SUPPLIERS),
         roster: normalizeRoster(saved && saved.roster),
         cloudConfig: (saved && saved.cloudConfig) ? saved.cloudConfig : { url: '', key: '' },
-        updatedAt: (saved && saved.updatedAt) ? saved.updatedAt : ''
+        updatedAt: (saved && saved.updatedAt) ? saved.updatedAt : '',
+        lessonSeed: (saved && saved.lessonSeed) ? saved.lessonSeed : ''
       };
+      if (s.lessonSeed !== LESSON_SEED_VERSION) {
+        const have = new Set(s.lessons.map(l => l.id));
+        const done = LESSON_SEEDS.findIndex(x => x[0] === s.lessonSeed); // eerder toegevoegde reeksen niet opnieuw
+        LESSON_SEEDS.slice(done + 1).forEach(([, list]) => {
+          s.lessons.unshift(...clone(list).filter(l => !have.has(l.id)));
+        });
+        s.lessonSeed = LESSON_SEED_VERSION;
+      }
       DEFAULT_PROJECTS.forEach(defProj => {
         if (!s.projects.some(p => p.id === defProj.id)) s.projects.push(clone(defProj));
       });
+      repairLinks(s);
       return s;
+    }
+
+    // Koppelingen project-stap <-> taak: verwijs nooit naar iets dat niet meer bestaat
+    function repairLinks(s) {
+      const taskIds = new Set(s.tasks.map(t => t.id));
+      const stepKeys = new Set();
+      s.projects.forEach(p => (p.steps || []).forEach(st => {
+        stepKeys.add(p.id + '|' + st.id);
+        if (st.taskId && !taskIds.has(st.taskId)) delete st.taskId;
+      }));
+      s.tasks.forEach(t => {
+        if ((t.projectId || t.stepId) && !stepKeys.has(t.projectId + '|' + t.stepId)) { delete t.projectId; delete t.stepId; }
+      });
     }
 
     // Rooster: { shifts: { 'YYYY-MM-DD': { <teamlid-id>: <dienst-id> } } } met opschoning van rommel
@@ -1747,8 +2155,15 @@
       }
     }
 
+    // Tijdelijke modal-staat opruimen bij elke manier van sluiten
+    function resetModalState(id) {
+      if (id === 'new-task-modal') pendingTaskEquipmentId = '';
+      if (id === 'complete-task-modal') { completingTaskId = null; pendingMaterialUsages = []; }
+      if (id === 'bp-text-modal') bpTextPos = null;
+    }
     function closeModal(id) {
       document.getElementById(id).classList.add('hidden');
+      resetModalState(id);
     }
 
     function renderAll() {
@@ -1772,10 +2187,24 @@
     }
 
     // ==================== 8 DONKERGROENE AFDELINGSTEGELS ====================
+    let homeShowAll = false;
+    try { homeShowAll = localStorage.getItem('tree11_home_all') === '1'; } catch (e) {}
+    function toggleHomeAllDepts() {
+      homeShowAll = !homeShowAll;
+      try { localStorage.setItem('tree11_home_all', homeShowAll ? '1' : '0'); } catch (e) {}
+      renderHome8Tiles();
+    }
     function renderHome8Tiles() {
       const grid = document.getElementById('home-8-tiles-grid');
       if (!grid) return;
-      const eightDepts = appState.departments.slice(0, 8);
+      const extra = Math.max(0, appState.departments.length - 8);
+      const eightDepts = homeShowAll ? appState.departments : appState.departments.slice(0, 8);
+      const moreBtn = document.getElementById('home-more-depts');
+      if (moreBtn) {
+        moreBtn.classList.toggle('hidden', !extra);
+        moreBtn.setAttribute('aria-expanded', homeShowAll ? 'true' : 'false');
+        moreBtn.textContent = homeShowAll ? '▲ Alleen de 8 kerntegels tonen' : `➕ Toon alle afdelingen (${extra} extra)`;
+      }
       grid.innerHTML = eightDepts.map(d => {
         const deptTasks = appState.tasks.filter(t => t.dept === d.name);
         const openCount = deptTasks.filter(t => !t.done).length;
@@ -1938,6 +2367,8 @@
               </div>` : `<div class="mt-2 flex flex-wrap items-center gap-2">
                 <label class="text-[11px] font-bold text-slate-500" for="td-${esc(t.id)}">📅 Inplannen</label>
                 <input id="td-${esc(t.id)}" type="date" value="${esc(t.date || '')}" onchange="setTaskDate(${jsArg(t.id)}, this.value)" class="min-h-[40px] px-2 py-1 rounded-lg border ${t.date ? 'border-slate-200' : 'border-amber-300 bg-amber-50'} text-xs" />
+                <button type="button" onclick="setTaskDateQuick(${jsArg(t.id)}, 0)" class="min-h-[40px] px-3 rounded-lg ${t.date === getLocalTodayIso() ? 'bg-[#3B4622] text-white' : 'bg-white text-slate-800 border border-slate-300'} text-[11px] font-bold" aria-label="Plan vandaag">Vandaag</button>
+                <button type="button" onclick="setTaskDateQuick(${jsArg(t.id)}, 1)" class="min-h-[40px] px-3 rounded-lg ${t.date === addDaysIso(getLocalTodayIso(), 1) ? 'bg-[#3B4622] text-white' : 'bg-white text-slate-800 border border-slate-300'} text-[11px] font-bold" aria-label="Plan morgen">Morgen</button>
                 <select aria-label="Uitvoerende" onchange="setTaskAssignee(${jsArg(t.id)}, this.value)" class="min-h-[40px] px-2 py-1 rounded-lg border border-slate-200 text-xs bg-white">${assigneeOptions(t.assignee)}</select>
               </div>`}
             </div>
@@ -2084,6 +2515,8 @@
         checkboxEl.checked = false;
         openCompleteTaskModal(id);
       } else {
+        const warn = reopenStockWarning(t);
+        if (!confirm(`Taak "${t.title}" heropenen?${warn}`)) { if (checkboxEl) checkboxEl.checked = true; return; }
         t.done = false;
         syncStepFromTask(t, ['done']);
         saveAppState();
@@ -2091,7 +2524,16 @@
         renderTasks();
         renderHome8Tiles();
         refreshProjectDetailIfOpen();
+        showToast(warn ? 'Taak heropend. Controleer de voorraad handmatig.' : 'Taak heropend.');
       }
+    }
+    // Bij heropenen wordt verbruikte voorraad NIET automatisch teruggezet
+    function reopenStockWarning(t) {
+      const mats = (t.completionLog && Array.isArray(t.completionLog.materials)) ? t.completionLog.materials : [];
+      const fromStock = mats.filter(m => m.source === 'voorraad');
+      if (!fromStock.length) return '';
+      const list = fromStock.map(m => `${m.qty} ${m.unit || ''} ${m.name}`.replace(/\s+/g, ' ').trim()).join(', ');
+      return `\n\nLet op: bij het afronden is voorraad verbruikt (${list}). Die wordt niet automatisch teruggezet. Controleer de voorraad handmatig; de regel in de verbruikshistorie blijft staan.`;
     }
 
     function openCompleteTaskModal(taskId) {
@@ -2111,6 +2553,15 @@
       document.getElementById('ct-new-mat-unit').value = 'stuks';
       document.getElementById('ct-stock-qty').value = '1';
       document.getElementById('ct-error-msg').classList.add('hidden');
+      const serBox = document.getElementById('ct-series-box');
+      if (t.series) {
+        serBox.classList.remove('hidden');
+        document.getElementById('ct-series-title').textContent = `Reeks: ${t.series.title} (nr ${t.series.from}–${t.series.to}). Welke nummers zijn nu klaar?`;
+        document.getElementById('ct-ser-from').value = t.series.from;
+        document.getElementById('ct-ser-to').value = t.series.to;
+        document.getElementById('ct-ser-maint').checked = true;
+        updateCtSeriesPreview();
+      } else serBox.classList.add('hidden');
 
       populateStockDropdown();
       renderPendingMaterials();
@@ -2280,7 +2731,7 @@
       const errBox = document.getElementById('ct-error-msg');
       errBox.classList.add('hidden');
 
-      const task = appState.tasks.find(x => x.id === completingTaskId);
+      let task = appState.tasks.find(x => x.id === completingTaskId);
       if (!task) return;
 
       const workDesc = document.getElementById('ct-work-desc').value.trim();
@@ -2296,6 +2747,17 @@
         errBox.textContent = 'Materiaalopgave is verplicht: voeg materiaal toe of vink "Geen materiaal verbruikt" aan.';
         errBox.classList.remove('hidden');
         return;
+      }
+
+      let serRange = null;
+      if (task.series) {
+        const r = readRange('ct-ser-from', 'ct-ser-to');
+        if (r.error || r.from < task.series.from || r.to > task.series.to) {
+          errBox.textContent = r.error || `Kies nummers binnen ${task.series.from}–${task.series.to}.`;
+          errBox.classList.remove('hidden');
+          return;
+        }
+        serRange = r;
       }
 
       const loggedMaterials = [];
@@ -2329,6 +2791,22 @@
       }
 
       const todayStr = getLocalTodayIso();
+      let serInfo = '';
+      if (serRange) {
+        const sr = task.series;
+        const wasPartial = serRange.from > sr.from || serRange.to < sr.to;
+        const groupKey = sr.key;
+        task = splitSeriesTask(task, serRange.from, serRange.to);
+        if (document.getElementById('ct-ser-maint').checked) {
+          const units = eqGroupUnits(groupKey).filter(e => (e.number || 0) >= serRange.from && (e.number || 0) <= serRange.to);
+          units.forEach(e => applyMaintenance(e, todayStr));
+          if (units.length) serInfo = ` Onderhoud bijgewerkt bij ${units.length} apparaten.`;
+        }
+        if (wasPartial) {
+          const open = appState.tasks.filter(t => !t.done && t.id !== task.id && t.series && t.series.key === groupKey && t.series.title === sr.title).map(t => t.title);
+          serInfo = ` Nog open: ${open.join(' en ')}.` + serInfo;
+        }
+      }
       task.done = true;
       task.completionLog = {
         workDescription: workDesc,
@@ -2356,6 +2834,7 @@
       closeModal('complete-task-modal');
       saveAppState();
       renderAll();
+      if (serInfo) showToast(`Afgerond: ${task.title}.${serInfo}`);
     }
 
     // ==================== VOORRAAD & VERBRUIKSHISTORIE MODAL ====================
@@ -2515,6 +2994,81 @@
       document.getElementById('bt-dept').innerHTML = opts;
     }
 
+    // ----- Taken voor een reeks apparaten (bijv. Indoor Stagesbike 1 t/m 40) -----
+    function seriesLabel(base, from, to) { return `${base} ${from === to ? from : from + '–' + to}`; }
+    function eqGroupsList() {
+      const m = new Map();
+      appState.equipment.forEach(e => { const k = eqGroupKey(e); if (k) m.set(k, e); });
+      return [...m.entries()].map(([k, e]) => ({ key: k, group: e.group, dept: e.dept }));
+    }
+    function fillTaskSeriesSelect(selectedKey) {
+      const sel = document.getElementById('nt-series');
+      sel.innerHTML = '<option value="">— geen reeks —</option>' + eqGroupsList().map(g => `<option value="${esc(g.key)}">${esc(g.group)} (${esc(g.dept)})</option>`).join('');
+      sel.value = selectedKey && eqGroupsList().some(g => g.key === selectedKey) ? selectedKey : '';
+      onTaskSeriesChange();
+    }
+    function onTaskSeriesChange() {
+      const key = document.getElementById('nt-series').value;
+      const box = document.getElementById('nt-series-range');
+      box.classList.toggle('hidden', !key);
+      if (!key) return;
+      const units = eqGroupUnits(key);
+      const nums = units.map(u => u.number).filter(n => Number.isInteger(n));
+      document.getElementById('nt-ser-from').value = nums.length ? Math.min(...nums) : 1;
+      document.getElementById('nt-ser-to').value = nums.length ? Math.max(...nums) : units.length;
+      const t = document.getElementById('nt-title');
+      if (!t.value.trim() && units[0]) t.value = 'Onderhoud ' + units[0].group;
+      if (units[0] && appState.departments.some(d => d.name === units[0].dept)) document.getElementById('nt-dept').value = units[0].dept;
+    }
+    function openTaskForSeries(key) {
+      openNewTaskModal();
+      fillTaskSeriesSelect(key);
+    }
+
+    // Afronden van een reekstaak: alleen de ingevulde nummers worden klaar, de rest blijft open
+    function updateCtSeriesPreview() {
+      const t = appState.tasks.find(x => x.id === completingTaskId);
+      const box = document.getElementById('ct-ser-preview');
+      if (!t || !t.series) return;
+      const r = readRange('ct-ser-from', 'ct-ser-to');
+      if (r.error) { box.textContent = r.error; return; }
+      const sr = t.series;
+      if (r.from < sr.from || r.to > sr.to) { box.textContent = `Kies nummers binnen ${sr.from}–${sr.to}.`; return; }
+      const left = r.from > sr.from ? seriesLabel(sr.title, sr.from, r.from - 1) : '';
+      const right = r.to < sr.to ? seriesLabel(sr.title, r.to + 1, sr.to) : '';
+      box.textContent = !left && !right ? 'Hele reeks wordt afgerond.' : `Rest blijft open: ${[left, right].filter(Boolean).join(' en ')}.`;
+    }
+    // Splitst een reekstaak. Geeft de taak terug die nu afgerond wordt.
+    function splitSeriesTask(task, a, b) {
+      const sr = task.series;
+      const left = a > sr.from ? [sr.from, a - 1] : null;
+      const right = b < sr.to ? [b + 1, sr.to] : null;
+      if (!left && !right) return task; // alles gedaan
+      const stamp = Date.now();
+      const doneCopy = JSON.parse(JSON.stringify(task));
+      doneCopy.id = 't-' + stamp + '-klaar';
+      delete doneCopy.projectId; delete doneCopy.stepId; // de projectstap blijft aan de open taak gekoppeld
+      doneCopy.series = { key: sr.key, title: sr.title, from: a, to: b };
+      doneCopy.title = seriesLabel(sr.title, a, b);
+      const idx = appState.tasks.findIndex(x => x.id === task.id);
+      const keep = left || right;
+      task.series = { key: sr.key, title: sr.title, from: keep[0], to: keep[1] };
+      task.title = seriesLabel(sr.title, keep[0], keep[1]);
+      const extras = [];
+      if (left && right) {
+        const more = JSON.parse(JSON.stringify(task));
+        more.id = 't-' + stamp + '-rest';
+        delete more.projectId; delete more.stepId;
+        more.series = { key: sr.key, title: sr.title, from: right[0], to: right[1] };
+        more.title = seriesLabel(sr.title, right[0], right[1]);
+        more.done = false; more.completionLog = null;
+        extras.push(more);
+      }
+      appState.tasks.splice(idx, 0, doneCopy);
+      if (extras.length) appState.tasks.splice(idx + 2, 0, ...extras);
+      return doneCopy;
+    }
+
     function openNewTaskModal() {
       pendingTaskEquipmentId = '';
       populateDeptSelects();
@@ -2522,15 +3076,24 @@
         document.getElementById('nt-dept').value = selectedDeptFilter;
       }
       document.getElementById('nt-date').value = getLocalTodayIso();
+      fillTaskSeriesSelect('');
       document.getElementById('new-task-modal').classList.remove('hidden');
     }
 
     function saveNewTask() {
       const title = document.getElementById('nt-title').value.trim();
       if (!title) return alert('Vul een taakomschrijving in.');
+      const serKey = document.getElementById('nt-series').value;
+      let series = null;
+      if (serKey) {
+        const r = readRange('nt-ser-from', 'nt-ser-to');
+        if (r.error) { showToast(r.error); return; }
+        series = { key: serKey, title, from: r.from, to: r.to };
+      }
       appState.tasks.unshift({
         id: 't-' + Date.now(),
-        title,
+        title: series ? seriesLabel(title, series.from, series.to) : title,
+        ...(series ? { series } : {}),
         dept: document.getElementById('nt-dept').value,
         priority: document.getElementById('nt-priority').value,
         assignee: document.getElementById('nt-assignee').value.trim() || 'Geert',
@@ -2588,14 +3151,19 @@
     }
 
     function openAddDeptModal() {
+      document.getElementById('nd-icon').value = '🎾';
+      document.getElementById('nd-name').value = '';
       document.getElementById('add-dept-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('nd-name').focus(), 50);
     }
 
     function saveNewDepartment() {
       const icon = document.getElementById('nd-icon').value.trim() || '🛠️';
       const name = document.getElementById('nd-name').value.trim();
       if (!name) return alert('Vul een afdelingsnaam in.');
+      if (appState.departments.some(d => d.name.toLowerCase() === name.toLowerCase())) return alert('Deze afdeling bestaat al.');
       appState.departments.push({ id: 'dept-' + Date.now(), icon, name, tileLabel: name.toUpperCase() });
+      if (appState.departments.length > 8 && !homeShowAll) { homeShowAll = true; try { localStorage.setItem('tree11_home_all', '1'); } catch (e) {} }
       document.getElementById('nd-name').value = '';
       closeModal('add-dept-modal');
       saveAppState();
@@ -2604,9 +3172,35 @@
     }
 
     // ==================== PROJECTEN & DOSSIER ====================
+    function projectStatus(p) {
+      const total = p.steps.length, done = p.steps.filter(x => x.done).length;
+      const dates = p.steps.filter(x => !x.done).map(x => x.date).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d || '')).sort();
+      if (p.deadline && dates.length && dates[dates.length - 1] > p.deadline) return 'laat';
+      if (total && done === total) return 'klaar';
+      return done === 0 ? 'nieuw' : 'lopend';
+    }
+    function resetProjectFilters() {
+      document.getElementById('proj-search').value = '';
+      document.getElementById('proj-status-filter').value = 'all';
+      renderProjectsGrid();
+    }
     function renderProjectsGrid() {
       const grid = document.getElementById('projects-grid');
-      grid.innerHTML = appState.projects.map(p => {
+      const q = (document.getElementById('proj-search').value || '').trim().toLowerCase();
+      const f = document.getElementById('proj-status-filter').value;
+      const shown = appState.projects.filter(p => {
+        if (q && !`${p.title} ${p.room} ${p.description} ${p.steps.map(x => x.title).join(' ')}`.toLowerCase().includes(q)) return false;
+        if (f === 'all') return true;
+        const st = projectStatus(p);
+        return f === 'laat' ? st === 'laat' : (st === f || (f === 'lopend' && st === 'laat'));
+      });
+      const cnt = document.getElementById('proj-count');
+      if (cnt) cnt.textContent = (q || f !== 'all') ? `${shown.length} van ${appState.projects.length}` : `${appState.projects.length} projecten`;
+      if (appState.projects.length && !shown.length) {
+        grid.innerHTML = `<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-600 text-center space-y-3"><div>Geen projecten gevonden${q ? ` voor “${esc(q)}”` : ''}.</div><button type="button" onclick="resetProjectFilters()" class="min-h-[44px] px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold">Filters wissen</button></div>`;
+        return;
+      }
+      grid.innerHTML = shown.map(p => {
         const total = p.steps.length;
         const done = p.steps.filter(s => s.done).length;
         const pct = total ? Math.round((done / total) * 100) : 0;
@@ -2675,6 +3269,16 @@
       document.getElementById('detail-proj-room').textContent = p.room;
       document.getElementById('detail-proj-title').textContent = p.title;
       document.getElementById('detail-proj-desc').textContent = p.description;
+      const dl = document.getElementById('detail-proj-deadline');
+      if (dl) {
+        const lastDates = p.steps.map(x => x.date).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d || '')).sort();
+        const last = lastDates[lastDates.length - 1];
+        const parts = [];
+        if (p.deadline) parts.push('🎯 Oplevering ' + fmtNlDate(p.deadline));
+        if (last) parts.push('Laatste stap ' + fmtNlDate(last));
+        if (p.deadline && last && last > p.deadline) parts.push('⚠️ ' + diffDaysIso(p.deadline, last) + ' dgn te laat');
+        dl.textContent = parts.join(' • ');
+      }
       document.getElementById('detail-proj-progress-text').textContent = `${pct}% (${done}/${total})`;
       document.getElementById('detail-proj-progress-bar').style.width = `${pct}%`;
       document.getElementById('detail-proj-budget').textContent = p.budget || '';
@@ -2772,17 +3376,37 @@
       const s = p && p.steps.find(x => x.id === stepId);
       if (s) {
         s.done = !s.done;
+        const t = s.taskId && appState.tasks.find(x => x.id === s.taskId);
+        if (t) {
+          if (s.done && !t.done) {
+            t.done = true;
+            t.completionLog = { workDescription: `Afgevinkt via project "${p.title}"`, noMaterial: true, materials: [], completedBy: currentUser.name, completedAt: getLocalTodayIso() };
+          } else if (!s.done && t.done) {
+            const warn = reopenStockWarning(t);
+            if (warn && !confirm(`De gekoppelde taak "${t.title}" wordt heropend.${warn}`)) { s.done = true; return; }
+            t.done = false;
+            t.completionLog = null;
+          }
+        } else if (s.taskId) {
+          delete s.taskId; // taak bestaat niet meer
+        }
         saveAppState();
-        renderActiveProjectDetail();
+        renderAll();
       }
     }
 
     function deleteProjectStep(projId, stepId) {
       const p = appState.projects.find(x => x.id === projId);
       if (p) {
+        const step = p.steps.find(x => x.id === stepId);
+        let unlinked = 0;
+        appState.tasks.forEach(t => {
+          if (t.projectId === projId && (t.stepId === stepId || (step && step.taskId === t.id))) { delete t.projectId; delete t.stepId; unlinked++; }
+        });
         p.steps = p.steps.filter(x => x.id !== stepId);
         saveAppState();
-        renderActiveProjectDetail();
+        renderAll();
+        if (unlinked) showToast('Stap verwijderd. De bijbehorende taak blijft staan als losse taak.');
       }
     }
 
@@ -2883,39 +3507,60 @@
       const b = document.getElementById('bp-media-usage'); if (b) b.innerHTML = mediaUsageHtml(p, 'blueprint');
     }
 
-    function previewMultipleProjectPhotos(event) {
+    let photoPreviewToken = 0;
+    async function previewMultipleProjectPhotos(event) {
       const files = Array.from(event.target.files || []);
+      const token = ++photoPreviewToken;
       pendingPhotoItems = [];
       const container = document.getElementById('proj-photo-previews');
       container.innerHTML = '';
-
-      files.forEach((file, idx) => {
-        compressImageFile(file).then(compressed => {
-          pendingPhotoItems.push({ dataUrl: compressed, note: '' });
-          const card = document.createElement('div');
-          card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
-          const img = document.createElement('img');
-          img.src = compressed;
-          img.alt = `Voorbeeld foto ${idx + 1}`;
-          img.className = 'w-full h-28 object-cover rounded-lg';
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.setAttribute('aria-label', `Notitie bij foto ${idx + 1}`);
-          input.placeholder = `Eigen notitie bij foto ${idx + 1} (optioneel)`;
-          input.className = 'w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs';
-          const noteIndex = pendingPhotoItems.length - 1;
-          input.oninput = () => updatePendingPhotoNote(noteIndex, input.value);
-          const size = document.createElement('div');
-          size.className = 'text-[10px] text-slate-400';
-          size.textContent = fmtBytes(dataUrlBytes(compressed));
-          card.append(img, input, size);
-          container.appendChild(card);
-        }).catch(err => showToast('Foto overgeslagen: ' + err.message));
-      });
+      for (let idx = 0; idx < files.length; idx++) {
+        let compressed;
+        try { compressed = await compressImageFile(files[idx]); }
+        catch (err) { showToast('Foto overgeslagen: ' + err.message); continue; }
+        if (token !== photoPreviewToken) return; // nieuwe selectie gestart
+        const item = { id: 'pp-' + token + '-' + idx, dataUrl: compressed, note: '' };
+        pendingPhotoItems.push(item);
+        const card = document.createElement('div');
+        card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
+        card.dataset.pid = item.id;
+        const img = document.createElement('img');
+        img.src = compressed;
+        img.alt = `Voorbeeld foto ${idx + 1}`;
+        img.className = 'w-full h-28 object-cover rounded-lg';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('aria-label', `Notitie bij foto ${idx + 1}`);
+        input.placeholder = `Eigen notitie bij foto ${idx + 1} (optioneel)`;
+        input.className = 'w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs';
+        input.oninput = () => updatePendingPhotoNote(item.id, input.value);
+        const foot = document.createElement('div');
+        foot.className = 'flex items-center justify-between gap-2';
+        const size = document.createElement('span');
+        size.className = 'text-[10px] text-slate-500';
+        size.textContent = fmtBytes(dataUrlBytes(compressed));
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'min-h-[40px] px-3 rounded-lg bg-white border border-rose-200 text-rose-700 text-[11px] font-bold';
+        rm.textContent = '🗑️ Foto verwijderen';
+        rm.setAttribute('aria-label', `Foto ${idx + 1} verwijderen voor het opslaan`);
+        rm.onclick = () => removePendingPhoto(item.id);
+        foot.append(size, rm);
+        card.append(img, input, foot);
+        container.appendChild(card);
+      }
     }
 
-    function updatePendingPhotoNote(index, val) {
-      if (pendingPhotoItems[index]) pendingPhotoItems[index].note = val;
+    function updatePendingPhotoNote(id, val) {
+      const it = pendingPhotoItems.find(x => x.id === id);
+      if (it) it.note = val;
+    }
+
+    function removePendingPhoto(id) {
+      pendingPhotoItems = pendingPhotoItems.filter(x => x.id !== id);
+      const card = [...document.querySelectorAll('#proj-photo-previews [data-pid]')].find(c => c.dataset.pid === id);
+      if (card) card.remove();
+      if (!pendingPhotoItems.length) { const f = document.getElementById('proj-photo-files'); if (f) f.value = ''; }
     }
 
     function detectSmartPhaseAndTip(text) {
@@ -2962,7 +3607,7 @@
         p.photos.unshift({
           id: 'ph-' + Date.now() + '-' + idx,
           dataUrl: item.dataUrl,
-          caption: item.note.trim() || generalDesc || `Situatiefoto ${idx + 1}`,
+          caption: (item.note || '').trim() || generalDesc || `Situatiefoto ${idx + 1}`,
           date: startDateStr
         });
       });
@@ -2970,7 +3615,7 @@
       if (autoPlan) {
         const stepCandidates = [];
         pendingPhotoItems.forEach(item => {
-          if (item.note.trim()) stepCandidates.push(item.note.trim());
+          if ((item.note || '').trim()) stepCandidates.push(item.note.trim());
         });
         generalDesc.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
           if (!stepCandidates.includes(line)) stepCandidates.push(line);
@@ -2979,31 +3624,22 @@
           stepCandidates.push(`Situatie op foto's beoordelen & vervolgactie uitzetten (${p.title})`);
         }
 
+        const stamp = Date.now();
+        const deptName = guessDeptForProject(p) || (appState.departments[0] && appState.departments[0].name) || 'Algemeen';
         stepCandidates.forEach((stepTitle, idx) => {
           const isoDate = addDaysIso(startDateStr, idx);
           const smart = detectSmartPhaseAndTip(stepTitle);
-
-          p.steps.push({
-            id: 'st-' + Date.now() + '-' + idx,
+          const step = {
+            id: `st-${stamp}-${idx}`,
             phase: smart.phase,
             title: stepTitle,
             date: isoDate,
             assignee,
             note: smart.tip,
             done: false
-          });
-
-          appState.tasks.unshift({
-            id: 't-proj-' + Date.now() + '-' + idx,
-            title: `[${p.title}] ${stepTitle}`,
-            dept: p.room,
-            priority: 'Normaal',
-            assignee,
-            date: isoDate,
-            notes: smart.tip,
-            done: false,
-            completionLog: null
-          });
+          };
+          p.steps.push(step);
+          appState.tasks.unshift(makeTaskFromStep(p, step, deptName, true, `foto-${stamp}-${idx}`));
         });
       }
 
@@ -3337,17 +3973,105 @@
       renderActiveProjectDetail();
     }
 
-    function openLessonsModal() {
+    const PHASE_LIST = () => [PH0, PH1, PH2, PH3];
+    const TYPE_NAMES = { vloer: 'Vloer', wand: 'Wanden', nat: 'Natte ruimte', algemeen: 'Algemeen' };
+
+    function lessonApplies(l, type) {
+      return !Array.isArray(l.appliesTo) || !l.appliesTo.length || l.appliesTo.includes(type);
+    }
+
+    function renderLessonsList() {
       const container = document.getElementById('lessons-list-container');
-      container.innerHTML = appState.lessons.map(l => `
+      container.innerHTML = appState.lessons.map(l => {
+        const ps = l.planStep && l.planStep.title ? l.planStep : null;
+        const off = l.planOff === true;
+        const types = Array.isArray(l.appliesTo) && l.appliesTo.length ? l.appliesTo.map(t => TYPE_NAMES[t] || t).join(', ') : 'alle soorten';
+        const planInfo = ps
+          ? `<p class="text-xs font-semibold ${off ? 'text-slate-600 bg-slate-100' : 'text-emerald-900 bg-emerald-100/80'} px-3 py-1.5 rounded-xl">🛡️ ${off ? 'Staat uit' : 'In planning'}: ${esc(ps.title)} (${esc(PHASE_LIST()[ps.phaseIdx] || PH0)}, ${esc(ps.days)} dgn) • ${esc(types)}</p>`
+          : '<p class="text-[11px] text-slate-600">Alleen checklist (geen vaste planningsstap).</p>';
+        return `
         <div class="p-4 rounded-2xl border border-amber-200 bg-amber-50/60 space-y-1.5">
           <span class="text-[11px] font-bold uppercase text-amber-800">${esc(l.project)}</span>
           <h4 class="font-extrabold text-sm text-slate-900">${esc(l.title)}</h4>
           <p class="text-xs text-slate-600">${esc(l.impact)}</p>
           <p class="text-xs font-semibold text-emerald-900 bg-emerald-100/80 px-3 py-1.5 rounded-xl mt-1">✅ Standaard Offerte-eis: ${esc(l.rule)}</p>
-        </div>
-      `).join('');
+          ${planInfo}
+          <div class="flex flex-wrap gap-2 pt-1">
+            ${ps ? `<button type="button" onclick="toggleLessonPlan(${jsArg(l.id)})" class="min-h-[44px] px-3 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700">${off ? 'Weer in planning zetten' : 'Uit planning halen'}</button>` : ''}
+            <button type="button" onclick="deleteLesson(${jsArg(l.id)})" class="min-h-[44px] px-3 rounded-xl bg-white border border-rose-200 text-xs font-bold text-rose-700">Verwijderen</button>
+          </div>
+        </div>`;
+      }).join('') || '<p class="text-xs text-slate-500 text-center py-4">Nog geen lessen vastgelegd.</p>';
+    }
+
+    function openLessonsModal() {
+      renderLessonsList();
+      document.getElementById('les-form').classList.add('hidden');
       document.getElementById('lessons-modal').classList.remove('hidden');
+    }
+
+    function toggleLessonForm() {
+      const f = document.getElementById('les-form');
+      f.classList.toggle('hidden');
+      if (!f.classList.contains('hidden')) setTimeout(() => document.getElementById('les-title').focus(), 50);
+    }
+
+    function saveLesson() {
+      const g = id => document.getElementById(id).value.trim();
+      const title = g('les-title'), rule = g('les-rule');
+      if (!title) { showToast('Beschrijf kort wat er misging.'); document.getElementById('les-title').focus(); return; }
+      if (!rule) { showToast('Vul in wat we voortaan doen.'); document.getElementById('les-rule').focus(); return; }
+      const types = [...document.querySelectorAll('.les-type:checked')].map(x => x.value);
+      if (!types.length) { showToast('Kies minstens één soort project.'); return; }
+      const lesson = { id: 'les-' + Date.now(), project: g('les-project') || 'Eerder project', title, impact: g('les-impact') || 'Nog niet toegelicht.', rule, appliesTo: types };
+      if (document.getElementById('les-step-on').checked) {
+        const stepTitle = g('les-step-title') || title;
+        lesson.planStep = {
+          title: stepTitle,
+          phaseIdx: Math.min(3, Math.max(0, parseInt(document.getElementById('les-phase').value, 10) || 0)),
+          days: Math.min(60, Math.max(1, Math.round(Number(document.getElementById('les-days').value)) || 1)),
+          assignee: g('les-assignee') || 'Geert'
+        };
+      }
+      appState.lessons.unshift(lesson);
+      ['les-project', 'les-title', 'les-impact', 'les-rule', 'les-step-title'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('les-form').classList.add('hidden');
+      saveAppState(); renderAll(); renderLessonsList();
+      showToast(lesson.planStep ? 'Les opgeslagen en toegevoegd aan de planning van nieuwe projecten' : 'Les opgeslagen');
+    }
+
+    function toggleLessonPlan(id) {
+      const l = appState.lessons.find(x => x.id === id);
+      if (!l || !l.planStep) return;
+      l.planOff = !l.planOff;
+      saveAppState(); renderLessonsList();
+    }
+
+    function deleteLesson(id) {
+      const l = appState.lessons.find(x => x.id === id);
+      if (!l || !confirm(`Les "${l.title}" verwijderen? Bestaande projecten houden hun checklist.`)) return;
+      appState.lessons = appState.lessons.filter(x => x.id !== id);
+      saveAppState(); renderAll(); renderLessonsList();
+    }
+
+    // Voegt de controlestappen uit eerdere lessen toe aan een nieuw plan (aan het eind van de juiste fase)
+    function applyLessonsToDraft(draft, type) {
+      appState.lessons.forEach(l => {
+        const ps = l.planStep;
+        if (!ps || !ps.title || l.planOff === true || !lessonApplies(l, type)) return;
+        const phase = PHASE_LIST()[ps.phaseIdx] || PH0;
+        const step = { phase, title: ps.title, days: ps.days || 1, assignee: ps.assignee || 'Geert', note: `Les uit ${l.project}: ${l.rule}`.slice(0, 300), include: true, start: '', end: '', lessonId: l.id };
+        let at = -1;
+        draft.forEach((d, i) => { if (d.phase === phase) at = i; });
+        if (at === -1) { // fase zonder stappen: vóór de eerstvolgende latere fase
+          const order = PHASE_LIST();
+          const mine = order.indexOf(phase);
+          at = draft.findIndex(d => order.indexOf(d.phase) > mine);
+          at = at === -1 ? draft.length : at;
+          draft.splice(at, 0, step);
+        } else draft.splice(at + 1, 0, step);
+      });
+      return draft;
     }
 
     // ==================== PLANNINGSTOOL VOOR NIEUWE PROJECTEN ====================
@@ -3484,7 +4208,7 @@
       const type = document.getElementById('np-type').value;
       if (!planDraft || planDraftType !== type) {
         const tpl = PLAN_TEMPLATES[type] || PLAN_TEMPLATES.algemeen;
-        planDraft = tpl.map(t => ({ ...t, include: true, start: '', end: '' }));
+        planDraft = applyLessonsToDraft(tpl.map(t => ({ ...t, include: true, start: '', end: '' })), type);
         planDraftType = type;
       }
       document.getElementById('np-dept-label').textContent = document.getElementById('np-dept').value || '';
@@ -3533,8 +4257,14 @@
            ${status ? `<div class="mt-1 font-semibold">${esc(status)}</div>` : ''}`
         : `<div class="font-semibold">${esc(status)}</div>`;
 
+      const lessonSteps = planDraft.filter(x => x.lessonId).length;
+      const ptype = planDraftType || document.getElementById('np-type').value;
+      const lessonCheck = appState.lessons.filter(l => lessonApplies(l, ptype)).length;
+      const lessonBanner = lessonCheck
+        ? `<div class="rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-950"><span class="font-extrabold">🛡️ Lessen uit eerdere projecten</span><br>${lessonSteps} controle${lessonSteps === 1 ? 'stap' : 'stappen'} in dit plan gezet • ${lessonCheck} ${lessonCheck === 1 ? 'les' : 'lessen'} komen als checklist in het project.</div>`
+        : '';
       let lastPhase = '';
-      document.getElementById('np-plan-list').innerHTML = planDraft.map((st, i) => {
+      document.getElementById('np-plan-list').innerHTML = lessonBanner + planDraft.map((st, i) => {
         const head = st.phase !== lastPhase ? `<div class="pt-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">${esc(st.phase)}</div>` : '';
         lastPhase = st.phase;
         return `${head}
@@ -3551,6 +4281,7 @@
             <input type="text" value="${esc(st.assignee)}" maxlength="60" aria-label="Uitvoerende" oninput="planEdit(${i}, 'assignee', this.value)" class="w-36 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" />
             <span class="text-[11px] font-semibold ${st.include ? 'text-emerald-700' : 'text-slate-400'}">${st.include ? '📅 ' + esc(fmtNlDate(st.start)) + (st.end !== st.start ? ' – ' + esc(fmtNlDate(st.end)) : '') : 'niet meegenomen'}</span>
           </div>
+          ${st.lessonId ? '<div class="pl-7 text-[11px] font-extrabold text-amber-900">🛡️ Toegevoegd vanwege een eerdere fout</div>' : ''}
           ${st.note ? `<div class="pl-7 text-[11px] text-amber-800">💡 ${esc(st.note)}</div>` : ''}
         </div>`;
       }).join('');
@@ -3607,7 +4338,7 @@
 
       const newTasks = [];
       chosen.forEach((st, i) => {
-        const step = { id: `ps-${stamp}-${i}`, phase: st.phase, title: st.title.trim(), date: st.start, assignee: (st.assignee || '').trim() || 'Geert', note: st.note || '', done: false };
+        const step = { id: `ps-${stamp}-${i}`, phase: st.phase, title: st.title.trim(), date: st.start, assignee: (st.assignee || '').trim() || 'Geert', note: st.note || '', done: false, days: st.days, ...(st.lessonId ? { lessonId: st.lessonId } : {}) };
         project.steps.push(step);
         if (makeTasks) newTasks.push(makeTaskFromStep(project, step, dept, withDate, `${stamp}-${i}`));
       });
@@ -3620,6 +4351,155 @@
       renderAll();
       openProjectDetail(project.id);
       showToast(newTasks.length ? `Project aangemaakt met ${newTasks.length} taken in ${dept}` : 'Project aangemaakt');
+    }
+
+
+    // ==================== PRINT / PDF VAN HET PROJECTDOSSIER ====================
+    function printProject(projId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (!p) return;
+      const total = p.steps.length, done = p.steps.filter(x => x.done).length;
+      const pct = total ? Math.round(done / total * 100) : 0;
+      const phases = [...new Set(p.steps.map(x => x.phase))];
+      const dept = guessDeptForProject(p);
+      const stepRow = st => {
+        const t = st.taskId && appState.tasks.find(x => x.id === st.taskId);
+        const taskTxt = t ? `Taak in ${esc(t.dept)}${t.done ? ' (afgerond)' : t.date ? ' (' + esc(fmtNlDate(t.date)) + ')' : ''}` : '';
+        return `<tr><td style="width:14pt"><span class="ps-box">${st.done ? '☑' : '☐'}</span></td><td><strong>${esc(st.title)}</strong>${st.note ? `<div class="ps-note">${esc(st.note)}</div>` : ''}${taskTxt ? `<div class="ps-note">${taskTxt}</div>` : ''}</td><td style="white-space:nowrap">${esc(fmtNlDate(st.date) || '-')}</td><td>${esc(st.assignee || '-')}</td></tr>`;
+      };
+      const risks = p.risks || [];
+      const photos = p.photos || [];
+      document.getElementById('print-sheet').innerHTML = `
+        <div class="ps-brand">TREE11 • Projectdossier</div>
+        <h1>${esc(p.title)}</h1>
+        <div class="ps-meta">
+          <span><strong>Ruimte:</strong> ${esc(p.room)}</span>
+          ${dept ? `<span><strong>Afdeling:</strong> ${esc(dept)}</span>` : ''}
+          ${p.budget ? `<span><strong>Budget:</strong> ${esc(p.budget)}</span>` : ''}
+          ${p.deadline ? `<span><strong>Oplevering uiterlijk:</strong> ${esc(fmtNlDate(p.deadline))}</span>` : ''}
+          <span><strong>Voortgang:</strong> ${pct}% (${done}/${total} stappen)</span>
+        </div>
+        ${p.description ? `<p>${esc(p.description)}</p>` : ''}
+        <h2>Planning en stappen</h2>
+        ${total ? phases.map(ph => `<h3>${esc(ph)}</h3><table><thead><tr><th></th><th>Werkzaamheden</th><th>Datum</th><th>Uitvoerende</th></tr></thead><tbody>${p.steps.filter(x => x.phase === ph).map(stepRow).join('')}</tbody></table>`).join('') : '<p>Nog geen stappen in dit project.</p>'}
+        <h2>Risico's en offerte-eisen</h2>
+        ${risks.length ? risks.map(r => `<div class="ps-risk"><span class="ps-box">${r.checked ? '☑' : '☐'}</span> <strong>${esc(r.title)}</strong>${r.action ? `<div class="ps-note">Eis / afspraak: ${esc(r.action)}</div>` : ''}</div>`).join('') : '<p>Geen risico\'s vastgelegd.</p>'}
+        <h2>Bouwtekening</h2>
+        <p>${(p.blueprintShapes && p.blueprintShapes.length) || p.blueprintBgDataUrl ? `Aanwezig: ${p.blueprintShapes ? p.blueprintShapes.length : 0} getekende ${(p.blueprintShapes || []).length === 1 ? 'vorm' : 'vormen'}${p.blueprintBgDataUrl ? ', met achtergrondafbeelding' : ''}. De tekening zelf staat in de app.` : 'Nog geen bouwtekening vastgelegd.'}</p>
+        ${photos.length ? `<h2>Foto's (${photos.length})</h2><div class="ps-photos">${photos.slice(0, 12).map(ph => { const src = safeImgSrc(ph.dataUrl); return `<figure>${src ? `<img src="${esc(src)}" alt="${esc(ph.caption || 'Projectfoto')}">` : ''}<figcaption>${esc(fmtNlDate(ph.date) || '')} — ${esc(ph.caption || 'Foto')}</figcaption></figure>`; }).join('')}</div>${photos.length > 12 ? `<p class="ps-note">+ ${photos.length - 12} extra foto's in de app.</p>` : ''}` : ''}
+        <div class="ps-foot">Afgedrukt op ${esc(fmtNlDate(getLocalTodayIso()))} door ${esc(currentUser.name)} • TREE11 Facility</div>`;
+      document.body.classList.add('printing-project');
+      window.addEventListener('afterprint', () => document.body.classList.remove('printing-project'), { once: true });
+      window.print();
+    }
+
+    // ==================== PROJECT BEWERKEN & PLANNING HERBEREKENEN ====================
+    function openEditProjectModal(projId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (!p) return;
+      document.getElementById('ep-id').value = p.id;
+      document.getElementById('ep-title').value = p.title || '';
+      document.getElementById('ep-room').value = p.room || '';
+      document.getElementById('ep-desc').value = p.description || '';
+      document.getElementById('ep-budget').value = p.budget || '';
+      document.getElementById('ep-deadline').value = /^\d{4}-\d{2}-\d{2}$/.test(p.deadline || '') ? p.deadline : '';
+      const sel = document.getElementById('ep-dept');
+      sel.innerHTML = '<option value="">— geen —</option>' + appState.departments.map(d => `<option value="${esc(d.name)}">${esc(d.icon || '')} ${esc(d.name)}</option>`).join('');
+      sel.value = guessDeptForProject(p);
+      document.getElementById('edit-project-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('ep-title').focus(), 50);
+    }
+
+    function saveEditedProject() {
+      const p = appState.projects.find(x => x.id === document.getElementById('ep-id').value);
+      if (!p) { closeModal('edit-project-modal'); return; }
+      const title = document.getElementById('ep-title').value.trim();
+      if (!title) { showToast('Geef het project een naam.'); document.getElementById('ep-title').focus(); return; }
+      p.title = title;
+      p.room = document.getElementById('ep-room').value.trim() || 'Algemeen';
+      p.description = document.getElementById('ep-desc').value.trim();
+      p.budget = document.getElementById('ep-budget').value.trim();
+      const dept = document.getElementById('ep-dept').value;
+      if (dept && appState.departments.some(d => d.name === dept)) p.dept = dept; else delete p.dept;
+      const dl = document.getElementById('ep-deadline').value;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dl)) p.deadline = dl; else delete p.deadline;
+      closeModal('edit-project-modal');
+      saveAppState();
+      renderAll();
+      if (activeProjectId === p.id) renderActiveProjectDetail();
+      showToast('Project bijgewerkt');
+    }
+
+    // Berekent de nieuwe stapdata zonder iets op te slaan
+    function computeReplan(p, startIso, defaultDays) {
+      let cursor = nextWorkdayIso(/^\d{4}-\d{2}-\d{2}$/.test(startIso || '') ? startIso : getLocalTodayIso());
+      const dd = Math.min(60, Math.max(1, Math.round(Number(defaultDays)) || 1));
+      const out = [];
+      let lastEnd = '';
+      p.steps.forEach(st => {
+        if (st.done) return;
+        const days = Math.min(60, Math.max(1, Math.round(Number(st.days)) || dd));
+        const start = cursor;
+        const end = addWorkdaysIso(start, days - 1);
+        out.push({ step: st, start, end, days });
+        lastEnd = end;
+        cursor = nextWorkdayIso(addDaysIso(end, 1));
+      });
+      return { items: out, lastEnd };
+    }
+
+    function openReplanModal(projId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (!p) return;
+      document.getElementById('rp-id').value = p.id;
+      document.getElementById('rp-start').value = getLocalTodayIso();
+      document.getElementById('rp-days').value = 1;
+      document.getElementById('rp-move-tasks').checked = true;
+      document.getElementById('replan-modal').classList.remove('hidden');
+      renderReplanPreview();
+    }
+
+    function renderReplanPreview() {
+      const box = document.getElementById('rp-preview');
+      const p = appState.projects.find(x => x.id === document.getElementById('rp-id').value);
+      if (!box || !p) return;
+      const r = computeReplan(p, document.getElementById('rp-start').value, document.getElementById('rp-days').value);
+      if (!r.items.length) { box.innerHTML = '<div class="font-semibold text-slate-600">Alle stappen zijn al afgerond: er is niets te herberekenen.</div>'; return; }
+      const first = r.items[0], doneN = p.steps.filter(x => x.done).length;
+      let html = `<div class="font-bold text-slate-900">${r.items.length} openstaande ${r.items.length === 1 ? 'stap' : 'stappen'} • ${fmtNlDate(first.start)} t/m ${fmtNlDate(r.lastEnd)}</div>`;
+      if (doneN) html += `<div class="text-slate-600">${doneN} afgeronde ${doneN === 1 ? 'stap blijft' : 'stappen blijven'} ongewijzigd.</div>`;
+      if (p.deadline) {
+        const over = diffDaysIso(p.deadline, r.lastEnd);
+        html += over > 0
+          ? `<div class="font-bold text-amber-800">⚠️ ${over} ${over === 1 ? 'dag' : 'dagen'} na de gewenste oplevering (${fmtNlDate(p.deadline)}).</div>`
+          : `<div class="font-bold text-emerald-700">✓ Past binnen de oplevering (${fmtNlDate(p.deadline)}).</div>`;
+      }
+      html += '<div class="text-slate-500">Eerste stappen: ' + r.items.slice(0, 3).map(i => `${esc(i.step.title)} (${fmtNlDate(i.start)})`).join(' • ') + (r.items.length > 3 ? ' …' : '') + '</div>';
+      box.innerHTML = html;
+    }
+
+    function applyReplan() {
+      const p = appState.projects.find(x => x.id === document.getElementById('rp-id').value);
+      if (!p) { closeModal('replan-modal'); return; }
+      const startVal = document.getElementById('rp-start').value;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startVal)) { showToast('Kies een startdatum.'); return; }
+      const r = computeReplan(p, startVal, document.getElementById('rp-days').value);
+      if (!r.items.length) { showToast('Er zijn geen openstaande stappen.'); return; }
+      const moveTasks = document.getElementById('rp-move-tasks').checked;
+      let moved = 0;
+      r.items.forEach(i => {
+        i.step.date = i.start;
+        i.step.days = i.days;
+        if (moveTasks && i.step.taskId) {
+          const t = appState.tasks.find(x => x.id === i.step.taskId);
+          if (t && !t.done && /^\d{4}-\d{2}-\d{2}$/.test(t.date || '')) { t.date = i.start; moved++; }
+        }
+      });
+      closeModal('replan-modal');
+      saveAppState();
+      renderAll();
+      if (activeProjectId === p.id) renderActiveProjectDetail();
+      showToast(`Planning herberekend: ${r.items.length} stappen${moved ? `, ${moved} taken verplaatst` : ''}. Laatste stap ${fmtNlDate(r.lastEnd)}.`);
     }
 
     // ----- Taken bij bestaande projecten -----
@@ -3689,6 +4569,9 @@
       if (fields && fields.includes('date') && task.date) st.date = task.date;
       if (fields && fields.includes('assignee') && task.assignee) st.assignee = task.assignee;
     }
+    function setTaskDateQuick(id, offsetDays) {
+      setTaskDate(id, addDaysIso(getLocalTodayIso(), offsetDays));
+    }
     function setTaskDate(id, value) {
       const t = appState.tasks.find(x => x.id === id);
       if (!t) return;
@@ -3717,9 +4600,71 @@
       return /^[^\s@<>"'`]+@[^\s@<>"'`]+\.[^\s@<>"'`]+$/.test(v) ? 'mailto:' + v : '';
     }
 
+    // Onderhoudsstatus op basis van de volgende onderhoudsdatum
+    function maintInfo(eq) {
+      const d = eq.nextDate;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) return { key: 'onbekend', label: 'Geen onderhoudsdatum', cls: 'bg-slate-100 text-slate-700 border-slate-300' };
+      const days = diffDaysIso(getLocalTodayIso(), d);
+      if (days < 0) return { key: 'verlopen', days, label: `⛔ ${-days} ${days === -1 ? 'dag' : 'dagen'} te laat`, cls: 'bg-rose-100 text-rose-900 border-rose-300' };
+      if (days <= 14) return { key: 'binnenkort', days, label: days === 0 ? '⏰ Vandaag onderhoud' : `⏰ Over ${days} ${days === 1 ? 'dag' : 'dagen'}`, cls: 'bg-amber-100 text-amber-950 border-amber-300' };
+      return { key: 'ok', days, label: `✅ Oké • over ${days} dagen`, cls: 'bg-emerald-100 text-emerald-900 border-emerald-300' };
+    }
+    function setEquipmentInterval(eqId, v) {
+      const eq = appState.equipment.find(x => x.id === eqId);
+      const n = Math.round(Number(v));
+      if (!eq || ![30, 90, 180, 365].includes(n)) return;
+      eq.intervalDays = n;
+      saveAppState(); renderEquipment();
+    }
+    function applyMaintenance(eq, today) {
+      const interval = [30, 90, 180, 365].includes(eq.intervalDays) ? eq.intervalDays : 90;
+      const next = addDaysIso(today, interval);
+      eq.history = [{ date: today, previousNext: eq.nextDate || '', nextDate: next, by: currentUser.name }].concat(Array.isArray(eq.history) ? eq.history : []).slice(0, 20);
+      eq.lastMaintenance = today;
+      eq.nextDate = next;
+      return next;
+    }
+    function markMaintenanceDone(eqId) {
+      const eq = appState.equipment.find(x => x.id === eqId);
+      if (!eq) return;
+      const next = applyMaintenance(eq, getLocalTodayIso());
+      saveAppState();
+      renderAll();
+      showToast(`Onderhoud vastgelegd. Volgend onderhoud: ${fmtNlDate(next)}.`);
+    }
+    function resetEquipmentFilters() {
+      document.getElementById('eq-search').value = '';
+      document.getElementById('eq-status-filter').value = 'all';
+      renderEquipment();
+    }
+
+    function equipmentFiltered() {
+      const q = (document.getElementById('eq-search').value || '').trim().toLowerCase();
+      const f = document.getElementById('eq-status-filter').value;
+      return appState.equipment.filter(eq => {
+        const sup = appState.suppliers.find(x => x.id === eq.supplierId);
+        if (q && !`${eq.name} ${eq.dept} ${sup ? sup.company : ''}`.toLowerCase().includes(q)) return false;
+        if (f === 'all') return true;
+        if (['verlopen', 'binnenkort', 'ok'].includes(f)) return maintInfo(eq).key === f;
+        return eq.status === f;
+      });
+    }
+
     function renderEquipment() {
       const grid = document.getElementById('equipment-grid');
-      grid.innerHTML = appState.equipment.map(eq => {
+      const q = (document.getElementById('eq-search').value || '').trim().toLowerCase();
+      const f = document.getElementById('eq-status-filter').value;
+      const list = equipmentFiltered();
+      const cnt = document.getElementById('eq-count');
+      if (cnt) cnt.textContent = (q || f !== 'all') ? `${list.length} van ${appState.equipment.length}` : `${appState.equipment.length} apparaten`;
+      if (appState.equipment.length && !list.length) {
+        grid.innerHTML = `<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-600 text-center space-y-3"><div>Geen apparaten gevonden${q ? ` voor “${esc(q)}”` : ''}.</div><button type="button" onclick="resetEquipmentFilters()" class="min-h-[44px] px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold">Filters wissen</button></div>`;
+        return;
+      }
+      const cardHtml = (eq) => {
+        const mi = maintInfo(eq);
+        const interval = [30, 90, 180, 365].includes(eq.intervalDays) ? eq.intervalDays : 90;
+        const hist = Array.isArray(eq.history) ? eq.history.slice(0, 5) : [];
         const sup = appState.suppliers.find(x => x.id === eq.supplierId);
         const tel = sup ? telHref(sup.phone) : '';
         const mail = sup ? mailHref(sup.email) : '';
@@ -3735,7 +4680,19 @@
             </select>
           </div>
           <h3 class="font-extrabold text-sm text-slate-900">${esc(eq.name)}</h3>
-          <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${esc(eq.nextDate)}</strong></p>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${mi.cls}">${esc(mi.label)}</span>
+            <span class="text-xs text-slate-600">📅 Volgend onderhoud: <strong>${esc(fmtNlDate(eq.nextDate) || eq.nextDate || '-')}</strong></span>
+          </div>
+          ${eq.lastMaintenance || eq.purchaseDate ? `<p class="text-[11px] text-slate-500">${eq.purchaseDate ? '🛒 Aangeschaft: ' + esc(fmtNlDate(eq.purchaseDate)) : ''}${eq.purchaseDate && eq.lastMaintenance ? ' • ' : ''}${eq.lastMaintenance ? 'Laatst onderhouden: ' + esc(fmtNlDate(eq.lastMaintenance)) : ''}</p>` : ''}
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="markMaintenanceDone(${jsArg(eq.id)})" class="min-h-[44px] px-3.5 rounded-xl bg-[#3B4622] hover:bg-[#2F381A] text-white text-xs font-bold">✅ Onderhoud gedaan</button>
+            <label class="text-[11px] font-bold text-slate-600" for="eq-int-${esc(eq.id)}">volgende over</label>
+            <select id="eq-int-${esc(eq.id)}" onchange="setEquipmentInterval(${jsArg(eq.id)}, this.value)" class="min-h-[40px] px-2 rounded-lg border border-slate-300 text-xs bg-white">
+              ${[30, 90, 180, 365].map(n => `<option value="${n}"${n === interval ? ' selected' : ''}>${n} dagen</option>`).join('')}
+            </select>
+          </div>
+          ${hist.length ? `<details class="text-[11px] text-slate-600"><summary class="cursor-pointer font-bold min-h-[32px] flex items-center">Onderhoudslog (${hist.length})</summary><ul class="mt-1 space-y-0.5">${hist.map(h => `<li>${esc(fmtNlDate(h.date))} • door ${esc(h.by || '-')} • volgende ${esc(fmtNlDate(h.nextDate))}</li>`).join('')}</ul></details>` : ''}
           ${linked.length ? `<div class="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">🔧 ${linked.length} open ${linked.length === 1 ? 'taak' : 'taken'}: ${esc(linked.slice(0, 2).map(t => t.title).join(' • '))}${linked.length > 2 ? ' …' : ''}</div>` : ''}
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-2">
             <label class="block text-[11px] font-bold text-slate-600">Leverancier</label>
@@ -3749,7 +4706,63 @@
           </div>
           <button type="button" onclick="openTaskForEquipment(${jsArg(eq.id)})" class="w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">+ Taak voor dit apparaat</button>
         </div>`;
-      }).join('') || '<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-500 text-center">Nog geen apparatuur toegevoegd.</div>';
+      };
+      const unitRow = (eq) => {
+        const mi = maintInfo(eq);
+        return `<div class="flex flex-wrap items-center gap-2 py-2 border-b border-slate-100 last:border-0">
+          <span class="font-bold text-xs text-slate-900 min-w-[9rem]">${esc(eq.name)}</span>
+          <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-full border ${mi.cls}">${esc(mi.label)}</span>
+          <span class="text-[11px] text-slate-600">📅 ${esc(fmtNlDate(eq.nextDate) || '-')}${eq.purchaseDate ? ' • 🛒 ' + esc(fmtNlDate(eq.purchaseDate)) : ''}</span>
+          <span class="flex-1"></span>
+          <select aria-label="Status van ${esc(eq.name)}" onchange="setEquipmentStatus(${jsArg(eq.id)}, this.value)" class="min-h-[40px] px-2 rounded-lg border border-slate-300 text-[11px] bg-white">
+            ${[...new Set(['Operationeel', 'Aandacht nodig', 'Buiten gebruik', eq.status])].map(st => `<option value="${esc(st)}"${st === eq.status ? ' selected' : ''}>${esc(st)}</option>`).join('')}
+          </select>
+          <button type="button" onclick="markMaintenanceDone(${jsArg(eq.id)})" aria-label="Onderhoud gedaan voor ${esc(eq.name)}" class="min-h-[40px] px-3 rounded-lg bg-[#3B4622] text-white text-[11px] font-bold">✅ Gedaan</button>
+          <button type="button" onclick="openTaskForEquipment(${jsArg(eq.id)})" aria-label="Taak voor ${esc(eq.name)}" class="min-h-[40px] px-3 rounded-lg bg-white border border-slate-300 text-[11px] font-bold">+ Taak</button>
+        </div>`;
+      };
+      const groupCard = (key, units) => {
+        const first = units[0];
+        const total = eqGroupUnits(key).length;
+        const c = { verlopen: 0, binnenkort: 0, buiten: 0 };
+        units.forEach(e => { const k = maintInfo(e).key; if (k === 'verlopen') c.verlopen++; if (k === 'binnenkort') c.binnenkort++; if (e.status === 'Buiten gebruik') c.buiten++; });
+        const nums = units.map(u => u.number).filter(n => Number.isInteger(n));
+        const open = eqOpenGroups.has(key);
+        return `<div class="col-span-full bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <span class="text-xs font-bold text-emerald-600">${esc(first.dept)}</span>
+              <h3 class="font-extrabold text-base text-slate-900">${esc(first.group)} <span class="text-slate-500 font-bold">(${units.length}${units.length !== total ? ' van ' + total : ''}x${nums.length ? ', nr ' + Math.min(...nums) + '–' + Math.max(...nums) : ''})</span></h3>
+              <div class="flex flex-wrap gap-1.5 mt-1.5">
+                ${c.verlopen ? `<span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-rose-100 text-rose-900 border-rose-300">⛔ ${c.verlopen} te laat</span>` : ''}
+                ${c.binnenkort ? `<span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-amber-100 text-amber-950 border-amber-300">⏰ ${c.binnenkort} binnen 14 dagen</span>` : ''}
+                ${c.buiten ? `<span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-slate-100 text-slate-800 border-slate-300">🚧 ${c.buiten} buiten gebruik</span>` : ''}
+                ${!c.verlopen && !c.binnenkort && !c.buiten ? '<span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full border bg-emerald-100 text-emerald-900 border-emerald-300">✅ Alles oké</span>' : ''}
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" onclick="markGroupMaintenanceDone(${jsArg(key)})" class="min-h-[44px] px-3.5 rounded-xl bg-[#3B4622] hover:bg-[#2F381A] text-white text-xs font-bold">✅ Onderhoud gedaan (${units.length})</button>
+              <button type="button" onclick="openTaskForSeries(${jsArg(key)})" class="min-h-[44px] px-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold">+ Taak voor reeks</button>
+              <button type="button" onclick="openEquipmentBulk(${jsArg(key)})" class="min-h-[44px] px-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold">📅 Reeks aanpassen</button>
+            </div>
+          </div>
+          <details ${open ? 'open' : ''} ontoggle="toggleEqGroup(${jsArg(key)}, this.open)">
+            <summary class="cursor-pointer min-h-[44px] flex items-center text-xs font-bold text-slate-700">Toon ${units.length} ${units.length === 1 ? 'apparaat' : 'apparaten'}</summary>
+            <div>${units.map(unitRow).join('')}</div>
+          </details>
+        </div>`;
+      };
+      // Reeksen worden gegroepeerd; losse apparaten blijven eigen kaarten
+      const seen = new Set();
+      const html = [];
+      list.forEach(eq => {
+        const key = eqGroupKey(eq);
+        if (!key) { html.push(cardHtml(eq)); return; }
+        if (seen.has(key)) return;
+        seen.add(key);
+        html.push(groupCard(key, list.filter(x => eqGroupKey(x) === key).sort((a, b) => (a.number || 0) - (b.number || 0))));
+      });
+      grid.innerHTML = html.join('') || '<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-500 text-center">Nog geen apparatuur toegevoegd.</div>';
     }
 
     function setEquipmentStatus(eqId, status) {
@@ -3862,27 +4875,153 @@
       renderEquipment();
     }
 
+    let equipAddMode = 'one';
+    const EQ_INTERVALS = [30, 90, 180, 365];
+    const EQ_MAX_BATCH = 200;
+    function isoOrEmpty(v) { return /^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : ''; }
+
+    function setEquipAddMode(mode) {
+      equipAddMode = mode === 'series' ? 'series' : 'one';
+      const series = equipAddMode === 'series';
+      document.getElementById('eq-series-box').classList.toggle('hidden', !series);
+      document.getElementById('eq-mode-one').className = 'min-h-[44px] rounded-xl text-xs font-bold ' + (series ? 'tab-inactive border border-slate-300' : 'tab-active');
+      document.getElementById('eq-mode-series').className = 'min-h-[44px] rounded-xl text-xs font-bold ' + (series ? 'tab-active' : 'tab-inactive border border-slate-300');
+      document.getElementById('eq-name-label').textContent = series ? 'Naam (zonder nummer)' : 'Naam apparaat';
+      document.getElementById('eq-name').placeholder = series ? 'Bijv. Indoor Stagesbike' : 'Bijv. Technogym Skillrun 1';
+      updateEquipPreview();
+    }
+    // Leest van/tot; geeft een foutmelding terug als de reeks niet klopt
+    function readRange(fromId, toId) {
+      const from = Number(document.getElementById(fromId).value), to = Number(document.getElementById(toId).value);
+      if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to < 0) return { error: 'Vul hele nummers in.' };
+      if (to < from) return { error: 'Het eindnummer moet groter zijn dan of gelijk zijn aan het beginnummer.' };
+      return { from, to, count: to - from + 1 };
+    }
+    function updateEquipPreview() {
+      const box = document.getElementById('eq-preview');
+      if (!box || equipAddMode !== 'series') return;
+      const name = document.getElementById('eq-name').value.trim() || 'Naam';
+      const r = readRange('eq-from', 'eq-to');
+      if (r.error) { box.textContent = r.error; return; }
+      if (r.count > EQ_MAX_BATCH) { box.textContent = `Maximaal ${EQ_MAX_BATCH} apparaten per keer.`; return; }
+      box.textContent = `${r.count} ${r.count === 1 ? 'apparaat' : 'apparaten'}: ${name} ${r.from}${r.count > 1 ? ' t/m ' + name + ' ' + r.to : ''}`;
+    }
+
     function openNewEquipmentModal() {
       document.getElementById('eq-supplier').innerHTML = '<option value="">— geen leverancier —</option>' +
         appState.suppliers.map(x => `<option value="${esc(x.id)}">${esc(x.company)}</option>`).join('');
+      document.getElementById('eq-dept-list').innerHTML = appState.departments.map(d => `<option value="${esc(d.name)}"></option>`).join('');
+      ['eq-name', 'eq-dept', 'eq-purchase', 'eq-next'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('eq-from').value = 1; document.getElementById('eq-to').value = 10;
+      document.getElementById('eq-interval').value = '90';
+      setEquipAddMode('one');
       document.getElementById('new-equip-modal').classList.remove('hidden');
     }
 
     function saveNewEquipment() {
       const name = document.getElementById('eq-name').value.trim();
-      if (!name) return;
-      appState.equipment.unshift({
-        id: 'eq-' + Date.now(),
-        name,
-        dept: document.getElementById('eq-dept').value.trim() || 'Fitness',
-        nextDate: document.getElementById('eq-next').value || '2026-12-31',
-        status: 'Operationeel',
-        ...(document.getElementById('eq-supplier').value ? { supplierId: document.getElementById('eq-supplier').value } : {})
+      if (!name) { showToast('Vul een naam in.'); document.getElementById('eq-name').focus(); return; }
+      const dept = document.getElementById('eq-dept').value.trim() || 'Fitness';
+      const interval = Number(document.getElementById('eq-interval').value);
+      const today = getLocalTodayIso();
+      const next = isoOrEmpty(document.getElementById('eq-next').value) || addDaysIso(today, EQ_INTERVALS.includes(interval) ? interval : 90);
+      const purchase = isoOrEmpty(document.getElementById('eq-purchase').value);
+      const supplierId = document.getElementById('eq-supplier').value;
+      const common = () => ({
+        dept, nextDate: next, status: 'Operationeel',
+        ...(EQ_INTERVALS.includes(interval) ? { intervalDays: interval } : {}),
+        ...(purchase ? { purchaseDate: purchase } : {}),
+        ...(supplierId && appState.suppliers.some(x => x.id === supplierId) ? { supplierId } : {})
       });
+      if (equipAddMode === 'series') {
+        const r = readRange('eq-from', 'eq-to');
+        if (r.error) { showToast(r.error); return; }
+        if (r.count > EQ_MAX_BATCH) { showToast(`Maximaal ${EQ_MAX_BATCH} apparaten per keer.`); return; }
+        const stamp = Date.now();
+        const have = new Set(appState.equipment.map(e => (e.dept + '|' + e.name).toLowerCase()));
+        const made = [];
+        let skipped = 0;
+        for (let n = r.from; n <= r.to; n++) {
+          const full = `${name} ${n}`;
+          if (have.has((dept + '|' + full).toLowerCase())) { skipped++; continue; }
+          made.push({ id: `eq-${stamp}-${n}`, name: full, group: name, number: n, ...common() });
+        }
+        if (!made.length) { showToast('Al deze apparaten bestaan al.'); return; }
+        appState.equipment.unshift(...made);
+        closeModal('new-equip-modal');
+        saveAppState();
+        renderAll();
+        showToast(`${made.length} apparaten toegevoegd (${name} ${made[0].number}${made.length > 1 ? '–' + made[made.length - 1].number : ''})${skipped ? `, ${skipped} bestonden al` : ''}.`);
+        return;
+      }
+      appState.equipment.unshift({ id: 'eq-' + Date.now(), name, ...common() });
       closeModal('new-equip-modal');
       saveAppState();
-      renderEquipment();
+      renderAll();
     }
+
+    // ----- Reeksen: gegevens van meerdere apparaten tegelijk aanpassen -----
+    function eqGroupKey(eq) { return eq.group ? eq.dept + '|' + eq.group : ''; }
+    function eqGroupUnits(key) { return appState.equipment.filter(e => eqGroupKey(e) === key).sort((a, b) => (a.number || 0) - (b.number || 0)); }
+    function openEquipmentBulk(key) {
+      const units = eqGroupUnits(key);
+      if (!units.length) return;
+      document.getElementById('eb-key').value = key;
+      document.getElementById('eb-title').textContent = `${units[0].group} • ${units[0].dept} • ${units.length} stuks`;
+      document.getElementById('eb-from').value = units[0].number || 0;
+      document.getElementById('eb-to').value = units[units.length - 1].number || 0;
+      ['eb-purchase', 'eb-next', 'eb-interval', 'eb-status'].forEach(id => { document.getElementById(id).value = ''; });
+      updateBulkPreview();
+      document.getElementById('eq-bulk-modal').classList.remove('hidden');
+    }
+    function bulkSelection() {
+      const key = document.getElementById('eb-key').value;
+      const r = readRange('eb-from', 'eb-to');
+      if (r.error) return { error: r.error };
+      return { units: eqGroupUnits(key).filter(e => (e.number || 0) >= r.from && (e.number || 0) <= r.to), r };
+    }
+    function updateBulkPreview() {
+      const box = document.getElementById('eb-preview');
+      const sel = bulkSelection();
+      box.textContent = sel.error ? sel.error : `${sel.units.length} ${sel.units.length === 1 ? 'apparaat wordt' : 'apparaten worden'} aangepast (nr ${sel.r.from} t/m ${sel.r.to}).`;
+    }
+    function applyEquipmentBulk() {
+      const sel = bulkSelection();
+      if (sel.error) { showToast(sel.error); return; }
+      if (!sel.units.length) { showToast('Geen apparaten in dit nummerbereik.'); return; }
+      const purchase = isoOrEmpty(document.getElementById('eb-purchase').value);
+      const next = isoOrEmpty(document.getElementById('eb-next').value);
+      const interval = Number(document.getElementById('eb-interval').value);
+      const status = document.getElementById('eb-status').value;
+      const changes = [];
+      if (purchase) changes.push('aanschafdatum');
+      if (next) changes.push('volgend onderhoud');
+      if (EQ_INTERVALS.includes(interval)) changes.push('interval');
+      if (['Operationeel', 'Aandacht nodig', 'Buiten gebruik'].includes(status)) changes.push('status');
+      if (!changes.length) { showToast('Vul minstens één veld in.'); return; }
+      sel.units.forEach(e => {
+        if (purchase) e.purchaseDate = purchase;
+        if (next) e.nextDate = next;
+        if (EQ_INTERVALS.includes(interval)) e.intervalDays = interval;
+        if (['Operationeel', 'Aandacht nodig', 'Buiten gebruik'].includes(status)) e.status = status;
+      });
+      closeModal('eq-bulk-modal');
+      saveAppState();
+      renderAll();
+      showToast(`${sel.units.length} apparaten bijgewerkt (${changes.join(', ')}).`);
+    }
+    function markGroupMaintenanceDone(key) {
+      const units = equipmentFiltered().filter(e => eqGroupKey(e) === key);
+      if (!units.length) return;
+      if (!confirm(`Onderhoud gedaan voor ${units.length} ${units.length === 1 ? 'apparaat' : 'apparaten'} vastleggen?`)) return;
+      const today = getLocalTodayIso();
+      units.forEach(e => applyMaintenance(e, today));
+      saveAppState();
+      renderAll();
+      showToast(`Onderhoud vastgelegd voor ${units.length} apparaten.`);
+    }
+    const eqOpenGroups = new Set();
+    function toggleEqGroup(key, open) { if (open) eqOpenGroups.add(key); else eqOpenGroups.delete(key); }
 
     // ==================== WEEKROOSTER, TAKEN PER DAG & AGENDA-EXPORT (.ics) ====================
     let rosterWeekStart = '';
@@ -4065,7 +5204,9 @@
     }
 
     function openAddMemberModal() {
+      ['tm-name', 'tm-role', 'tm-shift'].forEach(id => { document.getElementById(id).value = ''; });
       document.getElementById('add-member-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('tm-name').focus(), 50);
     }
 
     function saveNewMember() {
@@ -4100,7 +5241,6 @@
       const menu = document.getElementById('header-more-menu');
       if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) closeHeaderMenu();
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHeaderMenu(); });
 
     function showToast(msg) {
       const el = document.createElement('div');
@@ -4483,6 +5623,7 @@
     function setLastSync(v) { try { localStorage.setItem(LAST_SYNC_KEY, v || ''); } catch (e) {} }
 
     function updateCloudBadge() {
+      renderCloudStatusBox();
       const badge = document.getElementById('cloud-status-badge');
       if (!badge) return;
       const connected = appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key;
@@ -4498,7 +5639,21 @@
       }
     }
 
+    function renderCloudStatusBox() {
+      const box = document.getElementById('cloud-status-box');
+      if (!box) return;
+      const connected = !!(appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key);
+      const last = getLastSync();
+      let when = 'nog niet gesynchroniseerd';
+      if (last) {
+        const d = new Date(last);
+        when = isNaN(d.getTime()) ? 'onbekend' : d.toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+      const st = !connected ? 'Niet gekoppeld (alleen lokale opslag)' : cloudStatus === 'ok' ? '✅ Verbonden' : cloudStatus === 'error' ? '⚠️ Laatste sync mislukt' : 'Verbonden, nog geen sync in deze sessie';
+      box.innerHTML = `<div><strong>Status:</strong> ${esc(st)}</div><div><strong>Laatste sync:</strong> ${esc(when)}</div>`;
+    }
     function openCloudSyncModal() {
+      renderCloudStatusBox();
       document.getElementById('sb-url').value = appState.cloudConfig.url || '';
       document.getElementById('sb-key').value = appState.cloudConfig.key || '';
       document.getElementById('cloud-sync-modal').classList.remove('hidden');
@@ -4654,9 +5809,29 @@
     syncOnStartup();
     labelFormFields();
     (function () {
+      // Alleen nieuw toegevoegde knooppunten nalopen (geen volledige scan bij elke wijziging)
+      const queue = new Set();
       let t = null;
-      new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => labelFormFields(), 60); })
-        .observe(document.body, { childList: true, subtree: true });
+      new MutationObserver((muts) => {
+        muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) queue.add(n); }));
+        if (!queue.size || t) return;
+        t = setTimeout(() => {
+          t = null;
+          const all = new Set(queue); queue.clear();
+          // alleen de bovenste nieuwe knooppunten; veel nieuwe kinderen onder één ouder = één scan van die ouder
+          const tops = [...all].filter(n => {
+            if (!n.isConnected) return false;
+            for (let a = n.parentElement; a; a = a.parentElement) if (all.has(a)) return false;
+            return true;
+          });
+          const byParent = new Map();
+          tops.forEach(n => { const k = n.parentElement || n; byParent.set(k, (byParent.get(k) || []).concat(n)); });
+          byParent.forEach((kids, parent) => {
+            if (kids.length > 3 && parent !== document.body) labelFormFields(parent);
+            else kids.forEach(k => labelFormFields(k));
+          });
+        }, 80);
+      }).observe(document.body, { childList: true, subtree: true });
     })();
   </script>
 </body>
