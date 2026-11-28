@@ -8,37 +8,136 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body { font-family: 'Inter', sans-serif; }
-    .tab-active { background-color: #0f172a; color: #ffffff; }
-    .tab-inactive { background-color: #f1f5f9; color: #475569; }
-    .tab-inactive:hover { background-color: #e2e8f0; }
-    canvas { touch-action: none; }
 
-    /* TREE11 Startscherm na inloggen (8 donkergroene afdelingstegels) */
+    /* ==================== TREE11 HUISSTIJL (mos-/olijfgroen) ==================== */
+    :root {
+      --t11-bg: #F5F6F4;        /* hoofdachtergrond */
+      --t11-bg-soft: #FAFAFA;   /* zachte vlakken */
+      --t11-surface: #FFFFFF;   /* kaarten, topbalk, tabbalk */
+      --t11-line: #E2E5DF;      /* randen */
+      --t11-line-2: #D8DDD3;    /* invoerranden */
+      --t11-moss: #3B4622;      /* primair donker */
+      --t11-moss-d: #2F381A;    /* primair donker (hover/diep) */
+      --t11-lime: #88A138;      /* accent */
+      --t11-lime-2: #9BB344;    /* accent licht */
+      --t11-tile-end: #8CA63A;  /* onderkant ruimtetegel */
+      --t11-forest: #1F6E3A;    /* positief */
+      --t11-forest-2: #257A42;
+      --t11-ink: #1A1E14;       /* tekst */
+      --t11-mute: #5F6657;      /* subtekst */
+      --t11-cream: #DCE4C8;     /* tekst op donkergroen */
+      --t11-tint: #EEF3DC;      /* lichte olijf-tint */
+    }
+    body { background-color: var(--t11-bg); color: var(--t11-ink); }
+    .tab-active { background-color: var(--t11-moss); color: #ffffff; }
+    .tab-inactive { background-color: transparent; color: var(--t11-mute); }
+    .tab-inactive:hover { background-color: var(--t11-tint); color: var(--t11-moss); }
+    :focus-visible { outline: 2px solid var(--t11-lime); outline-offset: 2px; }
+
+    /* Tailwind-kleuren omzetten naar het TREE11-palet (specificiteit hoger dan Tailwind zelf) */
+    body .bg-slate-100 { background-color: #F0F2EC; }
+    body .bg-slate-50 { background-color: var(--t11-bg-soft); }
+    body .bg-slate-200 { background-color: #E4E8DD; }
+    body .hover\:bg-slate-200:hover { background-color: #E4E8DD; }
+    body .hover\:bg-slate-100:hover, body .hover\:bg-slate-50:hover { background-color: #F0F2EC; }
+    body .border-slate-100 { border-color: #ECEEE8; }
+    body .border-slate-200 { border-color: var(--t11-line); }
+    body .border-slate-300 { border-color: var(--t11-line-2); }
+    body .text-slate-950, body .text-slate-900, body .text-slate-800 { color: var(--t11-ink); }
+    body .text-slate-700 { color: #2E3425; }
+    body .text-slate-600 { color: #444B3A; }
+    body .text-slate-500 { color: var(--t11-mute); }
+    body .text-slate-400 { color: #6B7262; }
+    body .hover\:text-slate-700:hover, body .hover\:text-slate-800:hover, body .hover\:text-slate-900:hover { color: var(--t11-moss); }
+    body .bg-slate-900, body .bg-slate-800 { background-color: var(--t11-moss); color: #fff; }
+    body .hover\:bg-slate-800:hover, body .hover\:bg-slate-700:hover { background-color: var(--t11-moss-d); }
+    body .bg-emerald-600, body .bg-emerald-700 { background-color: var(--t11-moss); }
+    body .hover\:bg-emerald-700:hover { background-color: var(--t11-moss-d); }
+    body .bg-emerald-500 { background-color: var(--t11-lime); }
+    body .bg-emerald-400, body .hover\:bg-emerald-400:hover { background-color: var(--t11-lime-2); }
+    body .bg-emerald-50, body .bg-emerald-50\/80, body .bg-emerald-50\/70, body .bg-emerald-50\/60, body .bg-emerald-50\/30 { background-color: var(--t11-tint); }
+    body .bg-emerald-100, body .bg-emerald-100\/80, body .hover\:bg-emerald-100:hover { background-color: #E3EBC9; }
+    body .bg-emerald-200\/70 { background-color: #D3DFAC; }
+    body .border-emerald-100, body .border-emerald-200, body .border-emerald-200\/70, body .border-emerald-200\/80, body .border-emerald-300 { border-color: #CFDBA6; }
+    body .hover\:border-emerald-400:hover { border-color: var(--t11-lime); }
+    body .text-emerald-900, body .text-emerald-800 { color: var(--t11-moss-d); }
+    body .text-emerald-700, body .text-emerald-600 { color: var(--t11-forest); }
+    body .focus\:ring-emerald-500:focus, body .focus\:ring-sky-500:focus { --tw-ring-color: var(--t11-lime); }
+    body .accent-emerald-600, body .accent-sky-600 { accent-color: var(--t11-moss); }
+    body .bg-sky-600 { background-color: var(--t11-forest); }
+    body .hover\:bg-sky-700:hover, body .hover\:bg-sky-500:hover { background-color: #195A30; }
+    body .bg-sky-50 { background-color: var(--t11-tint); }
+    body .border-sky-200, body .border-sky-300 { border-color: #CFDBA6; }
+    body .text-sky-950 { color: var(--t11-moss-d); }
+    body .bg-teal-600, body .bg-teal-500 { background-color: var(--t11-forest-2); }
+    #login-screen { background: linear-gradient(135deg, #2F381A 0%, #3B4622 55%, #5B7226 120%) !important; }
+
+    /* Topheader & tabbalk */
+    .t11-header { background: var(--t11-surface); color: var(--t11-ink); border-bottom: 1px solid var(--t11-line); box-shadow: 0 1px 2px rgba(47,56,26,.04); }
+    .t11-emblem { width: 44px; height: 44px; border-radius: 9999px; background: var(--t11-moss); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(47,56,26,.25); transition: background-color .14s ease; }
+    .t11-emblem:hover { background: var(--t11-moss-d); }
+    .t11-wordmark { font-weight: 800; letter-spacing: .08em; font-size: 1.05rem; color: var(--t11-ink); }
+    .t11-dept-pill { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 9999px; background: var(--t11-tint); border: 1px solid #CFDBA6; color: #4A5E1B; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .t11-iconbtn { background: var(--t11-surface); color: var(--t11-ink); border: 1px solid var(--t11-line-2); border-radius: 14px; transition: background-color .14s ease, border-color .14s ease; }
+    .t11-iconbtn:hover { background: #F0F2EC; border-color: var(--t11-lime); }
+    .t11-primarybtn { background: var(--t11-moss); color: #fff; border-radius: 14px; border: 1px solid var(--t11-moss); }
+    .t11-primarybtn:hover { background: var(--t11-moss-d); }
+    .t11-cloud-badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; white-space: nowrap; border: 1px solid var(--t11-line-2); background: #F0F2EC; color: var(--t11-mute); font-weight: 600; }
+    .t11-cloud-badge.ok { background: #E6F2EA; color: var(--t11-forest); border-color: #B7D8C2; }
+    .t11-cloud-badge.warn { background: #FEF3C7; color: #78350F; border-color: #FCD34D; }
+    .t11-tabbar { background: var(--t11-surface); border-top: 1px solid var(--t11-line); }
+    .t11-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 7px; margin-left: 8px; border-radius: 9999px; font-size: 11px; font-weight: 800; line-height: 1; }
+    .t11-pill-green { background: #E3EBC9; color: var(--t11-moss-d); }
+    .t11-pill-grey { background: #ECEEE8; color: var(--t11-mute); }
+    .tab-active .t11-pill-green { background: var(--t11-lime-2); color: var(--t11-moss-d); }
+    .tab-active .t11-pill-grey { background: rgba(255,255,255,.18); color: #fff; }
+
+    /* Locatie-overzichtskaart */
+    .t11-hero { position: relative; overflow: hidden; border-radius: 24px; padding: 22px 20px; color: #fff;
+      background: radial-gradient(120% 90% at 100% 0%, rgba(136,161,56,.55) 0%, rgba(136,161,56,0) 60%), linear-gradient(160deg, var(--t11-moss-d) 0%, var(--t11-moss) 100%);
+      box-shadow: 0 8px 24px rgba(47,56,26,.22); }
+    .t11-hero-eyebrow { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--t11-cream); }
+    .t11-hero-dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--t11-lime-2); box-shadow: 0 0 0 4px rgba(155,179,68,.25); }
+    .t11-hero h2 { font-size: 1.6rem; line-height: 1.15; font-weight: 800; margin-top: 10px; color: #fff; }
+    .t11-hero p.t11-hero-text { margin-top: 6px; font-size: 13px; color: var(--t11-cream); max-width: 34rem; }
+    .t11-stat { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; padding: 12px 14px; }
+    .t11-stat-label { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--t11-cream); }
+    .t11-stat-value { margin-top: 4px; font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .t11-bar { height: 8px; border-radius: 9999px; background: rgba(255,255,255,.16); overflow: hidden; margin-top: 8px; }
+    .t11-bar > span { display: block; height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--t11-lime), var(--t11-lime-2)); transition: width .3s ease; }
+    .t11-badge-ok { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 9999px; background: var(--t11-forest); color: #fff; font-size: 11px; font-weight: 800; border: 1px solid rgba(255,255,255,.25); }
+    .t11-badge-spoed { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 9999px; background: #B42318; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+    .t11-daycell { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 10px 6px; }
+    .t11-daycell .text-lg { color: #fff; }
+    .t11-daycell .t11-daylabel { font-size: 11px; font-weight: 600; color: var(--t11-cream); }
+    .t11-daycell.warn { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.45); }
+    .t11-daycell.alert { background: rgba(244,63,94,.22); border-color: rgba(251,113,133,.5); }
+    .t11-section-label { font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--t11-mute); }
+
+    /* Ruimte-/afdelingstegels */
     .t11-dept-tile {
-      background-color: #163828;
-      color: #ffffff;
-      border-radius: 18px;
-      min-height: 92px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 16px 12px;
-      box-shadow: 0 4px 12px rgba(22, 56, 40, 0.14);
-      transition: transform 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
-      cursor: pointer;
-      user-select: none;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background-color: var(--t11-surface); color: var(--t11-ink);
+      border-radius: 20px; padding: 0; min-height: 0; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+      text-align: left; overflow: hidden; border: 1px solid var(--t11-line);
+      box-shadow: 0 2px 8px rgba(47,56,26,.08);
+      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
     }
-    .t11-dept-tile:hover {
-      background-color: #1e4b36;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(22, 56, 40, 0.22);
-    }
-    .t11-dept-tile:active {
-      transform: scale(0.98);
-      background-color: #0f271c;
-    }
+    .t11-dept-tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(47,56,26,.16); border-color: var(--t11-lime); background-color: var(--t11-surface); }
+    .t11-dept-tile:active { transform: scale(.98); background-color: var(--t11-surface); }
+    .t11-tile-top { position: relative; min-height: 112px; padding: 12px 12px 26px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+      background: linear-gradient(180deg, var(--t11-moss-d) 0%, var(--t11-moss) 52%, var(--t11-tile-end) 135%); }
+    .t11-tile-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+    .t11-tile-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 9999px; background: rgba(26,30,20,.62); color: #fff; font-size: 11px; font-weight: 800; border: 1px solid rgba(255,255,255,.14); }
+    .t11-tile-badge.urgent { background: #B42318; border-color: rgba(255,255,255,.25); }
+    .t11-tile-badge.oos { background: #FBBF24; color: #1A1E14; border-color: transparent; }
+    .t11-tile-title { font-size: 1.15rem; font-weight: 800; letter-spacing: .04em; line-height: 1.1; text-transform: uppercase; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); overflow-wrap: break-word; word-break: normal; font-size: clamp(.95rem, 4.3vw, 1.15rem); }
+    .t11-tile-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: var(--t11-surface); }
+    .t11-tile-sub { font-size: 12px; font-weight: 600; color: var(--t11-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .t11-tile-count { font-size: 12px; font-weight: 800; color: var(--t11-moss); background: var(--t11-tint); border-radius: 9999px; padding: 2px 9px; flex-shrink: 0; }
+
+    @media (max-width: 380px) { .t11-tile-title { font-size: 1rem; } .t11-hero h2 { font-size: 1.35rem; } }
+    canvas { touch-action: none; }
 
     /* Telefoon: grotere tikvlakken en geen inzoomen op invoervelden (iOS zoomt bij tekst kleiner dan 16px) */
     @media (max-width: 639px) {
@@ -50,7 +149,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen">
+<body class="min-h-screen">
 
   <!-- LOGIN SCHERM -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950">
@@ -99,46 +198,47 @@
   <!-- HOOFD APPLICATIE -->
   <div id="main-app" class="hidden min-h-screen flex flex-col">
     <!-- TOP BAR (COMPACT & RESPONSIVE) -->
-    <header class="relative bg-slate-900 text-white z-30 shadow-md">
+    <header class="t11-header relative z-30">
       <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0 flex-1 sm:flex-none">
-          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="w-11 h-11 shrink-0 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-extrabold text-sm shadow">
-            T11
+          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar de afdelingstegels" aria-label="TREE11 startscherm" class="t11-emblem">
+            <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 27V10M16 18l-6-5M16 21l6-5M16 14l5-4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="currentColor"/></svg>
           </button>
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="font-extrabold text-sm sm:text-lg tracking-tight truncate">TREE11 Facility<span class="hidden sm:inline"> & Verbouwing</span></h1>
-              <span id="cloud-status-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 whitespace-nowrap">Lokale opslag</span>
+              <h1 class="t11-wordmark truncate">TREE11</h1>
+              <span class="t11-dept-pill">Onderhoud</span>
+              <span id="cloud-status-badge" class="t11-cloud-badge">Lokale opslag</span>
             </div>
-            <p class="text-[11px] text-slate-400 truncate">Ingelogd als <span id="current-user-label" class="text-emerald-400 font-semibold">Geert</span></p>
+            <p class="text-[11px] truncate" style="color:var(--t11-mute)">Ingelogd als <span id="current-user-label" class="font-semibold" style="color:var(--t11-forest)">Geert</span></p>
           </div>
         </div>
 
         <!-- Telefoon: menu voor minder gebruikte acties -->
-        <button id="header-more-btn" type="button" onclick="toggleHeaderMenu(event)" aria-haspopup="true" aria-expanded="false" title="Meer acties" class="sm:hidden min-w-[44px] min-h-[44px] rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-lg font-bold leading-none">⋯</button>
+        <button id="header-more-btn" type="button" onclick="toggleHeaderMenu(event)" aria-haspopup="true" aria-expanded="false" title="Meer acties" class="sm:hidden min-w-[44px] min-h-[44px] t11-iconbtn text-lg font-bold leading-none">⋯</button>
 
         <!-- Hoofdacties: op telefoon een rij van 3 grote knoppen onder de titel -->
         <div class="grid grid-cols-3 gap-1.5 w-full order-last sm:order-none sm:w-auto sm:flex sm:flex-wrap sm:items-center">
-          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="min-h-[44px] px-2.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-emerald-100 text-xs font-bold border border-emerald-600/40 transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+          <button type="button" onclick="openDepartmentHomeScreen()" title="Terug naar 8 afdelingstegels" class="min-h-[44px] px-2.5 t11-iconbtn text-xs font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
             🌿 <span class="hidden sm:inline">8 </span>Afdelingen
           </button>
-          <button id="header-fault-btn" type="button" onclick="openFaultModal()" class="min-h-[44px] px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+          <button id="header-fault-btn" type="button" onclick="openFaultModal()" class="min-h-[44px] px-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold shadow transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
             🛠️ <span class="sm:hidden">Storing</span><span class="hidden sm:inline">Storing melden</span>
           </button>
-          <button type="button" onclick="openCloudSyncModal()" class="min-h-[44px] px-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
+          <button type="button" onclick="openCloudSyncModal()" class="min-h-[44px] px-2.5 t11-primarybtn text-xs font-bold transition flex items-center justify-center gap-1 leading-tight whitespace-nowrap">
             ☁️ <span class="sm:hidden">Cloud</span><span class="hidden sm:inline">Cloud Sync</span>
           </button>
 
           <!-- Desktop: overige acties direct zichtbaar -->
           <div class="hidden sm:flex items-center gap-1.5">
-            <button type="button" onclick="exportBackupJson()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition">
+            <button type="button" onclick="exportBackupJson()" class="px-2.5 py-1.5 t11-iconbtn text-[11px] font-semibold transition">
               💾 Backup
             </button>
-            <label class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition cursor-pointer whitespace-nowrap">
+            <label class="px-2.5 py-1.5 t11-iconbtn text-[11px] font-semibold transition cursor-pointer whitespace-nowrap">
               📂 Herstel
               <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
             </label>
-            <button type="button" onclick="logoutUser()" class="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-[11px] font-semibold border border-rose-500/30 transition">
+            <button type="button" onclick="logoutUser()" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 text-[11px] font-semibold border border-rose-200 transition">
               Uitloggen
             </button>
           </div>
@@ -156,19 +256,19 @@
       </div>
 
       <!-- NAVIGATIE TABS -->
-      <div id="main-nav-tabs" class="bg-slate-950/60 border-t border-slate-800">
+      <div id="main-nav-tabs" class="t11-tabbar">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 flex gap-1.5 overflow-x-auto">
           <button id="nav-tasks" type="button" onclick="switchMainTab('tasks')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-active">
-            ✅ Takenlijst & Afdelingen
+            ✅ Takenlijst & Afdelingen<span id="nav-count-tasks" class="t11-pill t11-pill-green" aria-hidden="true">0</span>
           </button>
           <button id="nav-projects" type="button" onclick="switchMainTab('projects')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
-            🏗️ Projecten & Verbouwing (A-Z)
+            🏗️ Projecten & Verbouwing (A-Z)<span id="nav-count-projects" class="t11-pill t11-pill-grey" aria-hidden="true">0</span>
           </button>
           <button id="nav-equipment" type="button" onclick="switchMainTab('equipment')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
-            🏋️ Apparatuur & Onderhoud
+            🏋️ Apparatuur & Onderhoud<span id="nav-count-equipment" class="t11-pill t11-pill-grey" aria-hidden="true">0</span>
           </button>
           <button id="nav-roster" type="button" onclick="switchMainTab('roster')" class="px-4 min-h-[44px] flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition tab-inactive">
-            📅 Dienstrooster & Team
+            📅 Dienstrooster & Team<span id="nav-count-roster" class="t11-pill t11-pill-grey" aria-hidden="true">0</span>
           </button>
         </div>
       </div>
@@ -178,28 +278,35 @@
     <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
 
       <!-- ==================== STARTSCHERM NA INLOGGEN: 8 AFDELINGSTEGELS ==================== -->
-      <section id="view-home-tiles" class="hidden max-w-2xl mx-auto">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-7 space-y-6">
-          <div class="flex flex-col items-center text-center pt-1">
-            <div class="flex items-center gap-2.5 text-[#163828]">
-              <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2.4"/>
-                <path d="M16 25V9M16 15L10.5 10.5M16 18L21.5 13M16 12L20.5 8.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-              </svg>
-              <span class="font-extrabold tracking-[0.14em] text-xl uppercase">TREE11</span>
+      <section id="view-home-tiles" class="hidden max-w-3xl mx-auto">
+        <div class="space-y-5">
+          <div class="t11-hero">
+            <div class="t11-hero-eyebrow"><span class="t11-hero-dot"></span>Locatie overzicht • TREE11</div>
+            <h2>Hoofdlocatie</h2>
+            <p class="t11-hero-text">Kies een ruimte om openstaande taken, storingen en onderhoud te bekijken.</p>
+            <div class="grid grid-cols-2 gap-2.5 mt-4">
+              <div class="t11-stat">
+                <div class="t11-stat-label">Voortgang</div>
+                <div class="t11-stat-value" id="home-progress-text">0%</div>
+                <div class="t11-bar" role="progressbar" aria-label="Voortgang alle taken" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="home-progress-bar"><span style="width:0%"></span></div>
+              </div>
+              <div class="t11-stat">
+                <div class="t11-stat-label">Spoed</div>
+                <div id="home-spoed-box"><span class="t11-badge-ok">Geen spoed</span></div>
+              </div>
             </div>
-            <p class="text-xs font-semibold text-slate-500 mt-1">Hoofdlocatie • Kies een afdeling voor openstaande taken</p>
+            <div id="home-day-summary" class="grid grid-cols-3 gap-2 text-center mt-2.5"></div>
           </div>
 
-          <div id="home-day-summary" class="grid grid-cols-3 gap-2 text-center"></div>
+          <div class="t11-section-label">Selecteer een ruimte</div>
           <div id="home-8-tiles-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5"></div>
 
-          <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-            <button onclick="selectDepartmentFromHome('ALL')" class="font-bold text-[#163828] hover:underline">
+          <div class="bg-white rounded-2xl border border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <button onclick="selectDepartmentFromHome('ALL')" class="font-bold text-[#3B4622] hover:underline min-h-[44px]">
               → Bekijk alle afdelingen & taken
             </button>
-            <button onclick="openUsageHistoryModal()" class="font-bold text-slate-700 hover:text-[#163828]">
-              📦 Voorraad & Verbruikshistorie (<span id="home-history-count">0</span>)
+            <button onclick="openUsageHistoryModal()" class="font-bold text-slate-700 hover:text-[#3B4622] min-h-[44px]">
+              📦 Voorraad & Verbruikshistorie (<span id="home-history-count">0</span>)<span id="home-reorder-badge" class="text-amber-700"></span>
             </button>
           </div>
         </div>
@@ -211,7 +318,7 @@
         <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2.5">
             <div class="flex items-center gap-2.5">
-              <button type="button" onclick="openDepartmentHomeScreen()" class="px-3 py-1.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold transition shadow-sm">
+              <button type="button" onclick="openDepartmentHomeScreen()" class="px-3 py-1.5 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-xs font-bold transition shadow-sm">
                 ← Alle 8 Afdelingen
               </button>
               <div>
@@ -220,6 +327,7 @@
                   <h2 id="tasks-section-title" class="text-lg sm:text-xl font-extrabold text-slate-900">Afdeling</h2>
                 </div>
                 <p id="dept-page-subtitle" class="text-xs text-slate-500">Eigen afdelingspagina met openstaande en afgeronde taken van deze afdeling.</p>
+                <div id="dept-oos-banner" class="hidden mt-2 flex flex-wrap items-center gap-2 text-xs font-bold bg-amber-100 text-amber-950 border border-amber-300 rounded-xl px-3 py-2"></div>
               </div>
             </div>
 
@@ -233,7 +341,7 @@
               <button type="button" onclick="openBulkTaskModal()" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-sm transition">
                 ⚡ Meerdere taken
               </button>
-              <button type="button" onclick="openUsageHistoryModal()" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#163828] border border-emerald-200 text-xs font-bold transition">
+              <button type="button" onclick="openUsageHistoryModal()" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#3B4622] border border-emerald-200 text-xs font-bold transition">
                 📦 Voorraad & Historie
               </button>
               <button type="button" onclick="openAddDeptModal()" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold transition">
@@ -256,7 +364,7 @@
             <option value="Normaal">3 • Normaal</option>
             <option value="Laag">4 • Laag</option>
           </select>
-          <select id="task-status-filter" onchange="renderTasks()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
+          <select id="task-status-filter" aria-label="Filter op status" onchange="renderTasks()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50">
             <option value="all">Openstaand + Afgerond (alles van afdeling)</option>
             <option value="open">Alleen openstaand</option>
             <option value="done">Alleen afgerond</option>
@@ -356,6 +464,7 @@
                 📷 Meerdere foto's uploaden
               </button>
             </div>
+            <div id="detail-media-usage" class="text-[11px] font-semibold text-slate-500"></div>
             <div id="detail-photos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
           </div>
 
@@ -373,6 +482,9 @@
                 <button onclick="undoBlueprintShape()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
                   ↩️ Laatste lijn wissen
                 </button>
+                <button onclick="clearBlueprintShapes()" class="px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold">
+                  🗑️ Wis alles
+                </button>
                 <button onclick="saveBlueprintChanges()" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
                   💾 Tekening opslaan
                 </button>
@@ -383,10 +495,12 @@
               <span class="text-xs font-bold text-slate-600 mr-1">Gereedschap:</span>
               <button onclick="setBpTool('line')" id="bptool-line" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-slate-900 text-white">📏 Lijn / Wand</button>
               <button onclick="setBpTool('rect')" id="bptool-rect" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">⬜ Vlak / Object</button>
+              <button onclick="setBpTool('erase')" id="bptool-erase" aria-label="Verwijder vorm: tik op een lijn, vlak of tekst" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">🧽 Verwijder vorm</button>
               <button onclick="setBpTool('text')" id="bptool-text" class="px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-700">🔤 Tekst / Maat</button>
               <input id="bp-color" type="color" value="#dc2626" class="w-11 h-11 sm:w-8 sm:h-7 rounded cursor-pointer border border-slate-300" title="Kleur kiezen" />
             </div>
 
+            <div id="bp-media-usage" class="text-[11px] font-semibold text-slate-500"></div>
             <div class="border-2 border-slate-300 rounded-2xl overflow-hidden bg-white flex justify-center">
               <canvas id="blueprint-canvas" width="900" height="580" class="w-full max-w-[900px] h-auto bg-white cursor-crosshair"></canvas>
             </div>
@@ -461,7 +575,7 @@
       <div class="px-5 py-4 space-y-4 overflow-y-auto flex-1">
         <!-- Eerdere verbruikshistorie suggesties voor vergelijkbare taken -->
         <div id="ct-similar-history" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 space-y-1.5">
-          <div class="text-xs font-extrabold text-[#163828]">💡 Eerder bij vergelijkbare klussen gebruikt:</div>
+          <div class="text-xs font-extrabold text-[#3B4622]">💡 Eerder bij vergelijkbare klussen gebruikt:</div>
           <div id="ct-similar-history-list" class="space-y-1 text-xs text-slate-700"></div>
         </div>
 
@@ -481,7 +595,7 @@
           </div>
 
           <label class="flex items-center gap-3 px-3.5 min-h-[52px] rounded-xl bg-white border border-slate-200 cursor-pointer">
-            <input id="ct-no-material" type="checkbox" onchange="toggleNoMaterialMode()" class="w-5 h-5 shrink-0 accent-[#163828]" />
+            <input id="ct-no-material" type="checkbox" onchange="toggleNoMaterialMode()" class="w-5 h-5 shrink-0 accent-[#3B4622]" />
             <span class="text-sm font-bold text-slate-800">Geen materiaal verbruikt</span>
           </label>
 
@@ -492,7 +606,7 @@
               <div class="grid grid-cols-2 sm:grid-cols-12 gap-2">
                 <select id="ct-stock-select" aria-label="Voorraadartikel" class="col-span-2 sm:col-span-7 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs bg-white"></select>
                 <input id="ct-stock-qty" type="number" inputmode="decimal" min="0.1" step="any" value="1" aria-label="Aantal" placeholder="Aantal" class="col-span-1 sm:col-span-3 px-3 min-h-[48px] rounded-xl border border-slate-300 text-base sm:text-xs" />
-                <button type="button" onclick="addStockUsageRow()" class="col-span-1 sm:col-span-2 px-3 min-h-[48px] rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-sm sm:text-xs font-bold">
+                <button type="button" onclick="addStockUsageRow()" class="col-span-1 sm:col-span-2 px-3 min-h-[48px] rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-sm sm:text-xs font-bold">
                   + Toevoegen
                 </button>
               </div>
@@ -510,7 +624,7 @@
                 </button>
               </div>
               <label class="flex items-center gap-2.5 min-h-[44px] text-xs text-slate-600 cursor-pointer">
-                <input id="ct-add-to-stock" type="checkbox" checked class="w-5 h-5 shrink-0 accent-[#163828]" />
+                <input id="ct-add-to-stock" type="checkbox" checked class="w-5 h-5 shrink-0 accent-[#3B4622]" />
                 <span>Ook opnemen in de voorraadlijst voor toekomstig gebruik</span>
               </label>
             </div>
@@ -526,7 +640,7 @@
         <p id="ct-error-msg" role="alert" class="hidden text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2"></p>
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <button type="button" onclick="cancelCompleteTaskModal()" class="px-4 min-h-[48px] sm:min-h-0 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm sm:text-xs font-bold">Annuleren</button>
-          <button type="button" onclick="confirmCompleteTaskWithLog()" class="px-5 min-h-[48px] sm:min-h-0 sm:py-2.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-sm sm:text-xs font-bold shadow">
+          <button type="button" onclick="confirmCompleteTaskWithLog()" class="px-5 min-h-[48px] sm:min-h-0 sm:py-2.5 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-sm sm:text-xs font-bold shadow">
             ✓ Taak afronden & opslaan
           </button>
         </div>
@@ -549,10 +663,11 @@
       <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
         <div class="text-xs font-extrabold text-slate-800">+ Nieuw artikel in voorraad plaatsen</div>
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
-          <input id="inv-add-name" type="text" placeholder="Artikelnaam (bijv. Siliconenspray)" class="sm:col-span-5 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
-          <input id="inv-add-qty" type="number" min="0" step="any" value="10" placeholder="Voorraad" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
-          <input id="inv-add-unit" type="text" value="stuks" placeholder="Eenheid" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
-          <button onclick="addInventoryItemFromModal()" class="sm:col-span-3 px-3 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">
+          <input id="inv-add-name" type="text" placeholder="Artikelnaam (bijv. Siliconenspray)" class="sm:col-span-4 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <input id="inv-add-qty" type="number" min="0" step="any" value="10" placeholder="Voorraad" aria-label="Voorraad" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <input id="inv-add-unit" type="text" value="stuks" placeholder="Eenheid" aria-label="Eenheid" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <input id="inv-add-min" type="number" min="0" step="any" placeholder="Min. voorraad" aria-label="Minimumvoorraad (optioneel)" class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
+          <button onclick="addInventoryItemFromModal()" class="sm:col-span-2 px-3 py-2 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-xs font-bold">
             Toevoegen
           </button>
         </div>
@@ -560,13 +675,20 @@
 
       <!-- Voorraadlijst -->
       <div class="space-y-2">
-        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Actuele Voorraad</h4>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Actuele Voorraad</h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" id="inv-filter-reorder" onclick="toggleReorderFilter()" aria-pressed="false" class="min-h-[40px] px-3 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700">🛒 Te bestellen (<span id="inv-reorder-count">0</span>)</button>
+            <button type="button" onclick="copyReorderList()" class="min-h-[40px] px-3 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700">📋 Kopieer bestellijst</button>
+          </div>
+        </div>
         <div id="inventory-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
       </div>
 
       <!-- Verbruikshistorie -->
       <div class="space-y-2 pt-2 border-t border-slate-100">
         <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Verbruikshistorie (Naslagwerk)</h4>
+        <input id="hist-search" type="search" oninput="renderInventoryAndHistoryModal()" placeholder="Zoek op onderdeel, afdeling, omschrijving of persoon…" aria-label="Zoeken in verbruikshistorie" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs bg-white" />
         <div id="usage-history-list-container" class="space-y-2"></div>
       </div>
     </div>
@@ -657,7 +779,7 @@
         <div class="flex flex-wrap justify-end gap-2 pt-1">
           <button type="button" onclick="closeFaultModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
           <button type="button" onclick="continueFaultWithoutAI()" class="px-4 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50">Zonder AI doorgaan</button>
-          <button type="button" id="fault-analyze-btn" onclick="analyzeFault()" class="px-5 py-2 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold disabled:opacity-60 disabled:cursor-wait">🤖 Analyseer met AI</button>
+          <button type="button" id="fault-analyze-btn" onclick="analyzeFault()" class="px-5 py-2 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-xs font-bold disabled:opacity-60 disabled:cursor-wait">🤖 Analyseer met AI</button>
         </div>
       </div>
 
@@ -698,6 +820,16 @@
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Notitie (oorzaak, aanpak, materiaal)</label>
           <textarea id="fault-notes" rows="6" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+        <div id="fault-oos-box" class="bg-rose-50/60 border border-rose-200 rounded-2xl p-3 space-y-2">
+          <label class="flex items-start gap-3 min-h-[44px] cursor-pointer">
+            <input id="fault-oos-check" type="checkbox" onchange="updateFaultOosSelect()" class="mt-0.5 w-5 h-5 shrink-0 accent-rose-600" />
+            <span class="text-xs font-bold text-rose-900">🚧 Toestel of ruimte buiten gebruik nemen tot de taak klaar is</span>
+          </label>
+          <div id="fault-oos-target-wrap" class="hidden">
+            <label for="fault-oos-target" class="block text-[11px] font-bold text-rose-900 mb-1">Wat gaat buiten gebruik?</label>
+            <select id="fault-oos-target" class="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs bg-white"></select>
+          </div>
         </div>
         <div id="fault-materials-box" class="hidden">
           <div class="text-xs font-bold text-slate-700 mb-1">Verwacht materiaal</div>
@@ -822,24 +954,30 @@
   </div>
 
   <!-- MODAL: SLIM STAPPENPLAN / NIEUW PROJECT -->
-  <div id="new-project-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">🧠 Nieuw Verbouwingsproject (met Smart Check)</h3>
-        <button onclick="closeModal('new-project-modal')" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+  <div id="new-project-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 id="np-modal-title" class="font-extrabold text-lg text-slate-900">🧠 Nieuw project • stap 1 van 2</h3>
+        <button type="button" onclick="closeModal('new-project-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
       </div>
-      <div class="space-y-3">
+
+      <!-- STAP 1: projectgegevens -->
+      <div id="np-step-1" class="px-5 py-4 space-y-3 overflow-y-auto">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Projectnaam</label>
-          <input id="np-title" type="text" placeholder="Bijv. Renovatie Kleedkamers Noord" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          <label for="np-title" class="block text-xs font-bold text-slate-700 mb-1">Projectnaam</label>
+          <input id="np-title" type="text" maxlength="120" placeholder="Bijv. Renovatie Kleedkamers Noord" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Ruimte / Afdeling</label>
-            <input id="np-room" type="text" placeholder="Bijv. Kleedkamers & Sanitair" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+            <label for="np-room" class="block text-xs font-bold text-slate-700 mb-1">Ruimte</label>
+            <input id="np-room" type="text" maxlength="80" placeholder="Bijv. Kleedkamers & Sanitair" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Type klus (voor vaktechniek & risico-check)</label>
+            <label for="np-dept" class="block text-xs font-bold text-slate-700 mb-1">Afdeling voor de taken</label>
+            <select id="np-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="np-type" class="block text-xs font-bold text-slate-700 mb-1">Type klus (bepaalt het voorgestelde stappenplan)</label>
             <select id="np-type" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
               <option value="vloer">Vloer / Vlonder / Egaliseren</option>
               <option value="wand">Sloop / Wanden / Indeling</option>
@@ -847,15 +985,45 @@
               <option value="algemeen">Algemeen verbouwingsproject</option>
             </select>
           </div>
+          <div>
+            <label for="np-start" class="block text-xs font-bold text-slate-700 mb-1">Startdatum</label>
+            <input id="np-start" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
+          <div>
+            <label for="np-deadline" class="block text-xs font-bold text-slate-700 mb-1">Uiterlijke oplevering (optioneel)</label>
+            <input id="np-deadline" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+          </div>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Omschrijving & doel</label>
-          <textarea id="np-desc" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+          <label for="np-desc" class="block text-xs font-bold text-slate-700 mb-1">Omschrijving & doel</label>
+          <textarea id="np-desc" rows="3" maxlength="600" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
         </div>
       </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeModal('new-project-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
-        <button onclick="createSmartProject()" class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Project + Stappenplan aanmaken</button>
+
+      <!-- STAP 2: planningstool -->
+      <div id="np-step-2" class="hidden px-5 py-4 space-y-3 overflow-y-auto">
+        <div id="np-plan-summary" class="rounded-2xl border px-3.5 py-3 text-xs"></div>
+        <div id="np-plan-list" class="space-y-2"></div>
+        <button type="button" onclick="planAddStep()" class="w-full min-h-[44px] rounded-xl border border-dashed border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50">+ Eigen stap toevoegen</button>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
+          <label class="flex items-start gap-3 min-h-[44px] cursor-pointer">
+            <input id="np-make-tasks" type="checkbox" checked onchange="updatePlanButton()" class="mt-0.5 w-5 h-5 shrink-0 accent-[#3B4622]" />
+            <span class="text-xs font-bold text-slate-800">Maak van elke gekozen stap meteen een taak in de afdeling <span id="np-dept-label" class="text-emerald-700"></span></span>
+          </label>
+          <label class="flex items-start gap-3 min-h-[44px] cursor-pointer">
+            <input id="np-schedule-tasks" type="checkbox" checked class="mt-0.5 w-5 h-5 shrink-0 accent-[#3B4622]" />
+            <span class="text-xs font-bold text-slate-800">Zet de voorgestelde datum alvast op de taken <span class="font-normal text-slate-500">(je kunt ze daarna in de afdeling zelf verplaatsen)</span></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="np-footer-1" class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+        <button type="button" onclick="closeModal('new-project-modal')" class="min-h-[44px] px-4 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button type="button" onclick="goToPlanStep()" class="min-h-[44px] px-5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Volgende: planning →</button>
+      </div>
+      <div id="np-footer-2" class="hidden flex justify-between gap-2 border-t border-slate-100 px-5 py-3">
+        <button type="button" onclick="backToProjectStep()" class="min-h-[44px] px-4 rounded-xl bg-slate-100 text-xs font-bold">← Terug</button>
+        <button id="np-confirm-btn" type="button" onclick="confirmProjectPlan()" class="min-h-[44px] px-5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Project + taken aanmaken</button>
       </div>
     </div>
   </div>
@@ -959,12 +1127,52 @@
       <div class="space-y-3">
         <input id="eq-name" type="text" placeholder="Naam apparaat (bijv. Technogym Skillrun 1)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
         <input id="eq-dept" type="text" placeholder="Afdeling (bijv. Fitness)" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
-        <input id="eq-next" type="date" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+        <input id="eq-next" type="date" aria-label="Volgende onderhoudsdatum" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
         <select id="eq-supplier" aria-label="Leverancier" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
       </div>
       <div class="flex justify-end gap-2">
         <button onclick="closeModal('new-equip-modal')" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
         <button onclick="saveNewEquipment()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TAAK BEWERKEN -->
+  <div id="edit-task-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[94vh] flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 pt-5 pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">✏️ Taak bewerken</h3>
+        <button type="button" onclick="closeModal('edit-task-modal')" aria-label="Sluiten" class="min-w-[44px] min-h-[44px] -mr-2 text-slate-400 hover:text-slate-700 font-bold text-lg">✕</button>
+      </div>
+      <div class="px-5 py-4 space-y-3 overflow-y-auto">
+        <input id="et-id" type="hidden" />
+        <div>
+          <label for="et-title" class="block text-xs font-bold text-slate-700 mb-1">Taakomschrijving</label>
+          <input id="et-title" type="text" maxlength="160" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="et-dept" class="block text-xs font-bold text-slate-700 mb-1">Afdeling</label>
+            <select id="et-dept" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"></select>
+          </div>
+          <div>
+            <label for="et-priority" class="block text-xs font-bold text-slate-700 mb-1">Urgentie</label>
+            <select id="et-priority" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+              <option value="Spoed">1 • Spoed (vandaag)</option>
+              <option value="Hoog">2 • Hoog</option>
+              <option value="Normaal">3 • Normaal</option>
+              <option value="Laag">4 • Laag</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="et-notes" class="block text-xs font-bold text-slate-700 mb-1">Notitie</label>
+          <textarea id="et-notes" rows="5" maxlength="800" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+        <button type="button" onclick="closeModal('edit-task-modal')" class="min-h-[44px] px-4 rounded-xl bg-slate-100 text-xs font-bold">Annuleren</button>
+        <button type="button" onclick="saveEditedTask()" class="min-h-[44px] px-5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Opslaan</button>
       </div>
     </div>
   </div>
@@ -1019,6 +1227,90 @@
   </div>
 
   <script>
+    // ==================== VANGNET VOOR ONVERWACHTE FOUTEN ====================
+    // Toont op elk scherm (ook telefoon) een melding met de mogelijkheid om direct een backup te downloaden.
+    (function () {
+      let count = 0;
+      const IGNORE = /ResizeObserver loop|^Script error\.?$/i;
+      function show(message) {
+        const msg = String(message || 'Onbekende fout').slice(0, 200);
+        if (IGNORE.test(msg)) return;
+        count++;
+        try { console.error('TREE11 fout:', msg); } catch (e) {}
+        let el = document.getElementById('error-net');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'error-net';
+          el.setAttribute('role', 'alert');
+          el.className = 'fixed top-2 left-2 right-2 sm:left-auto sm:right-3 sm:max-w-md z-[80] bg-rose-700 text-white text-xs rounded-2xl shadow-2xl p-3.5 space-y-2.5';
+          el.innerHTML = '<div class="font-extrabold text-sm">⚠️ Er ging iets mis</div><div id="error-net-msg" class="font-semibold break-words"></div>' +
+            '<div class="text-rose-100">Je gegevens staan nog lokaal opgeslagen. Download voor de zekerheid een backup.</div>' +
+            '<div class="flex flex-wrap gap-2"><button type="button" id="error-net-backup" class="min-h-[44px] px-3.5 rounded-xl bg-white text-rose-800 font-bold">💾 Backup downloaden</button>' +
+            '<button type="button" id="error-net-close" class="min-h-[44px] px-3.5 rounded-xl bg-rose-900/60 text-white font-bold">Sluiten</button></div>';
+          document.body.appendChild(el);
+          document.getElementById('error-net-backup').onclick = function () {
+            try { exportBackupJson(); } catch (e) { alert('Backup maken lukt nu niet. Herlaad de pagina en probeer het opnieuw.'); }
+          };
+          document.getElementById('error-net-close').onclick = function () { el.remove(); count = 0; };
+        }
+        document.getElementById('error-net-msg').textContent = msg + (count > 1 ? ' (' + count + 'x)' : '');
+      }
+      window.addEventListener('error', function (e) { show(e.message); });
+      window.addEventListener('unhandledrejection', function (e) { show(e.reason && e.reason.message ? e.reason.message : e.reason); });
+      window.__showErrorNet = show; // alleen voor testen
+    })();
+
+    // ==================== MODALS: ESCAPE & BACKDROP, FORMULIERLABELS ====================
+    const MODAL_CLOSERS = {
+      'complete-task-modal': () => cancelCompleteTaskModal(),
+      'fault-modal': () => closeFaultModal(),
+      'bp-text-modal': () => cancelBpText(),
+      'project-photo-modal': () => closeProjectPhotoModal(),
+      'photo-lightbox': () => document.getElementById('photo-lightbox').classList.add('hidden')
+    };
+    // Alleen schermen zonder in te vullen gegevens sluiten ook bij een klik op de achtergrond
+    const BACKDROP_CLOSE = ['usage-history-modal', 'lessons-modal', 'suppliers-modal', 'photo-lightbox', 'cloud-sync-modal'];
+    function closeTopModal() {
+      const open = [...document.querySelectorAll('[id$="-modal"], #photo-lightbox')].filter(m => !m.classList.contains('hidden') && m.id !== 'np-modal-title');
+      const top = open[open.length - 1];
+      if (!top) return false;
+      (MODAL_CLOSERS[top.id] || (() => closeModal(top.id)))();
+      return true;
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && closeTopModal()) e.preventDefault();
+    });
+    (function () {
+      let downOn = null;
+      document.addEventListener('pointerdown', (e) => { downOn = e.target; }, true);
+      document.addEventListener('click', (e) => {
+        const m = e.target;
+        if (m && m.id && BACKDROP_CLOSE.includes(m.id) && downOn === m && !m.classList.contains('hidden')) {
+          (MODAL_CLOSERS[m.id] || (() => closeModal(m.id)))();
+        }
+      });
+    })();
+    // Elk invoerveld krijgt een naam voor schermlezers: <label for> of anders aria-label uit de placeholder
+    function labelFormFields(root) {
+      (root || document).querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.type === 'hidden' || el.type === 'file' && el.closest('label')) return;
+        if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
+        if (el.closest('label')) return;
+        if (el.id && document.querySelector(`label[for="${el.id}"]`)) return;
+        const prev = el.previousElementSibling;
+        if (prev && prev.tagName === 'LABEL' && !prev.getAttribute('for') && el.id) { prev.setAttribute('for', el.id); return; }
+        const parentLabel = el.parentElement && el.parentElement.querySelector(':scope > label:not([for])');
+        if (parentLabel && el.id && el.parentElement.querySelectorAll('input,select,textarea').length === 1) { parentLabel.setAttribute('for', el.id); return; }
+        let name = el.getAttribute('placeholder') || el.getAttribute('title');
+        if (!name && el.type === 'checkbox') {
+          const host = el.closest('li, tr, label, div');
+          const txt = host ? host.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+          name = txt ? 'Afvinken: ' + txt : 'Afvinken';
+        }
+        if (name) el.setAttribute('aria-label', name);
+      });
+    }
+
     // Kalenderdagen optellen zonder tijdzone/zomertijd-effecten (alles in UTC-middernacht)
     function addDaysIso(iso, days) {
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
@@ -1274,7 +1566,7 @@
 
     // Rooster: vaste dienstsoorten (tijden zoals het team ze gebruikt)
     const SHIFT_TYPES = [
-      { id: 'D_12_2030', label: '12:00 - 20:30', badge: 'bg-[#163828] text-white' },
+      { id: 'D_12_2030', label: '12:00 - 20:30', badge: 'bg-[#3B4622] text-white' },
       { id: 'D_08_1630', label: '08:00 - 16:30', badge: 'bg-emerald-700 text-white' },
       { id: 'D_07_1530', label: '07:00 - 15:30', badge: 'bg-emerald-600 text-white' },
       { id: 'D_05_1300', label: '05:00 - 13:00', badge: 'bg-teal-600 text-white' },
@@ -1467,8 +1759,16 @@
       renderEquipment();
       renderTeam();
       renderRoster();
+      refreshProjectDetailIfOpen();
+      const setNav = (k, n) => { const el = document.getElementById('nav-count-' + k); if (el) el.textContent = n; };
+      setNav('tasks', appState.tasks.filter(t => !t.done).length);
+      setNav('projects', appState.projects.length);
+      setNav('equipment', appState.equipment.length);
+      setNav('roster', appState.team.length);
       document.getElementById('lessons-count-badge').textContent = appState.lessons.length;
       document.getElementById('home-history-count').textContent = appState.usageHistory.length;
+      const rb = document.getElementById('home-reorder-badge');
+      if (rb) { const n = appState.inventory.filter(needsReorder).length; rb.textContent = n ? ` • ⚠️ ${n} te bestellen` : ''; }
     }
 
     // ==================== 8 DONKERGROENE AFDELINGSTEGELS ====================
@@ -1477,19 +1777,30 @@
       if (!grid) return;
       const eightDepts = appState.departments.slice(0, 8);
       grid.innerHTML = eightDepts.map(d => {
-        const openCount = appState.tasks.filter(t => t.dept === d.name && !t.done).length;
-        const urgentCount = appState.tasks.filter(t => t.dept === d.name && !t.done && (t.priority === 'Spoed' || t.priority === 'Hoog')).length;
+        const deptTasks = appState.tasks.filter(t => t.dept === d.name);
+        const openCount = deptTasks.filter(t => !t.done).length;
+        const doneCount = deptTasks.length - openCount;
+        const urgentCount = deptTasks.filter(t => !t.done && (t.priority === 'Spoed' || t.priority === 'Hoog')).length;
         const label = esc((d.tileLabel || d.name).toUpperCase());
         return `
           <button
             type="button"
             onclick="selectDepartmentFromHome(${jsArg(d.name)})"
-            class="t11-dept-tile flex-col gap-1"
+            class="t11-dept-tile"
             title="${esc(d.name)} — ${openCount} openstaande taken"
           >
-            <span class="font-extrabold text-sm sm:text-base tracking-wide leading-tight">${label}</span>
-            <span class="text-[11px] font-semibold text-emerald-200/90">${openCount} open</span>
-            ${urgentCount ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white">🔥 ${urgentCount} urgent</span>` : ''}
+            <span class="t11-tile-top">
+              <span class="t11-tile-badges">
+                <span class="t11-tile-badge">${openCount} open</span>
+                ${urgentCount ? `<span class="t11-tile-badge urgent">🔥 ${urgentCount} urgent</span>` : ''}
+                ${d.outOfService ? '<span class="t11-tile-badge oos">🚧 buiten gebruik</span>' : ''}
+              </span>
+              <span class="t11-tile-title">${label}</span>
+            </span>
+            <span class="t11-tile-bottom">
+              <span class="t11-tile-sub">${esc(d.name)}</span>
+              <span class="t11-tile-count" title="Afgerond / totaal">${doneCount}/${deptTasks.length}</span>
+            </span>
           </button>
         `;
       }).join('');
@@ -1503,11 +1814,24 @@
       const open = appState.tasks.filter(t => !t.done);
       const todayN = open.filter(t => t.date === today).length;
       const lateN = open.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.date || '') && t.date < today).length;
-      const spoedN = open.filter(t => t.priority === 'Spoed').length;
+      const spoedList = open.filter(t => t.priority === 'Spoed');
+      const spoedN = spoedList.length;
+      const spoedNu = spoedList.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.date || '') && t.date <= today).length;
       el.innerHTML = `
-        <div class="rounded-2xl bg-slate-50 border border-slate-200 px-2 py-2.5"><div class="text-lg font-extrabold text-slate-900">${todayN}</div><div class="text-[11px] font-semibold text-slate-500">gepland vandaag</div></div>
-        <div class="rounded-2xl ${lateN ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'} border px-2 py-2.5"><div class="text-lg font-extrabold ${lateN ? 'text-amber-800' : 'text-slate-900'}">${lateN}</div><div class="text-[11px] font-semibold text-slate-500">achterstallig</div></div>
-        <div class="rounded-2xl ${spoedN ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'} border px-2 py-2.5"><div class="text-lg font-extrabold ${spoedN ? 'text-rose-700' : 'text-slate-900'}">${spoedN}</div><div class="text-[11px] font-semibold text-slate-500">spoed</div></div>`;
+        <div class="t11-daycell"><div class="text-lg font-extrabold">${todayN}</div><div class="t11-daylabel">gepland vandaag</div></div>
+        <div class="t11-daycell ${lateN ? 'warn' : ''}"><div class="text-lg font-extrabold">${lateN}</div><div class="t11-daylabel">achterstallig</div></div>
+        <div class="t11-daycell ${spoedN ? 'alert' : ''}"><div class="text-lg font-extrabold">${spoedN}</div><div class="t11-daylabel">spoed</div></div>`;
+      const total = appState.tasks.length;
+      const done = total - open.length;
+      const pct = total ? Math.round(done / total * 100) : 0;
+      const pt = document.getElementById('home-progress-text');
+      if (pt) pt.textContent = total ? `${pct}% • ${done}/${total}` : 'Nog geen taken';
+      const pb = document.getElementById('home-progress-bar');
+      if (pb) { pb.setAttribute('aria-valuenow', pct); pb.firstElementChild.style.width = pct + '%'; }
+      const sp = document.getElementById('home-spoed-box');
+      if (sp) sp.innerHTML = spoedN
+        ? `<span class="t11-badge-spoed">${spoedN} • SPOED${spoedNu ? ' (VANDAAG)' : ''}</span>`
+        : '<span class="t11-badge-ok">Geen spoed</span>';
     }
 
     // ==================== AFDELINGEN & TAKEN ====================
@@ -1529,10 +1853,20 @@
         if (subtitle) subtitle.textContent = `Eigen pagina voor ${selectedDeptFilter}: openstaande én afgeronde taken van deze afdeling.`;
       }
 
+      const oosBanner = document.getElementById('dept-oos-banner');
+      if (oosBanner) {
+        if (activeDeptObj && activeDeptObj.outOfService) {
+          oosBanner.classList.remove('hidden');
+          oosBanner.innerHTML = `<span>🚧 Deze ruimte staat buiten gebruik.</span><button type="button" onclick="setDeptInService(${jsArg(activeDeptObj.name)}, true)" class="min-h-[40px] px-3 rounded-lg bg-white border border-amber-400 text-amber-950">Weer in gebruik nemen</button>`;
+        } else {
+          oosBanner.classList.add('hidden');
+        }
+      }
+
       if (!grid) return;
 
       let html = `
-        <button onclick="selectDeptFilter('ALL')" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition ${selectedDeptFilter === 'ALL' ? 'bg-[#163828] text-white border-[#163828]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
+        <button onclick="selectDeptFilter('ALL')" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition ${selectedDeptFilter === 'ALL' ? 'bg-[#3B4622] text-white border-[#3B4622]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
           🏢 Alle Afdelingen
         </button>
       `;
@@ -1543,7 +1877,7 @@
         const doneCount = deptTasks.filter(t => t.done).length;
         const active = selectedDeptFilter === d.name;
         html += `
-          <button onclick="selectDeptFilter(${jsArg(d.name)})" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${active ? 'bg-[#163828] text-white border-[#163828]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
+          <button onclick="selectDeptFilter(${jsArg(d.name)})" class="px-3 py-1.5 rounded-xl border text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${active ? 'bg-[#3B4622] text-white border-[#3B4622]' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}">
             <span>${esc(d.icon)}</span>
             <span>${esc(d.name)}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}">${openCount} open · ${doneCount} klaar</span>
@@ -1559,6 +1893,16 @@
       renderTasks();
     }
 
+    function taskProjectBadge(t) {
+      if (!t.projectId) return '';
+      const p = appState.projects.find(x => x.id === t.projectId);
+      return p ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">🏗️ ${esc(p.title)}</span>` : '';
+    }
+    function assigneeOptions(current) {
+      const names = [...new Set([...appState.team.map(m => m.name), current || 'Geert'])];
+      return names.map(n => `<option value="${esc(n)}"${n === (current || 'Geert') ? ' selected' : ''}>👤 ${esc(n)}</option>`).join('');
+    }
+
     function renderTaskCardHtml(t) {
       let logHtml = '';
       if (t.done && t.completionLog) {
@@ -1567,8 +1911,8 @@
           : (t.completionLog.materials || []).map(m => `${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}`).join(', ');
         logHtml = `
           <div class="mt-2 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 text-xs text-slate-700 space-y-1">
-            <div><strong class="text-[#163828]">Werkomschrijving:</strong> ${esc(t.completionLog.workDescription)}</div>
-            <div><strong class="text-[#163828]">Materiaal:</strong> ${mats || 'Niet opgegeven'}</div>
+            <div><strong class="text-[#3B4622]">Werkomschrijving:</strong> ${esc(t.completionLog.workDescription)}</div>
+            <div><strong class="text-[#3B4622]">Materiaal:</strong> ${mats || 'Niet opgegeven'}</div>
             <div class="text-[11px] text-slate-500">Afgerond door: ${esc(t.completionLog.completedBy || 'Geert')} ${t.completionLog.completedAt ? 'op ' + esc(t.completionLog.completedAt) : ''}</div>
           </div>
         `;
@@ -1577,25 +1921,75 @@
       return `
         <div class="bg-white p-4 rounded-2xl border ${t.done ? 'border-emerald-200/70 bg-slate-50/60' : 'border-slate-200 shadow-sm ' + urgencyOf(t.priority).border} flex items-start justify-between gap-3">
           <div class="flex items-start gap-3 flex-1">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-0.5 w-6 h-6 shrink-0 accent-[#163828] cursor-pointer" />
+            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskCheckboxToggle(${jsArg(t.id)}, this)" class="mt-0.5 w-6 h-6 shrink-0 accent-[#3B4622] cursor-pointer" />
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-bold text-sm ${t.done ? 'line-through text-slate-500' : 'text-slate-900'}">${esc(t.title)}</span>
                 <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(t.dept)}</span>
-                ${t.done ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828]">✓ Afgerond</span>' : ''}
+                ${taskProjectBadge(t)}
+                ${t.done ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#3B4622]">✓ Afgerond</span><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">${esc(urgencyOf(t.priority).label)}</span>` : ''}
                 ${!t.done ? `<button type="button" onclick="cycleTaskUrgency(${jsArg(t.id)})" title="Tik om de urgentie te wijzigen" aria-label="Urgentie ${esc(urgencyOf(t.priority).label)}, tik om te wijzigen" class="text-[11px] font-bold px-2.5 min-h-[28px] rounded-full ${urgencyOf(t.priority).badge}">${urgencyOf(t.priority).icon} ${esc(urgencyOf(t.priority).label)}</button>` : ''}
               </div>
               ${t.notes ? `<p class="text-xs text-slate-600 mt-1 whitespace-pre-line">${esc(t.notes)}</p>` : ''}
               ${logHtml}
-              <div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
+              ${t.done ? `<div class="text-[11px] text-slate-400 mt-1.5 flex flex-wrap gap-3">
                 <span>👤 ${esc(t.assignee || 'Geert')}</span>
                 <span>📅 ${esc(t.date || 'Geen datum')}</span>
-              </div>
+              </div>` : `<div class="mt-2 flex flex-wrap items-center gap-2">
+                <label class="text-[11px] font-bold text-slate-500" for="td-${esc(t.id)}">📅 Inplannen</label>
+                <input id="td-${esc(t.id)}" type="date" value="${esc(t.date || '')}" onchange="setTaskDate(${jsArg(t.id)}, this.value)" class="min-h-[40px] px-2 py-1 rounded-lg border ${t.date ? 'border-slate-200' : 'border-amber-300 bg-amber-50'} text-xs" />
+                <select aria-label="Uitvoerende" onchange="setTaskAssignee(${jsArg(t.id)}, this.value)" class="min-h-[40px] px-2 py-1 rounded-lg border border-slate-200 text-xs bg-white">${assigneeOptions(t.assignee)}</select>
+              </div>`}
             </div>
           </div>
-          <button onclick="deleteTask(${jsArg(t.id)})" aria-label="Taak verwijderen" class="shrink-0 min-w-[44px] min-h-[44px] -mr-2 -mt-1.5 text-slate-400 hover:text-rose-600 text-base font-bold">✕</button>
+          <div class="shrink-0 flex -mr-2 -mt-1.5">
+            ${t.done ? '' : `<button type="button" onclick="openEditTaskModal(${jsArg(t.id)})" aria-label="Taak bewerken" class="min-w-[44px] min-h-[44px] text-slate-400 hover:text-slate-800 text-sm font-bold">✏️</button>`}
+            <button onclick="deleteTask(${jsArg(t.id)})" aria-label="Taak verwijderen" class="min-w-[44px] min-h-[44px] text-slate-400 hover:text-rose-600 text-base font-bold">✕</button>
+          </div>
         </div>
       `;
+    }
+
+    function openEditTaskModal(id) {
+      const t = appState.tasks.find(x => x.id === id);
+      if (!t || t.done) return;
+      document.getElementById('et-id').value = t.id;
+      document.getElementById('et-title').value = t.title || '';
+      document.getElementById('et-notes').value = t.notes || '';
+      document.getElementById('et-priority').value = urgencyOf(t.priority).value;
+      const names = appState.departments.map(d => d.name);
+      if (!names.includes(t.dept)) names.push(t.dept);
+      document.getElementById('et-dept').innerHTML = names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      document.getElementById('et-dept').value = t.dept;
+      document.getElementById('edit-task-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('et-title').focus(), 50);
+    }
+    function saveEditedTask() {
+      const t = appState.tasks.find(x => x.id === document.getElementById('et-id').value);
+      if (!t) { closeModal('edit-task-modal'); return; }
+      const title = document.getElementById('et-title').value.trim();
+      if (!title) { showToast('Vul een taakomschrijving in.'); return; }
+      t.title = title.slice(0, 160);
+      t.notes = document.getElementById('et-notes').value.trim().slice(0, 800);
+      t.priority = urgencyOf(document.getElementById('et-priority').value).value;
+      const dept = document.getElementById('et-dept').value;
+      if (dept) t.dept = dept;
+      if (t.projectId && t.stepId) {
+        const pr = appState.projects.find(x => x.id === t.projectId);
+        const st = pr && pr.steps.find(x => x.id === t.stepId);
+        if (st) st.title = t.title;
+      }
+      closeModal('edit-task-modal');
+      saveAppState();
+      renderAll();
+      showToast('Taak bijgewerkt ✓');
+    }
+
+    function resetTaskFilters() {
+      document.getElementById('task-search').value = '';
+      document.getElementById('task-urgency-filter').value = 'all';
+      document.getElementById('task-status-filter').value = 'all';
+      renderTasks();
     }
 
     function cycleTaskUrgency(id) {
@@ -1632,7 +2026,24 @@
       const openTasks = deptTasks
         .filter(t => !t.done && (urgencyFilter === 'all' || urgencyOf(t.priority).value === urgencyFilter))
         .sort((a, b) => (urgencyOf(a.priority).n - urgencyOf(b.priority).n) || String(a.date || '9999').localeCompare(String(b.date || '9999')));
-      const doneTasks = deptTasks.filter(t => t.done);
+      const doneTasks = deptTasks.filter(t => t.done && (urgencyFilter === 'all' || urgencyOf(t.priority).value === urgencyFilter));
+
+      // Lege staat: filters of zoekopdracht geven niets terug, met een uitweg
+      const filtersActive = !!search || urgencyFilter !== 'all' || statusFilter !== 'all';
+      const visibleCount = statusFilter === 'open' ? openTasks.length : statusFilter === 'done' ? doneTasks.length : openTasks.length + doneTasks.length;
+      if (filtersActive && visibleCount === 0) {
+        const parts = [];
+        if (search) parts.push(`zoekopdracht “${esc(document.getElementById('task-search').value.trim())}”`);
+        if (urgencyFilter !== 'all') parts.push(`urgentie ${esc(urgencyOf(urgencyFilter).label)}`);
+        if (statusFilter !== 'all') parts.push(statusFilter === 'open' ? 'alleen openstaand' : 'alleen afgerond');
+        list.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-3">
+          <div class="text-3xl" aria-hidden="true">🔍</div>
+          <div class="text-sm font-bold text-slate-800">Geen taken gevonden</div>
+          <div class="text-xs text-slate-500">Met ${parts.join(' + ')} is er niets in ${selectedDeptFilter === 'ALL' ? 'alle afdelingen' : 'afdeling ' + esc(selectedDeptFilter)}.</div>
+          <button type="button" onclick="resetTaskFilters()" class="min-h-[44px] px-5 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-xs font-bold">Filters en zoekopdracht wissen</button>
+        </div>`;
+        return;
+      }
 
       if (statusFilter === 'open') {
         list.innerHTML = openTasks.length
@@ -1643,7 +2054,7 @@
 
       if (statusFilter === 'done') {
         list.innerHTML = doneTasks.length
-          ? `<div class="space-y-2.5"><h3 class="text-xs font-extrabold uppercase tracking-wider text-[#163828] px-1">Afgeronde taken (${doneTasks.length})</h3>${doneTasks.map(renderTaskCardHtml).join('')}</div>`
+          ? `<div class="space-y-2.5"><h3 class="text-xs font-extrabold uppercase tracking-wider text-[#3B4622] px-1">Afgeronde taken (${doneTasks.length})</h3>${doneTasks.map(renderTaskCardHtml).join('')}</div>`
           : `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-sm text-slate-500">Geen afgeronde taken gevonden.</div>`;
         return;
       }
@@ -1659,7 +2070,7 @@
           ${openTasks.length ? openTasks.map(renderTaskCardHtml).join('') : `<div class="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">Geen openstaande taken op dit moment.</div>`}
         </div>
         <div class="space-y-2.5 pt-2">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-[#163828] px-1">Afgeronde taken (${doneTasks.length})</h3>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-[#3B4622] px-1">Afgeronde taken (${doneTasks.length})</h3>
           ${doneTasks.length ? doneTasks.map(renderTaskCardHtml).join('') : `<div class="bg-white p-5 rounded-2xl border border-slate-200 text-xs text-slate-500">Nog geen afgeronde taken in deze afdeling.</div>`}
         </div>
       `;
@@ -1674,10 +2085,12 @@
         openCompleteTaskModal(id);
       } else {
         t.done = false;
+        syncStepFromTask(t, ['done']);
         saveAppState();
         renderDepartmentFilters();
         renderTasks();
         renderHome8Tiles();
+        refreshProjectDetailIfOpen();
       }
     }
 
@@ -1744,7 +2157,7 @@
       list.innerHTML = matches.map(m => {
         const mats = m.materials.map(x => `${esc(x.qty)} ${esc(x.unit)} ${esc(x.name)}`).join(', ');
         return `<div class="bg-white/90 px-2.5 py-1.5 rounded-lg border border-emerald-200/70">
-          <strong>${esc(m.taskTitle)}</strong> (${esc(m.dept)}, ${esc(m.date)}): <span class="font-semibold text-[#163828]">${mats}</span>
+          <strong>${esc(m.taskTitle)}</strong> (${esc(m.dept)}, ${esc(m.date)}): <span class="font-semibold text-[#3B4622]">${mats}</span>
         </div>`;
       }).join('');
       box.classList.remove('hidden');
@@ -1854,7 +2267,7 @@
         <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-xs">
           <div>
             <span class="font-bold text-slate-900">${esc(m.qty)} ${esc(m.unit)} — ${esc(m.name)}</span>
-            <span class="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${m.source === 'voorraad' ? 'bg-emerald-200/70 text-[#163828]' : 'bg-amber-100 text-amber-800'}">
+            <span class="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full ${m.source === 'voorraad' ? 'bg-emerald-200/70 text-[#3B4622]' : 'bg-amber-100 text-amber-800'}">
               ${m.source === 'voorraad' ? 'Uit voorraad' : (m.addToStock ? 'Nieuw + naar voorraad' : 'Nieuw materiaal')}
             </span>
           </div>
@@ -1936,6 +2349,8 @@
         completedBy: currentUser.name
       });
 
+      syncStepFromTask(task, ['done']);
+      maybeRestoreAfterTask(task);
       completingTaskId = null;
       pendingMaterialUsages = [];
       closeModal('complete-task-modal');
@@ -1960,12 +2375,19 @@
         existing.qty = Number((existing.qty + qty).toFixed(2));
         existing.unit = unit;
       } else {
+        const minRaw = parseFloat(document.getElementById('inv-add-min').value);
         appState.inventory.push({
           id: 'inv-' + Date.now(),
           name,
           qty,
-          unit
+          unit,
+          ...(Number.isFinite(minRaw) && minRaw >= 0 ? { minQty: minRaw } : {})
         });
+      }
+      {
+        const minRaw2 = parseFloat(document.getElementById('inv-add-min').value);
+        if (existing && Number.isFinite(minRaw2) && minRaw2 >= 0) existing.minQty = minRaw2;
+        document.getElementById('inv-add-min').value = '';
       }
 
       document.getElementById('inv-add-name').value = '';
@@ -1982,32 +2404,82 @@
       renderInventoryAndHistoryModal();
     }
 
+    // ----- Minimumvoorraad & bestellijst -----
+    let invOnlyReorder = false;
+    const needsReorder = (i) => Number.isFinite(Number(i.minQty)) && i.minQty !== null && i.minQty !== '' && Number(i.qty) <= Number(i.minQty);
+    function toggleReorderFilter() { invOnlyReorder = !invOnlyReorder; renderInventoryAndHistoryModal(); }
+    function setInventoryMin(id, value) {
+      const item = appState.inventory.find(i => i.id === id);
+      if (!item) return;
+      const v = parseFloat(value);
+      if (Number.isFinite(v) && v >= 0) item.minQty = v; else delete item.minQty;
+      saveAppState();
+      renderInventoryAndHistoryModal();
+    }
+    function reorderListText() {
+      const items = appState.inventory.filter(needsReorder);
+      if (!items.length) return '';
+      return 'Bestellijst TREE11 (' + fmtNlDate(getLocalTodayIso()) + ')\n' +
+        items.map(i => `- ${i.name}: voorraad ${i.qty} ${i.unit}, minimum ${i.minQty} ${i.unit}`).join('\n');
+    }
+    function copyReorderList() {
+      const text = reorderListText();
+      if (!text) { showToast('Niets te bestellen: alles boven het minimum.'); return; }
+      const done = () => showToast('Bestellijst gekopieerd');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => alert(text));
+      else alert(text);
+    }
+
     function renderInventoryAndHistoryModal() {
       const invContainer = document.getElementById('inventory-list-container');
-      invContainer.innerHTML = appState.inventory.map(i => `
-        <div class="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white">
-          <div>
-            <div class="font-bold text-xs text-slate-900">${esc(i.name)}</div>
-            <div class="text-[11px] font-semibold ${i.qty <= 2 ? 'text-rose-600' : 'text-[#163828]'}">Voorraad: ${esc(i.qty)} ${esc(i.unit)}</div>
+      const reorderN = appState.inventory.filter(needsReorder).length;
+      document.getElementById('inv-reorder-count').textContent = reorderN;
+      const fbtn = document.getElementById('inv-filter-reorder');
+      fbtn.setAttribute('aria-pressed', String(invOnlyReorder));
+      fbtn.className = 'min-h-[40px] px-3 rounded-xl border text-xs font-bold ' + (invOnlyReorder ? 'border-amber-400 bg-amber-100 text-amber-900' : 'border-slate-300 bg-white text-slate-700');
+      const homeBadge = document.getElementById('home-reorder-badge');
+      if (homeBadge) homeBadge.textContent = reorderN ? ` • ⚠️ ${reorderN} te bestellen` : '';
+
+      const shown = invOnlyReorder ? appState.inventory.filter(needsReorder) : appState.inventory;
+      invContainer.innerHTML = shown.map(i => {
+        const low = needsReorder(i);
+        const hasMin = i.minQty !== undefined && i.minQty !== null && i.minQty !== '';
+        return `
+        <div class="flex items-center justify-between gap-2 p-3 rounded-2xl border ${low ? 'border-amber-300 bg-amber-50/60' : 'border-slate-200 bg-white'}">
+          <div class="min-w-0">
+            <div class="font-bold text-xs text-slate-900 break-words">${esc(i.name)} ${low ? '<span class="ml-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-500 text-white">Te bestellen</span>' : ''}</div>
+            <div class="text-[11px] font-semibold ${low || (!hasMin && i.qty <= 2) ? 'text-rose-600' : 'text-[#3B4622]'}">Voorraad: ${esc(i.qty)} ${esc(i.unit)}</div>
+            <label class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">Min.
+              <input type="number" min="0" step="any" value="${hasMin ? esc(i.minQty) : ''}" placeholder="–" aria-label="Minimumvoorraad ${esc(i.name)}" onchange="setInventoryMin(${jsArg(i.id)}, this.value)" class="w-16 px-1.5 py-1 rounded-lg border border-slate-200 text-[11px] bg-white" />
+            </label>
           </div>
-          <div class="flex items-center gap-1.5">
-            <button onclick="adjustInventoryStock(${jsArg(i.id)}, -1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">-</button>
-            <button onclick="adjustInventoryStock(${jsArg(i.id)}, 1)" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">+</button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="adjustInventoryStock(${jsArg(i.id)}, -1)" aria-label="Voorraad ${esc(i.name)} verlagen" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">-</button>
+            <button onclick="adjustInventoryStock(${jsArg(i.id)}, 1)" aria-label="Voorraad ${esc(i.name)} verhogen" class="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold text-xs">+</button>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('') || `<div class="sm:col-span-2 text-xs text-slate-500 p-4 rounded-2xl border border-slate-200 text-center">${invOnlyReorder ? 'Niets te bestellen: alles boven het minimum. 🎉' : 'Nog geen artikelen in voorraad.'}</div>`;
 
       const histContainer = document.getElementById('usage-history-list-container');
+      const q = (document.getElementById('hist-search').value || '').trim().toLowerCase();
+      const hist = !q ? appState.usageHistory : appState.usageHistory.filter(h => {
+        const mats = (h.materials || []).map(m => m.name).join(' ');
+        return `${h.taskTitle} ${h.dept} ${h.workDescription} ${h.completedBy} ${h.date} ${mats}`.toLowerCase().includes(q);
+      });
       if (!appState.usageHistory.length) {
         histContainer.innerHTML = `<div class="text-xs text-slate-400 p-4 rounded-2xl border border-slate-200 text-center">Nog geen verbruikshistorie vastgelegd.</div>`;
         return;
       }
+      if (!hist.length) {
+        histContainer.innerHTML = `<div class="text-xs text-slate-500 p-5 rounded-2xl border border-slate-200 text-center space-y-2"><div>Geen resultaten voor “${esc(document.getElementById('hist-search').value.trim())}”.</div><button type="button" onclick="document.getElementById('hist-search').value=''; renderInventoryAndHistoryModal()" class="min-h-[40px] px-4 rounded-xl bg-slate-100 font-bold">Zoekopdracht wissen</button></div>`;
+        return;
+      }
 
-      histContainer.innerHTML = appState.usageHistory.map(h => {
+      histContainer.innerHTML = hist.map(h => {
         const matsHtml = h.noMaterial
           ? `<span class="text-slate-500 italic">Geen materiaal verbruikt</span>`
           : (h.materials || []).map(m =>
-              `<span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-[#163828] font-bold text-[11px] mr-1 mb-1">${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}</span>`
+              `<span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-[#3B4622] font-bold text-[11px] mr-1 mb-1">${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}</span>`
             ).join('');
 
         return `
@@ -2029,10 +2501,12 @@
       if (!task) return;
       if (!confirm(`Taak "${task.title}" verwijderen?`)) return;
       appState.tasks = appState.tasks.filter(x => x.id !== id);
+      appState.projects.forEach(pr => (pr.steps || []).forEach(st => { if (st.taskId === id) delete st.taskId; }));
       saveAppState();
       renderDepartmentFilters();
       renderTasks();
       renderHome8Tiles();
+      refreshProjectDetailIfOpen();
     }
 
     function populateDeptSelects() {
@@ -2181,6 +2655,15 @@
       renderProjectsGrid();
     }
 
+    function stepTaskHtml(p, s) {
+      const t = s.taskId && appState.tasks.find(x => x.id === s.taskId);
+      if (t) {
+        const state = t.done ? 'afgerond' : (t.date ? 'ingepland ' + fmtNlDate(t.date) : 'nog niet ingepland');
+        return `<div class="mt-1.5"><button type="button" onclick="selectDepartmentFromHome(${jsArg(t.dept)})" class="text-[11px] font-bold px-2.5 min-h-[32px] rounded-full bg-purple-100 text-purple-800">📌 Taak in ${esc(t.dept)} • ${esc(state)}</button></div>`;
+      }
+      return s.done ? '' : `<div class="mt-1.5"><button type="button" onclick="createTaskFromStep(${jsArg(p.id)}, ${jsArg(s.id)})" class="text-[11px] font-bold px-2.5 min-h-[32px] rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700">+ Taak maken</button></div>`;
+    }
+
     function renderActiveProjectDetail() {
       const p = appState.projects.find(x => x.id === activeProjectId);
       if (!p) return;
@@ -2198,12 +2681,23 @@
       document.getElementById('detail-photo-count').textContent = (p.photos || []).length;
       document.getElementById('detail-risk-count').textContent = (p.risks || []).length;
 
+      updateMediaUsage();
       const phases = [...new Set(p.steps.map(s => s.phase))];
       const planContainer = document.getElementById('project-subview-planning');
+      const openNoTask = p.steps.filter(st => !st.done && !(st.taskId && appState.tasks.some(t => t.id === st.taskId))).length;
+      const deptBar = `
+        <div class="bg-purple-50 border border-purple-200 rounded-2xl p-3.5 flex flex-wrap items-center gap-2.5">
+          <label for="proj-dept-select" class="text-xs font-bold text-purple-900">Afdeling voor taken</label>
+          <select id="proj-dept-select" onchange="setProjectDept(${jsArg(p.id)}, this.value)" class="min-h-[40px] px-2.5 rounded-xl border border-purple-200 text-xs bg-white">
+            <option value="">— kies afdeling —</option>
+            ${appState.departments.map(d => `<option value="${esc(d.name)}"${d.name === guessDeptForProject(p) ? ' selected' : ''}>${esc(d.icon || '')} ${esc(d.name)}</option>`).join('')}
+          </select>
+          <button type="button" onclick="createTasksForOpenSteps(${jsArg(p.id)})" ${openNoTask ? '' : 'disabled'} class="min-h-[44px] px-3.5 rounded-xl ${openNoTask ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-slate-100 text-slate-400'} text-xs font-bold">📌 Maak taken van open stappen (${openNoTask})</button>
+        </div>`;
       if (!p.steps.length) {
-        planContainer.innerHTML = `<div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen stappen in dit project.</div>`;
+        planContainer.innerHTML = deptBar + `<div class="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">Nog geen stappen in dit project.</div>`;
       } else {
-        planContainer.innerHTML = phases.map(phase => {
+        planContainer.innerHTML = deptBar + phases.map(phase => {
           const phaseSteps = p.steps.filter(s => s.phase === phase);
           return `
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
@@ -2216,6 +2710,7 @@
                       <div class="font-bold text-sm ${s.done ? 'line-through text-slate-400' : 'text-slate-900'}">${esc(s.title)}</div>
                       ${s.note ? `<p class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1 mt-1">💡 ${esc(s.note)}</p>` : ''}
                       <div class="text-[11px] text-slate-400 mt-1">👤 ${esc(s.assignee)} • 📅 ${esc(s.date)}</div>
+                      ${stepTaskHtml(p, s)}
                     </div>
                   </div>
                   <button onclick="deleteProjectStep(${jsArg(p.id)}, ${jsArg(s.id)})" class="text-slate-400 hover:text-rose-600 text-xs font-bold">✕</button>
@@ -2331,6 +2826,63 @@
       document.getElementById('project-photo-modal').classList.add('hidden');
     }
 
+    // ----- Compacte foto's: max 800 px breed, JPEG 0,68 (één plek, voor alle projectfoto's en achtergronden) -----
+    const IMG_MAX_W = 800, IMG_QUALITY = 0.68;
+    function compressImageFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Bestand kon niet gelezen worden'));
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('Dit bestand is geen geldige afbeelding'));
+          img.onload = () => {
+            const scale = Math.min(1, IMG_MAX_W / (img.width || 1));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            const c = canvas.getContext('2d');
+            c.fillStyle = '#ffffff'; // transparante PNG's worden anders zwart in JPEG
+            c.fillRect(0, 0, canvas.width, canvas.height);
+            c.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', IMG_QUALITY));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    function dataUrlBytes(u) {
+      const i = String(u || '').indexOf(',');
+      return i < 0 ? 0 : Math.round((String(u).length - i - 1) * 0.75);
+    }
+    function fmtBytes(n) {
+      return n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(0, Math.round(n / 1024)) + ' KB';
+    }
+    // Totale opslag van de app t.o.v. de ±5 MB die een browser meestal toestaat
+    function storageUsage() {
+      let chars = 0;
+      try { chars = JSON.stringify(appState).length; } catch (e) {}
+      const limit = 5000000;
+      return { chars, pct: Math.round((chars / limit) * 100), text: fmtBytes(chars) + ' van ±5 MB (' + Math.round((chars / limit) * 100) + '%)' };
+    }
+    function mediaUsageHtml(p, what) {
+      const photos = p.photos || [];
+      const photoBytes = photos.reduce((a, ph) => a + dataUrlBytes(ph.dataUrl), 0);
+      const bgBytes = dataUrlBytes(p.blueprintBgDataUrl);
+      const u = storageUsage();
+      const tone = u.pct >= 85 ? 'text-rose-700' : u.pct >= 60 ? 'text-amber-700' : 'text-slate-500';
+      const own = what === 'photos'
+        ? `📷 ${photos.length} ${photos.length === 1 ? 'foto' : "foto's"} • ${fmtBytes(photoBytes)}`
+        : `🖼️ Achtergrond: ${p.blueprintBgDataUrl ? fmtBytes(bgBytes) : 'geen'}`;
+      return `${esc(own)} • <span class="${tone}">💾 App-opslag: ${esc(u.text)}${u.pct >= 60 ? ' — maak ruimte of download een backup' : ''}</span>`;
+    }
+    function updateMediaUsage() {
+      const p = appState.projects.find(x => x.id === activeProjectId);
+      if (!p) return;
+      const a = document.getElementById('detail-media-usage'); if (a) a.innerHTML = mediaUsageHtml(p, 'photos');
+      const b = document.getElementById('bp-media-usage'); if (b) b.innerHTML = mediaUsageHtml(p, 'blueprint');
+    }
+
     function previewMultipleProjectPhotos(event) {
       const files = Array.from(event.target.files || []);
       pendingPhotoItems = [];
@@ -2338,30 +2890,27 @@
       container.innerHTML = '';
 
       files.forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const maxW = 900;
-            const scale = Math.min(1, maxW / img.width);
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.72);
-            pendingPhotoItems.push({ dataUrl: compressed, note: '' });
-
-            const card = document.createElement('div');
-            card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
-            card.innerHTML = `
-              <img src="${compressed}" class="w-full h-28 object-cover rounded-lg" />
-              <input type="text" placeholder="Eigen notitie bij foto ${idx + 1} (optioneel)" oninput="updatePendingPhotoNote(${pendingPhotoItems.length - 1}, this.value)" class="w-full px-2 py-1 text-xs border border-slate-300 rounded-lg bg-white" />
-            `;
-            container.appendChild(card);
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        compressImageFile(file).then(compressed => {
+          pendingPhotoItems.push({ dataUrl: compressed, note: '' });
+          const card = document.createElement('div');
+          card.className = 'border border-slate-200 rounded-xl p-2 bg-slate-50 space-y-1.5';
+          const img = document.createElement('img');
+          img.src = compressed;
+          img.alt = `Voorbeeld foto ${idx + 1}`;
+          img.className = 'w-full h-28 object-cover rounded-lg';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.setAttribute('aria-label', `Notitie bij foto ${idx + 1}`);
+          input.placeholder = `Eigen notitie bij foto ${idx + 1} (optioneel)`;
+          input.className = 'w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs';
+          const noteIndex = pendingPhotoItems.length - 1;
+          input.oninput = () => updatePendingPhotoNote(noteIndex, input.value);
+          const size = document.createElement('div');
+          size.className = 'text-[10px] text-slate-400';
+          size.textContent = fmtBytes(dataUrlBytes(compressed));
+          card.append(img, input, size);
+          container.appendChild(card);
+        }).catch(err => showToast('Foto overgeslagen: ' + err.message));
       });
     }
 
@@ -2528,6 +3077,18 @@
           openBpTextModal(x, y, color);
           return;
         }
+        if (bpTool === 'erase') {
+          // Tikken verwijdert de vorm onder je vinger (bovenste eerst); ruime tikmarge, ook voor een vinger
+          const rect = canvas.getBoundingClientRect();
+          const tol = 18 * (canvas.width / rect.width);
+          const idx = bpHitTest(bpShapes, x, y, tol, canvas.getContext('2d'));
+          if (idx >= 0) {
+            bpShapes.splice(idx, 1);
+            redrawBlueprintCanvas();
+            showToast('Vorm verwijderd — vergeet niet op te slaan');
+          }
+          return;
+        }
         isDrawingBp = true;
         bpPointerId = e.pointerId;
         bpStart = { x, y };
@@ -2596,9 +3157,47 @@
       cancelBpText();
     }
 
+    // Welke vorm zit er onder dit punt? (index van de bovenste, of -1)
+    function bpDistToSegment(px, py, x1, y1, x2, y2) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const len2 = dx * dx + dy * dy;
+      let t = len2 ? ((px - x1) * dx + (py - y1) * dy) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+    }
+    function bpHitTest(shapes, x, y, tol, ctx) {
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        const sh = shapes[i];
+        if (sh.type === 'line') {
+          if (bpDistToSegment(x, y, sh.x1, sh.y1, sh.x2, sh.y2) <= tol) return i;
+        } else if (sh.type === 'rect') {
+          const x1 = Math.min(sh.x, sh.x + sh.w), x2 = Math.max(sh.x, sh.x + sh.w);
+          const y1 = Math.min(sh.y, sh.y + sh.h), y2 = Math.max(sh.y, sh.y + sh.h);
+          const onEdge = bpDistToSegment(x, y, x1, y1, x2, y1) <= tol || bpDistToSegment(x, y, x2, y1, x2, y2) <= tol ||
+                         bpDistToSegment(x, y, x2, y2, x1, y2) <= tol || bpDistToSegment(x, y, x1, y2, x1, y1) <= tol;
+          const small = (x2 - x1) < tol * 2 && (y2 - y1) < tol * 2;
+          if (onEdge || (small && x >= x1 && x <= x2 && y >= y1 && y <= y2)) return i;
+        } else if (sh.type === 'text') {
+          let w = String(sh.text || '').length * 8;
+          try { ctx.font = 'bold 14px Inter, sans-serif'; w = ctx.measureText(String(sh.text || '')).width; } catch (e) {}
+          if (x >= sh.x - tol && x <= sh.x + w + tol && y >= sh.y - 14 - tol && y <= sh.y + 4 + tol) return i;
+        }
+      }
+      return -1;
+    }
+    function clearBlueprintShapes() {
+      if (!bpShapes.length) { showToast('De tekening is al leeg.'); return; }
+      if (!confirm(`Alle ${bpShapes.length} getekende vormen wissen? De achtergrond blijft staan. Je moet daarna nog op "Tekening opslaan" klikken.`)) return;
+      bpShapes = [];
+      redrawBlueprintCanvas();
+      showToast('Tekening gewist — vergeet niet op te slaan');
+    }
+
     function setBpTool(tool) {
       bpTool = tool;
-      ['line', 'rect', 'text'].forEach(t => {
+      const cv = document.getElementById('blueprint-canvas');
+      if (cv) cv.style.cursor = tool === 'erase' ? 'pointer' : 'crosshair';
+      ['line', 'rect', 'text', 'erase'].forEach(t => {
         const btn = document.getElementById(`bptool-${t}`);
         if (t === tool) {
           btn.className = 'px-3 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-bold bg-slate-900 text-white';
@@ -2650,25 +3249,24 @@
     function uploadBlueprintBackground(event) {
       const file = event.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        bpBgImageDataUrl = e.target.result;
+      compressImageFile(file).then(dataUrl => {
+        bpBgImageDataUrl = dataUrl;
         const img = new Image();
         img.onload = () => {
           const canvas = document.getElementById('blueprint-canvas');
           if (canvas && img.width && img.height) {
-            const maxW = 900;
-            const scale = Math.min(1, maxW / img.width);
+            const scale = Math.min(1, 900 / img.width);
             canvas.width = Math.round(img.width * scale);
             canvas.height = Math.round(img.height * scale);
           }
           bpBgImgObj = img;
           redrawBlueprintCanvas();
           saveBlueprintChanges(true);
+          updateMediaUsage();
         };
-        img.src = bpBgImageDataUrl;
-      };
-      reader.readAsDataURL(file);
+        img.src = dataUrl;
+      }).catch(err => showToast('Achtergrond niet gelukt: ' + err.message));
+      event.target.value = '';
     }
 
     function undoBlueprintShape() {
@@ -2682,6 +3280,7 @@
       p.blueprintShapes = JSON.parse(JSON.stringify(bpShapes));
       p.blueprintBgDataUrl = bpBgImageDataUrl;
       saveAppState();
+      updateMediaUsage();
       if (!silent) alert('Bouwtekening en wijzigingen zijn veilig opgeslagen!');
     }
 
@@ -2751,57 +3350,360 @@
       document.getElementById('lessons-modal').classList.remove('hidden');
     }
 
-    function openSmartWizardModal() {
-      document.getElementById('new-project-modal').classList.remove('hidden');
+    // ==================== PLANNINGSTOOL VOOR NIEUWE PROJECTEN ====================
+    const PH0 = 'Fase 0: Voorbereiding, Offerte & Sloop';
+    const PH1 = 'Fase 1: Constructie & Ondergrond';
+    const PH2 = 'Fase 2: Installaties & Droogtijden';
+    const PH3 = 'Fase 3: Opbouw & Afwerking';
+
+    // Voorgestelde stappen per type klus. "days" = werkdagen (ma t/m vr) die de stap duurt.
+    const PLAN_TEMPLATES = {
+      vloer: [
+        { phase: PH0, title: 'Steekproef & inspectie onderliggende constructie vóór tekenen offerte', days: 1, assignee: 'Geert', note: 'Les uit Yoga Studio: leg verborgen constructies vooraf schriftelijk vast.' },
+        { phase: PH0, title: 'Offertes opvragen en vergelijken', days: 3, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Opdracht verlenen en materialen bestellen', days: 2, assignee: 'Geert', note: 'Controleer levertijd van de vloer vóór je de planning vastlegt.' },
+        { phase: PH0, title: 'Ruimte vrijmaken en sloopwerk uitvoeren', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH1, title: 'Ondergrond controleren, herstellen en stofvrij maken', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH2, title: 'Primer & egaline aanbrengen', days: 1, assignee: 'Vloerenlegger', note: '' },
+        { phase: PH2, title: 'Droogtijd + CM-restvochtmeting', days: 3, assignee: 'Vloerenlegger', note: 'Minimaal 24-48 uur droogtijd aanhouden; pas leggen bij goede meetwaarde.' },
+        { phase: PH3, title: 'Nieuwe vloer plaatsen', days: 3, assignee: 'Vloerenlegger', note: '' },
+        { phase: PH3, title: 'Plinten en afwerking', days: 1, assignee: 'Geert', note: '' },
+        { phase: PH3, title: 'Opleverronde lopen', days: 1, assignee: 'Geert & Aannemer', note: '' }
+      ],
+      wand: [
+        { phase: PH0, title: 'Opname, tekening en inspectie verborgen leidingen / constructie', days: 1, assignee: 'Geert', note: 'Leg bevindingen schriftelijk vast voordat de offerte getekend wordt.' },
+        { phase: PH0, title: 'Offertes opvragen en vergelijken', days: 3, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Opdracht verlenen en materialen bestellen', days: 2, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Sloopwerk wanden en puin afvoeren', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH1, title: 'Nieuwe wandindeling uitzetten en frame / metalstud plaatsen', days: 3, assignee: 'Aannemer', note: '' },
+        { phase: PH2, title: 'Elektra en installaties aanpassen', days: 2, assignee: 'Installateur', note: 'Laat dit vóór het dichtmaken van de wanden keuren.' },
+        { phase: PH2, title: 'Wanden dichtmaken en voegen / stucwerk laten drogen', days: 3, assignee: 'Aannemer', note: 'Droogtijd van stuc- en plamuurwerk aanhouden.' },
+        { phase: PH3, title: 'Schilderwerk en afwerking', days: 3, assignee: 'Schilder', note: '' },
+        { phase: PH3, title: 'Opleverronde lopen', days: 1, assignee: 'Geert & Aannemer', note: '' }
+      ],
+      nat: [
+        { phase: PH0, title: 'Inspectie afvoer, leidingen en eventuele lekkage', days: 1, assignee: 'Geert', note: 'Maak foto\'s van de uitgangssituatie.' },
+        { phase: PH0, title: 'Offertes opvragen en vergelijken', days: 3, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Opdracht verlenen en sanitair / tegels bestellen', days: 2, assignee: 'Geert', note: 'Let op levertijd van tegels en sanitair.' },
+        { phase: PH0, title: 'Sloop tegelwerk en oud sanitair', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH1, title: 'Afvoer en leidingwerk aanpassen', days: 2, assignee: 'Loodgieter', note: '' },
+        { phase: PH1, title: 'Vloer egaliseren met afschot naar de put', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH2, title: 'Waterdichte laag aanbrengen', days: 1, assignee: 'Tegelzetter', note: 'Wand- en vloeraansluitingen met banden afdichten.' },
+        { phase: PH2, title: 'Droogtijd + controle waterdichtheid', days: 3, assignee: 'Geert', note: 'Volg de droogtijd van de fabrikant.' },
+        { phase: PH3, title: 'Tegelwerk en kitwerk', days: 4, assignee: 'Tegelzetter', note: '' },
+        { phase: PH3, title: 'Sanitair monteren en ventilatie controleren', days: 2, assignee: 'Loodgieter', note: '' },
+        { phase: PH3, title: 'Opleverronde lopen', days: 1, assignee: 'Geert & Aannemer', note: '' }
+      ],
+      algemeen: [
+        { phase: PH0, title: 'Opname en inspectie van de situatie', days: 1, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Offertes opvragen en vergelijken', days: 3, assignee: 'Geert', note: '' },
+        { phase: PH0, title: 'Opdracht verlenen en materialen bestellen', days: 2, assignee: 'Geert', note: '' },
+        { phase: PH1, title: 'Ruimte vrijmaken en voorbereiden', days: 2, assignee: 'Aannemer', note: '' },
+        { phase: PH2, title: 'Hoofdwerkzaamheden uitvoeren', days: 5, assignee: 'Aannemer', note: '' },
+        { phase: PH3, title: 'Afwerking', days: 2, assignee: 'Geert', note: '' },
+        { phase: PH3, title: 'Opleverronde lopen', days: 1, assignee: 'Geert & Aannemer', note: '' }
+      ]
+    };
+
+    // Werkdagen (ma t/m vr). Feestdagen worden niet meegerekend: pas een datum in de afdeling aan als dat nodig is.
+    function isWeekendIso(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+      const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+      return d === 0 || d === 6;
     }
+    function nextWorkdayIso(iso) {
+      let d = iso;
+      while (isWeekendIso(d)) d = addDaysIso(d, 1);
+      return d;
+    }
+    function addWorkdaysIso(iso, n) { // n werkdagen verder
+      let d = iso;
+      for (let i = 0; i < n; i++) d = nextWorkdayIso(addDaysIso(d, 1));
+      return d;
+    }
+    function diffDaysIso(a, b) { // b - a in kalenderdagen
+      const p = (x) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x); return Date.UTC(+m[1], +m[2] - 1, +m[3]); };
+      return Math.round((p(b) - p(a)) / 86400000);
+    }
+    function fmtNlDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+    }
+
+    // Rekent start- en einddatum van alle gekozen stappen achter elkaar uit
+    function schedulePlan(draft, startIso) {
+      let cursor = nextWorkdayIso(/^\d{4}-\d{2}-\d{2}$/.test(startIso || '') ? startIso : getLocalTodayIso());
+      let lastEnd = '';
+      draft.forEach(st => {
+        if (!st.include) { st.start = ''; st.end = ''; return; }
+        const days = Math.min(60, Math.max(1, Math.round(Number(st.days)) || 1));
+        st.days = days;
+        st.start = cursor;
+        st.end = addWorkdaysIso(cursor, days - 1);
+        lastEnd = st.end;
+        cursor = nextWorkdayIso(addDaysIso(st.end, 1));
+      });
+      return lastEnd;
+    }
+
+    let planDraft = null;
+    let planDraftType = '';
 
     function openNewProjectModal() {
+      document.getElementById('np-title').value = '';
+      document.getElementById('np-room').value = '';
+      document.getElementById('np-desc').value = '';
+      document.getElementById('np-start').value = getLocalTodayIso();
+      document.getElementById('np-deadline').value = '';
+      document.getElementById('np-dept').innerHTML = appState.departments
+        .map(d => `<option value="${esc(d.name)}">${esc(d.icon || '')} ${esc(d.name)}</option>`).join('');
+      if (selectedDeptFilter !== 'ALL' && appState.departments.some(d => d.name === selectedDeptFilter)) {
+        document.getElementById('np-dept').value = selectedDeptFilter;
+      }
+      planDraft = null; planDraftType = '';
+      document.getElementById('np-make-tasks').checked = true;
+      document.getElementById('np-schedule-tasks').checked = true;
+      updatePlanButton();
+      showProjectStep(1);
       document.getElementById('new-project-modal').classList.remove('hidden');
     }
+    function openSmartWizardModal() { openNewProjectModal(); }
 
-    function createSmartProject() {
+    function showProjectStep(n) {
+      document.getElementById('np-step-1').classList.toggle('hidden', n !== 1);
+      document.getElementById('np-step-2').classList.toggle('hidden', n !== 2);
+      document.getElementById('np-footer-1').classList.toggle('hidden', n !== 1);
+      document.getElementById('np-footer-2').classList.toggle('hidden', n !== 2);
+      document.getElementById('np-modal-title').textContent = n === 1 ? '🧠 Nieuw project • stap 1 van 2' : '🗓️ Planning • stap 2 van 2';
+    }
+    function backToProjectStep() { showProjectStep(1); }
+
+    function goToPlanStep() {
       const title = document.getElementById('np-title').value.trim();
-      const room = document.getElementById('np-room').value.trim() || 'Algemeen';
+      if (!title) { showToast('Vul eerst een projectnaam in.'); document.getElementById('np-title').focus(); return; }
       const type = document.getElementById('np-type').value;
-      const desc = document.getElementById('np-desc').value.trim() || 'Nieuw verbouwingsproject';
-      if (!title) return alert('Vul een projectnaam in.');
-
-      const today = getLocalTodayIso();
-      const steps = [
-        { id: 's1-' + Date.now(), phase: 'Fase 0: Voorbereiding, Offerte & Sloop', title: 'Steekproef & inspectie onderliggende constructie vóór tekenen offerte', date: today, assignee: 'Geert', note: 'Les uit Yoga Studio: leg verborgen constructies vooraf schriftelijk vast.', done: false },
-        { id: 's2-' + Date.now(), phase: 'Fase 1: Constructie & Ondergrond', title: 'Ruimte vrijmaken, sloopwerk uitvoeren en ondergrond voorbereiden', date: today, assignee: 'Aannemer', note: '', done: false },
-        { id: 's3-' + Date.now(), phase: 'Fase 3: Opbouw & Afwerking', title: 'Nieuwe afwerking plaatsen en opleverronde lopen', date: today, assignee: 'Geert & Aannemer', note: '', done: false }
-      ];
-
-      if (type === 'vloer') {
-        steps.splice(2, 0, { id: 'sv-' + Date.now(), phase: 'Fase 2: Installaties & Droogtijden', title: 'Primer & egaline aanbrengen + CM-restvochtmeting', date: today, assignee: 'Vloerenlegger', note: 'Minimaal 24-48 uur droogtijd aanhouden.', done: false });
+      if (!planDraft || planDraftType !== type) {
+        const tpl = PLAN_TEMPLATES[type] || PLAN_TEMPLATES.algemeen;
+        planDraft = tpl.map(t => ({ ...t, include: true, start: '', end: '' }));
+        planDraftType = type;
       }
+      document.getElementById('np-dept-label').textContent = document.getElementById('np-dept').value || '';
+      showProjectStep(2);
+      renderPlanPreview();
+    }
 
-      const inheritedRisks = appState.lessons.map((l, idx) => ({
-        id: 'inh-' + Date.now() + '-' + idx,
-        title: l.title,
-        action: l.rule,
-        checked: false
-      }));
+    function planEdit(i, field, value) {
+      const st = planDraft && planDraft[i];
+      if (!st) return;
+      if (field === 'title') st.title = String(value).slice(0, 160);
+      else if (field === 'assignee') st.assignee = String(value).slice(0, 60);
+      else if (field === 'days') st.days = value;
+      else if (field === 'include') st.include = !!value;
+    }
+    function planRemoveStep(i) { planDraft.splice(i, 1); renderPlanPreview(); }
+    function planAddStep() {
+      planDraft.push({ phase: PH2, title: 'Nieuwe stap', days: 1, assignee: 'Geert', note: '', include: true, start: '', end: '' });
+      renderPlanPreview();
+      showToast('Stap toegevoegd onderaan (Fase 2). Pas de naam aan.');
+    }
+    function updatePlanButton() {
+      const mk = document.getElementById('np-make-tasks').checked;
+      document.getElementById('np-confirm-btn').textContent = mk ? 'Project + taken aanmaken' : 'Alleen project aanmaken';
+      document.getElementById('np-schedule-tasks').disabled = !mk;
+    }
 
-      appState.projects.unshift({
-        id: 'proj-' + Date.now(),
+    function renderPlanPreview() {
+      const start = document.getElementById('np-start').value;
+      const deadline = document.getElementById('np-deadline').value;
+      const end = schedulePlan(planDraft, start);
+      const chosen = planDraft.filter(x => x.include).length;
+      const workdays = planDraft.filter(x => x.include).reduce((a, x) => a + x.days, 0);
+
+      let status = '', tone = 'bg-emerald-50 border-emerald-200 text-emerald-900';
+      if (!chosen) { status = 'Geen stappen gekozen.'; tone = 'bg-slate-50 border-slate-200 text-slate-700'; }
+      else if (deadline && /^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+        const over = diffDaysIso(deadline, end);
+        if (over > 0) { status = `⚠️ De planning loopt ${over} ${over === 1 ? 'dag' : 'dagen'} over de gewenste oplevering (${fmtNlDate(deadline)}). Kort stappen in of laat er een weg.`; tone = 'bg-rose-50 border-rose-200 text-rose-900'; }
+        else { status = `✓ Past binnen de gewenste oplevering (${fmtNlDate(deadline)}), ${-over} ${over === -1 ? 'dag' : 'dagen'} ruimte.`; }
+      }
+      document.getElementById('np-plan-summary').className = `rounded-2xl border px-3.5 py-3 text-xs ${tone}`;
+      document.getElementById('np-plan-summary').innerHTML = chosen
+        ? `<div class="font-extrabold text-sm">${chosen} stappen • ${workdays} werkdagen</div>
+           <div class="mt-0.5">Start <strong>${esc(fmtNlDate(planDraft.find(x => x.include).start))}</strong> → verwachte oplevering <strong>${esc(fmtNlDate(end))}</strong> (alleen werkdagen, feestdagen niet meegeteld)</div>
+           ${status ? `<div class="mt-1 font-semibold">${esc(status)}</div>` : ''}`
+        : `<div class="font-semibold">${esc(status)}</div>`;
+
+      let lastPhase = '';
+      document.getElementById('np-plan-list').innerHTML = planDraft.map((st, i) => {
+        const head = st.phase !== lastPhase ? `<div class="pt-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">${esc(st.phase)}</div>` : '';
+        lastPhase = st.phase;
+        return `${head}
+        <div class="rounded-2xl border ${st.include ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 opacity-60'} p-2.5 space-y-2">
+          <div class="flex items-start gap-2">
+            <input type="checkbox" ${st.include ? 'checked' : ''} aria-label="Stap meenemen" onchange="planEdit(${i}, 'include', this.checked); renderPlanPreview()" class="mt-2.5 w-5 h-5 shrink-0 accent-[#3B4622]" />
+            <input type="text" value="${esc(st.title)}" maxlength="160" aria-label="Omschrijving stap" oninput="planEdit(${i}, 'title', this.value)" class="flex-1 min-w-0 px-2.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold" />
+            <button type="button" onclick="planRemoveStep(${i})" aria-label="Stap verwijderen" class="shrink-0 min-w-[40px] min-h-[40px] text-slate-400 hover:text-rose-600 font-bold">✕</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 pl-7">
+            <label class="text-[11px] font-bold text-slate-500">Duur</label>
+            <input type="number" min="1" max="60" value="${esc(st.days)}" aria-label="Duur in werkdagen" onchange="planEdit(${i}, 'days', this.value); renderPlanPreview()" class="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" />
+            <span class="text-[11px] text-slate-500">werkdagen</span>
+            <input type="text" value="${esc(st.assignee)}" maxlength="60" aria-label="Uitvoerende" oninput="planEdit(${i}, 'assignee', this.value)" class="w-36 px-2 py-1.5 rounded-lg border border-slate-200 text-xs" />
+            <span class="text-[11px] font-semibold ${st.include ? 'text-emerald-700' : 'text-slate-400'}">${st.include ? '📅 ' + esc(fmtNlDate(st.start)) + (st.end !== st.start ? ' – ' + esc(fmtNlDate(st.end)) : '') : 'niet meegenomen'}</span>
+          </div>
+          ${st.note ? `<div class="pl-7 text-[11px] text-amber-800">💡 ${esc(st.note)}</div>` : ''}
+        </div>`;
+      }).join('');
+      updatePlanButton();
+    }
+
+    // Maakt van een projectstap een taak in een afdeling (en koppelt ze aan elkaar)
+    function makeTaskFromStep(project, step, dept, withDate, idSuffix) {
+      const task = {
+        id: 't-' + Date.now() + '-' + idSuffix,
+        title: step.title,
+        dept,
+        priority: 'Normaal',
+        assignee: step.assignee || 'Geert',
+        date: withDate && /^\d{4}-\d{2}-\d{2}$/.test(step.date || '') ? step.date : '',
+        notes: (`Project: ${project.title} — ${step.phase}` + (step.note ? `\n${step.note}` : '')).slice(0, 500),
+        done: false,
+        completionLog: null,
+        projectId: project.id,
+        stepId: step.id
+      };
+      step.taskId = task.id;
+      return task;
+    }
+
+    function confirmProjectPlan() {
+      const title = document.getElementById('np-title').value.trim();
+      if (!title) { showProjectStep(1); return; }
+      const room = document.getElementById('np-room').value.trim() || 'Algemeen';
+      const desc = document.getElementById('np-desc').value.trim() || 'Nieuw verbouwingsproject';
+      const dept = document.getElementById('np-dept').value;
+      const makeTasks = document.getElementById('np-make-tasks').checked && !!dept;
+      const withDate = document.getElementById('np-schedule-tasks').checked;
+
+      schedulePlan(planDraft, document.getElementById('np-start').value);
+      const chosen = planDraft.filter(x => x.include && x.title.trim());
+      if (!chosen.length) { showToast('Kies minstens één stap, of ga terug.'); return; }
+
+      const stamp = Date.now();
+      const project = {
+        id: 'proj-' + stamp,
         title,
         room,
+        dept,
         budget: 'Offerte nog vast te stellen',
         description: desc,
-        steps,
+        steps: [],
         photos: [],
-        risks: inheritedRisks,
+        risks: appState.lessons.map((l, idx) => ({ id: 'inh-' + stamp + '-' + idx, title: l.title, action: l.rule, checked: false })),
         blueprintShapes: [],
         blueprintBgDataUrl: null
+      };
+      if (/^\d{4}-\d{2}-\d{2}$/.test(document.getElementById('np-deadline').value)) project.deadline = document.getElementById('np-deadline').value;
+
+      const newTasks = [];
+      chosen.forEach((st, i) => {
+        const step = { id: `ps-${stamp}-${i}`, phase: st.phase, title: st.title.trim(), date: st.start, assignee: (st.assignee || '').trim() || 'Geert', note: st.note || '', done: false };
+        project.steps.push(step);
+        if (makeTasks) newTasks.push(makeTaskFromStep(project, step, dept, withDate, `${stamp}-${i}`));
       });
 
-      document.getElementById('np-title').value = '';
-      document.getElementById('np-desc').value = '';
+      appState.projects.unshift(project);
+      if (newTasks.length) appState.tasks.unshift(...newTasks);
+      planDraft = null; planDraftType = '';
       closeModal('new-project-modal');
       saveAppState();
-      renderProjectsGrid();
+      renderAll();
+      openProjectDetail(project.id);
+      showToast(newTasks.length ? `Project aangemaakt met ${newTasks.length} taken in ${dept}` : 'Project aangemaakt');
+    }
+
+    // ----- Taken bij bestaande projecten -----
+    function guessDeptForProject(p) {
+      if (p.dept && appState.departments.some(d => d.name === p.dept)) return p.dept;
+      const room = String(p.room || '').toLowerCase().trim();
+      if (!room) return '';
+      const hit = appState.departments.find(d => { const n = d.name.toLowerCase(); return n === room || n.includes(room) || room.includes(n); });
+      return hit ? hit.name : '';
+    }
+    function setProjectDept(projId, dept) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (!p) return;
+      if (dept && appState.departments.some(d => d.name === dept)) p.dept = dept; else delete p.dept;
+      saveAppState();
+      renderActiveProjectDetail();
+    }
+    function refreshProjectDetailIfOpen() {
+      const box = document.getElementById('project-detail-mode');
+      if (activeProjectId && box && !box.classList.contains('hidden') && appState.projects.some(x => x.id === activeProjectId)) {
+        renderActiveProjectDetail();
+      }
+    }
+    function refreshAfterTaskChange() {
+      refreshProjectDetailIfOpen();
+      renderHome8Tiles();
+      renderDepartmentFilters();
+      renderTasks();
+      renderRoster();
+      renderEquipment();
+    }
+    function createTaskFromStep(projId, stepId) {
+      const p = appState.projects.find(x => x.id === projId);
+      const st = p && p.steps.find(x => x.id === stepId);
+      if (!p || !st) return;
+      const dept = guessDeptForProject(p);
+      if (!dept) { showToast('Kies eerst bovenaan een afdeling voor de taken.'); return; }
+      if (st.taskId && appState.tasks.some(t => t.id === st.taskId)) return;
+      appState.tasks.unshift(makeTaskFromStep(p, st, dept, true, Date.now() + '-m'));
+      saveAppState();
+      renderActiveProjectDetail();
+      refreshAfterTaskChange();
+      showToast('Taak aangemaakt in ' + dept);
+    }
+    function createTasksForOpenSteps(projId) {
+      const p = appState.projects.find(x => x.id === projId);
+      if (!p) return;
+      const dept = guessDeptForProject(p);
+      if (!dept) { showToast('Kies eerst bovenaan een afdeling voor de taken.'); return; }
+      const stamp = Date.now();
+      const todo = p.steps.filter(st => !st.done && !(st.taskId && appState.tasks.some(t => t.id === st.taskId)));
+      if (!todo.length) { showToast('Alle open stappen hebben al een taak.'); return; }
+      const created = todo.map((st, i) => makeTaskFromStep(p, st, dept, true, `${stamp}-${i}`));
+      appState.tasks.unshift(...created);
+      saveAppState();
+      renderActiveProjectDetail();
+      refreshAfterTaskChange();
+      showToast(`${created.length} taken aangemaakt in ${dept}`);
+    }
+    // Houdt de projectstap gelijk aan de taak: afronden / heropenen / plannen
+    function syncStepFromTask(task, fields) {
+      if (!task || !task.projectId || !task.stepId) return;
+      const p = appState.projects.find(x => x.id === task.projectId);
+      const st = p && p.steps.find(x => x.id === task.stepId);
+      if (!st) return;
+      if (!fields || fields.includes('done')) st.done = !!task.done;
+      if (fields && fields.includes('date') && task.date) st.date = task.date;
+      if (fields && fields.includes('assignee') && task.assignee) st.assignee = task.assignee;
+    }
+    function setTaskDate(id, value) {
+      const t = appState.tasks.find(x => x.id === id);
+      if (!t) return;
+      t.date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+      syncStepFromTask(t, ['date']);
+      saveAppState();
+      renderTasks(); renderHome8Tiles(); renderRoster(); refreshProjectDetailIfOpen();
+    }
+    function setTaskAssignee(id, value) {
+      const t = appState.tasks.find(x => x.id === id);
+      if (!t) return;
+      t.assignee = String(value).slice(0, 60) || 'Geert';
+      syncStepFromTask(t, ['assignee']);
+      saveAppState();
+      renderTasks(); renderRoster(); refreshProjectDetailIfOpen();
     }
 
     // ==================== APPARATUUR & TEAM ====================
@@ -2828,7 +3730,9 @@
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
           <div class="flex justify-between items-start">
             <span class="text-xs font-bold text-emerald-600">${esc(eq.dept)}</span>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${esc(eq.status)}</span>
+            <select aria-label="Status van ${esc(eq.name)}" onchange="setEquipmentStatus(${jsArg(eq.id)}, this.value)" class="min-h-[36px] px-2 rounded-full border text-[11px] font-bold ${eq.status === 'Buiten gebruik' ? 'bg-rose-100 text-rose-800 border-rose-300' : eq.status === 'Aandacht nodig' ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-100 text-slate-700 border-slate-200'}">
+              ${[...new Set(['Operationeel', 'Aandacht nodig', 'Buiten gebruik', eq.status])].map(st => `<option value="${esc(st)}"${st === eq.status ? ' selected' : ''}>${esc(st === 'Buiten gebruik' ? '🚧 ' + st : st)}</option>`).join('')}
+            </select>
           </div>
           <h3 class="font-extrabold text-sm text-slate-900">${esc(eq.name)}</h3>
           <p class="text-xs text-slate-500">📅 Volgend onderhoud: <strong>${esc(eq.nextDate)}</strong></p>
@@ -2838,14 +3742,39 @@
             <select onchange="setEquipmentSupplier(${jsArg(eq.id)}, this.value)" aria-label="Leverancier van ${esc(eq.name)}" class="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs bg-white">${supOpts}</select>
             ${sup ? `<div class="text-[11px] text-slate-600">${sup.contact ? '👤 ' + esc(sup.contact) + ' • ' : ''}${sup.customerNo ? 'Klantnr ' + esc(sup.customerNo) : ''}</div>
             <div class="flex flex-wrap gap-1.5">
-              ${tel ? `<a href="${esc(tel)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-[#163828] text-white text-xs font-bold">📞 ${esc(sup.phone)}</a>` : (sup.phone ? `<span class="text-[11px] text-slate-600">📞 ${esc(sup.phone)}</span>` : '')}
-              ${mail ? `<a href="${esc(mail)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-emerald-100 text-[#163828] text-xs font-bold">✉️ E-mail</a>` : (sup.email ? `<span class="text-[11px] text-slate-600">✉️ ${esc(sup.email)}</span>` : '')}
+              ${tel ? `<a href="${esc(tel)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-[#3B4622] text-white text-xs font-bold">📞 ${esc(sup.phone)}</a>` : (sup.phone ? `<span class="text-[11px] text-slate-600">📞 ${esc(sup.phone)}</span>` : '')}
+              ${mail ? `<a href="${esc(mail)}" class="min-h-[40px] inline-flex items-center px-3 rounded-lg bg-emerald-100 text-[#3B4622] text-xs font-bold">✉️ E-mail</a>` : (sup.email ? `<span class="text-[11px] text-slate-600">✉️ ${esc(sup.email)}</span>` : '')}
               ${!sup.phone && !sup.email ? '<span class="text-[11px] text-slate-400">Nog geen telefoon of e-mail ingevuld (via Leveranciers).</span>' : ''}
             </div>` : ''}
           </div>
           <button type="button" onclick="openTaskForEquipment(${jsArg(eq.id)})" class="w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">+ Taak voor dit apparaat</button>
         </div>`;
       }).join('') || '<div class="col-span-full bg-white p-6 rounded-2xl border border-slate-200 text-sm text-slate-500 text-center">Nog geen apparatuur toegevoegd.</div>';
+    }
+
+    function setEquipmentStatus(eqId, status) {
+      const eq = appState.equipment.find(x => x.id === eqId);
+      if (!eq || !['Operationeel', 'Aandacht nodig', 'Buiten gebruik'].includes(status)) return;
+      eq.status = status;
+      saveAppState();
+      renderEquipment();
+    }
+    function setDeptInService(deptName, inService) {
+      const d = appState.departments.find(x => x.name === deptName);
+      if (!d) return;
+      if (inService) delete d.outOfService; else d.outOfService = true;
+      saveAppState();
+      renderAll();
+    }
+    // Na afronden van een taak: voorstel om het gekoppelde toestel weer in gebruik te nemen
+    function maybeRestoreAfterTask(task) {
+      if (task.equipmentId) {
+        const eq = appState.equipment.find(e => e.id === task.equipmentId);
+        if (eq && eq.status === 'Buiten gebruik' && confirm(`"${eq.name}" stond buiten gebruik. Weer in gebruik nemen?`)) eq.status = 'Operationeel';
+      }
+      const d = appState.departments.find(x => x.name === task.dept);
+      if (d && d.outOfService && !appState.tasks.some(t => !t.done && t.dept === d.name && t.id !== task.id && t.priority === 'Spoed') &&
+          confirm(`Afdeling ${d.name} stond buiten gebruik. Weer in gebruik nemen?`)) delete d.outOfService;
     }
 
     function setEquipmentSupplier(eqId, supId) {
@@ -2983,6 +3912,27 @@
       renderRoster();
     }
 
+    function copyPreviousWeek() {
+      if (!rosterWeekStart) rosterWeekStart = mondayOfIso(getLocalTodayIso());
+      const days = Array.from({ length: 7 }, (_, i) => addDaysIso(rosterWeekStart, i));
+      const prevDays = days.map(d => addDaysIso(d, -7));
+      const ids = new Set(appState.team.map(m => m.id));
+      const countCells = (list) => list.reduce((a, d) => a + Object.keys(appState.roster.shifts[d] || {}).filter(id => ids.has(id)).length, 0);
+      const prevCount = countCells(prevDays);
+      if (!prevCount) { showToast('De vorige week is leeg: er valt niets te kopiëren.'); return; }
+      const curCount = countCells(days);
+      if (curCount && !confirm(`Deze week heeft al ${curCount} ingevulde diensten. Die worden vervangen door de diensten van de vorige week. Doorgaan?`)) return;
+      days.forEach((d, i) => {
+        const src = appState.roster.shifts[prevDays[i]] || {};
+        const copy = {};
+        Object.keys(src).forEach(id => { if (ids.has(id)) copy[id] = src[id]; });
+        if (Object.keys(copy).length) appState.roster.shifts[d] = copy; else delete appState.roster.shifts[d];
+      });
+      saveAppState();
+      renderRoster();
+      showToast(`${prevCount} diensten van vorige week overgenomen ✓`);
+    }
+
     function renderRoster() {
       const box = document.getElementById('roster-week');
       if (!box) return;
@@ -3026,9 +3976,10 @@
               <button type="button" onclick="changeRosterWeek(-1)" aria-label="Vorige week" class="min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 font-bold">◀</button>
               <div class="px-2 text-sm font-extrabold text-slate-900 text-center">${esc(weekLabel)}</div>
               <button type="button" onclick="changeRosterWeek(1)" aria-label="Volgende week" class="min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 font-bold">▶</button>
-              <button type="button" onclick="changeRosterWeek(0)" class="min-h-[44px] px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#163828] text-xs font-bold border border-emerald-200">Deze week</button>
+              <button type="button" onclick="changeRosterWeek(0)" class="min-h-[44px] px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#3B4622] text-xs font-bold border border-emerald-200">Deze week</button>
             </div>
-            <button type="button" onclick="exportTasksIcs()" class="min-h-[44px] px-3.5 rounded-xl bg-[#163828] hover:bg-[#1e4b36] text-white text-xs font-bold">📅 Taken naar agenda (.ics)</button>
+            <button type="button" onclick="copyPreviousWeek()" class="min-h-[44px] px-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold">📋 Kopieer vorige week</button>
+            <button type="button" onclick="exportTasksIcs()" class="min-h-[44px] px-3.5 rounded-xl bg-[#3B4622] hover:bg-[#4A5A2A] text-white text-xs font-bold">📅 Taken naar agenda (.ics)</button>
           </div>
           <div class="overflow-x-auto -mx-1 px-1">
             <table class="min-w-full text-left">
@@ -3422,6 +4373,9 @@
       }
 
       document.getElementById('fault-notes').value = lines.join('\n');
+      // Buiten gebruik: vooraf aangevinkt als de AI dat adviseert, anders keuze van de melder
+      document.getElementById('fault-oos-check').checked = !!(p && p.buiten_gebruik_nemen);
+      updateFaultOosSelect();
       document.getElementById('fault-step-input').classList.add('hidden');
       document.getElementById('fault-step-review').classList.remove('hidden');
     }
@@ -3431,11 +4385,40 @@
       document.getElementById('fault-step-input').classList.remove('hidden');
     }
 
+    function updateFaultOosSelect() {
+      const on = document.getElementById('fault-oos-check').checked;
+      const wrap = document.getElementById('fault-oos-target-wrap');
+      wrap.classList.toggle('hidden', !on);
+      if (!on) return;
+      const dept = document.getElementById('fault-dept-label').value;
+      const eq = appState.equipment.filter(e => e.dept === dept);
+      document.getElementById('fault-oos-target').innerHTML =
+        eq.map(e => `<option value="eq:${esc(e.id)}">🏋️ ${esc(e.name)}</option>`).join('') +
+        `<option value="dept">🚧 Hele ruimte / afdeling ${esc(dept)}</option>`;
+    }
+    // Zet het gekozen toestel of de ruimte op "buiten gebruik" en geeft het toestel terug voor koppeling aan de taak
+    function applyFaultOutOfService(dept) {
+      if (!document.getElementById('fault-oos-check').checked) return null;
+      const target = document.getElementById('fault-oos-target').value;
+      if (target === 'dept') {
+        const d = appState.departments.find(x => x.name === dept);
+        if (d) d.outOfService = true;
+        return null;
+      }
+      const id = target.startsWith('eq:') ? target.slice(3) : '';
+      const eq = appState.equipment.find(e => e.id === id);
+      if (eq) { eq.status = 'Buiten gebruik'; return eq.id; }
+      return null;
+    }
+
     function saveFaultTask() {
       const title = document.getElementById('fault-title').value.trim();
       if (!title) return alert('Vul een taakomschrijving in.');
+      const faultDept = document.getElementById('fault-dept-label').value;
+      const oosEquipmentId = applyFaultOutOfService(faultDept);
       appState.tasks.unshift({
         id: 't-' + Date.now(),
+        ...(oosEquipmentId ? { equipmentId: oosEquipmentId } : {}),
         title,
         dept: document.getElementById('fault-dept-label').value,
         priority: document.getElementById('fault-priority').value,
@@ -3451,6 +4434,7 @@
       renderDepartmentFilters();
       renderTasks();
       renderHome8Tiles();
+      renderEquipment();
     }
 
     // ==================== BACKUP & CLOUD SYNC (SUPABASE) ====================
@@ -3504,13 +4488,13 @@
       const connected = appState.cloudConfig && appState.cloudConfig.url && appState.cloudConfig.key;
       if (connected && cloudStatus === 'error') {
         badge.textContent = '⚠️ Sync mislukt';
-        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40';
+        badge.className = 't11-cloud-badge warn';
       } else if (connected) {
         badge.textContent = '☁️ Cloud verbonden';
-        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/40';
+        badge.className = 't11-cloud-badge ok';
       } else {
         badge.textContent = 'Lokale opslag';
-        badge.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+        badge.className = 't11-cloud-badge';
       }
     }
 
@@ -3668,6 +4652,12 @@
     // INIT
     loadAppState();
     syncOnStartup();
+    labelFormFields();
+    (function () {
+      let t = null;
+      new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => labelFormFields(), 60); })
+        .observe(document.body, { childList: true, subtree: true });
+    })();
   </script>
 </body>
 </html>
